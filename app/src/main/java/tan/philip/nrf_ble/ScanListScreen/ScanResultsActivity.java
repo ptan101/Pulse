@@ -109,7 +109,6 @@ public class ScanResultsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_results);
-        this.getSupportActionBar().hide();
 
         Intent intent = getIntent();
         mScanResults = (HashMap<String, BluetoothDevice>)intent.getSerializableExtra(ClientActivity.EXTRA_BT_SCAN_RESULTS);

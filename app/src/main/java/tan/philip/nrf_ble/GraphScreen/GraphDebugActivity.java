@@ -95,7 +95,6 @@ public class GraphDebugActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
-        this.getSupportActionBar().hide();
 
         deviceIdentifier = "Debug Mode";
 

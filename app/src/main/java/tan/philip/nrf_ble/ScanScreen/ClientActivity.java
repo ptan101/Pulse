@@ -71,7 +71,7 @@ public class ClientActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_client);
-        this.getSupportActionBar().hide();
+        //this.getSupportActionBar().hide();
 
         mBinding.btnListDevices.setVisibility(View.GONE);
 
@@ -190,7 +190,8 @@ public class ClientActivity extends AppCompatActivity {
 
         ScanFilter scanFilter = new ScanFilter.Builder()
                 //.setServiceUuid(new ParcelUuid(SERVICE_UUID))
-                .setDeviceAddress("EF:C6:E7:96:D4:D6")
+                //.setDeviceAddress("EF:C6:E7:96:D4:D6")
+                .setDeviceName("PWV Sensor")
                 .build();
         filters.add(scanFilter);
 

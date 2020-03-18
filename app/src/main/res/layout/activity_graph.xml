@@ -14,8 +14,8 @@
         <com.jjoe64.graphview.GraphView
             android:id="@+id/graph1"
             android:layout_width="match_parent"
-            android:layout_height="410dp"
-            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+            android:layout_height="500dp"
+            app:layout_constraintTop_toBottomOf="@+id/txt_proximal" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout"
@@ -40,14 +40,13 @@
                 android:id="@+id/textView5"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Reading from device SAMPLE_NAME"
                 android:textSize="10sp"
-                android:layout_marginTop="3dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView4" />
-
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -65,8 +64,8 @@
                 android:id="@+id/HR_layout"
                 android:layout_width="wrap_content"
                 android:layout_height="50dp"
-                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/PWV_layout"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <ImageView
@@ -282,6 +281,18 @@
             app:layout_constraintBottom_toBottomOf="@+id/graph1"
             app:layout_constraintStart_toStartOf="@+id/graph1" />
 
+        <ToggleButton
+            android:id="@+id/toggleButtonRecord"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.5"
+            android:backgroundTint="#FFEB3B"
+            android:textColor="#2D5492"
+            android:textOff="Record"
+            android:textOn="Stop"
+            app:layout_constraintBottom_toBottomOf="@+id/graph1"
+            app:layout_constraintEnd_toEndOf="parent" />
+
         <TextView
             android:id="@+id/txt_proximal"
             android:layout_width="wrap_content"
@@ -290,7 +301,7 @@
             android:text="Proximal Sensor"
             android:textColor="#a6a6a6"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/graph1" />
+            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
         <TextView
             android:id="@+id/txt_distal"
@@ -303,15 +314,32 @@
             app:layout_constraintTop_toBottomOf="@+id/txt_proximal" />
 
         <TextView
-            android:id="@+id/textView8"
+            android:id="@+id/txt_lf"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:text="Filtered Signal"
-            android:textColor="#FF0000"
+            android:text="LF Signal"
+            android:textColor="#000000"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/txt_distal" />
 
+        <TextView
+            android:id="@+id/txt_pwv_legend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="PWV"
+            android:textColor="#FF0000"
+            app:layout_constraintBottom_toTopOf="@+id/toggleButtonRecord"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/recordTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0s"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

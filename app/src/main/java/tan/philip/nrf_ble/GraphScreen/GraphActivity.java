@@ -2,6 +2,7 @@ package tan.philip.nrf_ble.GraphScreen;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.jjoe64.graphview.DefaultLabelFormatter;
@@ -10,7 +11,9 @@ import com.jjoe64.graphview.GridLabelRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.opencsv.CSVWriter;
 
+import android.Manifest;
 import android.animation.ValueAnimator;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.BroadcastReceiver;
@@ -19,19 +22,31 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.provider.DocumentsContract;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Random;
 
 import tan.philip.nrf_ble.BluetoothLeService;
@@ -49,11 +64,11 @@ public class GraphActivity extends AppCompatActivity {
     private final double MAX_VALUE = 1.5;
     private final double MARGIN = 1;
     //private static final int INDEX_TO_START_FILTER_DISPLAY = 5000;
-    private static final int INPUT_DELAY = 500;
+    private static final int INPUT_DELAY = 100;
 
 
     public static final String TAG = "GraphActivity";
-    public static final int MAX_POINTS_PLOT = 1000;
+    public static final int MAX_POINTS_PLOT = 10000;
     public static final int MAX_POINTS_ARRAY = 20000;
     public static final float SAMPLE_PERIOD = 2;
     //public static final float SAMPLE_PERIOD = 0.025f; //At 40 ksps sample rate
@@ -65,6 +80,8 @@ public class GraphActivity extends AppCompatActivity {
     private LineGraphSeries<DataPoint> sensor1Input;
     private LineGraphSeries<DataPoint> sensor2Output;
     private LineGraphSeries<DataPoint> sensor2Input;
+    private LineGraphSeries<DataPoint> sensor3Input;
+
     //private LineGraphSeries<DataPoint> sensor2Output;
     //private BarGraphSeries<DataPoint> peaks;
 
@@ -75,9 +92,12 @@ public class GraphActivity extends AppCompatActivity {
     private float sensor1y[] = new float[MAX_POINTS_ARRAY];
     private float sensor2x[] = new float[MAX_POINTS_ARRAY];
     private float sensor2y[] = new float[MAX_POINTS_ARRAY];
+    private float sensor3x[] = new float[MAX_POINTS_ARRAY];
+
     Filter sensor1Filter = new Filter(sensor1x, sensor1y);
     Filter sensor2Filter = new Filter(sensor2x, sensor2y);
     private int numPoints = 0;
+    private int numLFPoints = 0;
 
 
     private HeartDataAnalysis hda;
@@ -97,6 +117,14 @@ public class GraphActivity extends AppCompatActivity {
 
     private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BluetoothLeService mBluetoothLeService;
+
+    //Saving
+    private ToggleButton recordButton;
+    private String fileName;
+    private boolean storeData = false;
+    private String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private long startRecordTime;
+
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -133,7 +161,6 @@ public class GraphActivity extends AppCompatActivity {
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
 
-
                 if(numPoints % GRAPHING_FREQUENCY == 0) {
                     displayData();
                     drawHrRanges();
@@ -155,13 +182,19 @@ public class GraphActivity extends AppCompatActivity {
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_graph);
 
+        mBinding.recordTimer.setVisibility(View.INVISIBLE);
+        recordButton = mBinding.toggleButtonRecord;
+        setupSwitch(recordButton);
+
+
 
         mBinding.textView5.setText("Reading from device " + deviceIdentifier);
         graph = mBinding.graph1;
 
         sensor1Input = new LineGraphSeries<>();
-        sensor2Output = new LineGraphSeries<>();
         sensor2Input = new LineGraphSeries<>();
+        sensor3Input = new LineGraphSeries<>();
+        sensor2Output = new LineGraphSeries<>();
         //sensor2Output = new LineGraphSeries<>();
         //peaks = new BarGraphSeries<>();
 
@@ -234,6 +267,8 @@ public class GraphActivity extends AppCompatActivity {
         mBluetoothLeService = null;
     }
 
+    ////////////////////////////////////GRAPH STUFF////////////////////////////////////////////////
+
     private void setupGraph() {
         graph.getGridLabelRenderer().setVerticalLabelsVisible(false);
         //graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
@@ -261,7 +296,7 @@ public class GraphActivity extends AppCompatActivity {
         graph.getViewport().setYAxisBoundsManual(true);
         //graph.getViewport().setMinY(MIN_VALUE - MARGIN/2);
         graph.getViewport().setMinY(-0.5);
-        graph.getViewport().setMaxY(4*MAX_VALUE - MIN_VALUE + 3/2*MARGIN);
+        graph.getViewport().setMaxY(6*MAX_VALUE - MIN_VALUE + 3/2*MARGIN);
 
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
@@ -269,6 +304,7 @@ public class GraphActivity extends AppCompatActivity {
 
         graph.addSeries(sensor1Input);
         graph.addSeries(sensor2Input);
+        graph.addSeries(sensor3Input);
         graph.addSeries(sensor2Output);
         //graph.addSeries(sensor2Output);
         //graph.addSeries(peaks);
@@ -297,23 +333,20 @@ public class GraphActivity extends AppCompatActivity {
             }
         });
 
-        Paint redPaint = new Paint();
-        redPaint.setARGB(255, 255, 0, 0);
-        redPaint.setStrokeWidth(5);
-        sensor2Output.setCustomPaint(redPaint);
-
-        Paint sensor1Paint = new Paint();
-        sensor1Paint.setARGB(255, 166, 166, 166);
-        sensor1Paint.setStrokeWidth(5);
-        sensor1Input.setCustomPaint(sensor1Paint);
-
-        Paint sensor2Paint = new Paint();
-        sensor2Paint.setARGB(255, 107, 107, 107);
-        sensor2Paint.setStrokeWidth(5);
-        sensor2Input.setCustomPaint(sensor2Paint);
+        setSeriesPaint(255, 166, 166, 166, 5, sensor1Input);
+        setSeriesPaint(255, 107, 107, 107, 5, sensor2Input);
+        setSeriesPaint(255, 0, 0, 0, 5, sensor3Input);
+        setSeriesPaint(255, 255, 0, 0, 5, sensor2Output);
 
         //peaks.setDataWidth(0.01);
         //peaks.setSize(5);
+    }
+
+    private void setSeriesPaint(int a, int r, int g, int b, int strokeWidth, LineGraphSeries<DataPoint> series) {
+        Paint sensorPaint = new Paint();
+        sensorPaint.setARGB(a, r, g, b);
+        sensorPaint.setStrokeWidth(strokeWidth);
+        series.setCustomPaint(sensorPaint);
     }
 
     private void resetViewport() {
@@ -326,20 +359,29 @@ public class GraphActivity extends AppCompatActivity {
         mBinding.btnReset.setVisibility(View.GONE);
     }
 
-    private static final float SENSOR_1_OFFSET = 5;
-    private static final float SENSOR_2_OFFSET = 2;
+    private static final float SENSOR_1_OFFSET = 8;
+    private static final float SENSOR_2_OFFSET = 5;
+    private static final float SENSOR_3_OFFSET = 2;
     private void displayData() {
         if(numPoints > INPUT_DELAY) {
-            float xPoint = (float) (numPoints - INPUT_DELAY) * SAMPLE_PERIOD / 1000;
+            float xPoint = (float) (numPoints - INPUT_DELAY/100) * SAMPLE_PERIOD / 1000;
             float yPoint1 = sensor1x[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_1_OFFSET ;
             float yPoint2 = sensor2x[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_2_OFFSET;
-            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY];
+            float yPoint3 = sensor3x[(numLFPoints - INPUT_DELAY / 50) % MAX_POINTS_ARRAY] + SENSOR_3_OFFSET;
+
+
+            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_1_OFFSET ;
+            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_2_OFFSET ;
 
             //Log.d(TAG, Float.toString(yPoint1));
 
             sensor1Input.appendData(new DataPoint(xPoint, yPoint1), !graph1Scrollable, MAX_POINTS_PLOT);
             sensor2Input.appendData(new DataPoint(xPoint, yPoint2), !graph1Scrollable, MAX_POINTS_PLOT);
-            sensor2Output.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
+            sensor3Input.appendData(new DataPoint(xPoint, yPoint3), !graph1Scrollable, MAX_POINTS_PLOT);
+
+            //sensor1Input.appendData(new DataPoint(xPoint, yPoint1Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
+            //sensor2Input.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
+            sensor2Output.appendData(new DataPoint(xPoint, 0), !graph1Scrollable, MAX_POINTS_PLOT);
 
             if((int)heartRateAnimator.getAnimatedValue() <= 10 && heartRate != -1)
                 mBinding.txtHeartRate.setText(String.valueOf(heartRate) + " bpm");
@@ -351,28 +393,63 @@ public class GraphActivity extends AppCompatActivity {
         }
     }
 
+
+    ////////////////////////////////////////DATA RECEPTION//////////////////////////////////////////
+
     private static final int INDEX_SENSOR_1_DATA = 0;      //Change to 1 for original code from XX
     private static final int INDEX_SENSOR_2_DATA = 1;      //Change to 5 for original code from XX
+    private static final int INDEX_SENSOR_3_DATA = 1;
     private static final float PRESCALER = 3f / 1024f;     //10 bit resolution
+
+    private float lfDataBuff;
+    private boolean availableLFData = false;
+
     private void runData(byte[] input) {
         //Little endian conversion
         //short[] shorts = new short[input.length/2];
         //ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
         int[] shorts = convertByteArray(input);
 
-
         for(int i = 0; i < (shorts.length); i +=2) {
-            float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
-            float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
 
-            //Log.d("", Float.toString(sensor2FloatData));
+            //Check if first 2 bytes is LF data flag
+            if(shorts[INDEX_SENSOR_1_DATA + i] == 0xFFFF) {
+                //Input is LF signal
+                lfDataBuff = (float) shorts[INDEX_SENSOR_3_DATA + i] * PRESCALER;
+                Log.d(TAG, Float.toString(lfDataBuff));
+                availableLFData = true;
+                sensor3x[numLFPoints % MAX_POINTS_ARRAY] = lfDataBuff;
+                filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
+                numLFPoints ++;
+            } else {
+                //Input is pulsatile signal
 
-            gatherInputData(sensor1x, sensor1FloatData);
-            gatherInputData(sensor2x, sensor2FloatData);
-            filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
-            filterData(sensor2Filter, sensor2x, sensor2y, SENSOR_2_IDENTIFIER);
+                float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
+                float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
 
-            numPoints++;
+                //Saving Data in memory
+                if(storeData) {
+                    //Store data
+                    if(availableLFData) {
+                        String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData), Float.toString(lfDataBuff)};
+                        writeCSV(data, data.length);
+                        availableLFData = false;
+                    } else {
+                        String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
+                        writeCSV(data, data.length);
+                    }
+                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+                }
+
+                //Log.d("", Float.toString(sensor2FloatData));
+
+                gatherInputData(sensor1x, sensor1FloatData);
+                gatherInputData(sensor2x, sensor2FloatData);
+                filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
+                filterData(sensor2Filter, sensor2x, sensor2y, SENSOR_2_IDENTIFIER);
+
+                numPoints++;
+            }
         }
         //Log.d(TAG, "///////////////////////");
     }
@@ -385,20 +462,18 @@ public class GraphActivity extends AppCompatActivity {
         float newInput = inputArray[numPoints % MAX_POINTS_ARRAY];
 
         if(numPoints > Filter.N_POLES) {
+            filter.amplify(30f);
             filter.findNextY();
-            filter.amplifyPeaks();
-            filter.amplify(2000f);
-
         } else {
             filter.setXv(newInput, numPoints);
             filter.setYv(0, numPoints);
         }
 
         //Determining if there was a peak detected, and where.
-        int peakIndex = filter.findPeak();
+        //int peakIndex = filter.findPeak();
 
-        if(numPoints > INPUT_DELAY)
-            handlePeaks(peakIndex, sensorIdentifier);
+        //if(numPoints > INPUT_DELAY)
+        //    handlePeaks(peakIndex, sensorIdentifier);
     }
 
     /**
@@ -541,4 +616,94 @@ public class GraphActivity extends AppCompatActivity {
 
         return out;
     }
+
+    //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
+    private void setupSwitch(ToggleButton mySwitch) {
+        mySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(isChecked) {
+                    startRecordTime = System.currentTimeMillis();
+                    mBinding.toggleButtonRecord.getBackground().setAlpha(0xFF);
+                    mBinding.recordTimer.setVisibility(View.VISIBLE);
+                    storeData = true;
+
+                    //Set File Name to current time
+                    fileName = Calendar.getInstance().getTime().toString() + ".csv";
+
+                    //Check Permission
+                    while(!isStoragePermissionGranted());
+
+                    //Create Folder
+                    createFolder();
+
+                } else {
+                    mBinding.toggleButtonRecord.getBackground().setAlpha(0x77);
+                    mBinding.recordTimer.setVisibility(View.INVISIBLE);
+                    storeData = false;
+                }
+            }
+        });
+    }
+
+    public  boolean isStoragePermissionGranted() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    == PackageManager.PERMISSION_GRANTED) {
+                Log.v(TAG,"Permission is granted");
+                return true;
+            } else {
+
+                Log.v(TAG,"Permission is revoked");
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+                return false;
+            }
+        }
+        else { //permission is automatically granted on sdk<23 upon installation
+            Log.v(TAG,"Permission is granted");
+            return true;
+        }
+    }
+
+    private void createFolder() {
+        File folder = new File(path);
+        boolean success = true;
+        if (!folder.exists()) {
+            success = folder.mkdirs();
+        }
+        if (success) {
+            Log.d(TAG, "Successfully created new folder / already exists");
+        } else {
+            Log.d(TAG, "Failed to create new folder");
+        }
+    }
+
+    private void writeCSV(String data[], int lenData) {
+        Log.d(TAG, "Writing to CSV");
+        String filePath = path + File.separator + fileName;
+        File f = new File(filePath);
+        CSVWriter writer;
+        FileWriter mFileWriter;
+
+        try {
+            // File exist
+            if(f.exists()&&!f.isDirectory())
+            {
+                mFileWriter = new FileWriter(filePath, true);
+                writer = new CSVWriter(mFileWriter);
+            }
+            else
+            {
+                writer = new CSVWriter(new FileWriter(filePath));
+            }
+
+            writer.writeNext(data);
+
+            writer.close();
+            Log.d(TAG, "SUCCESSFUL WRITE");
+        } catch (IOException e) {
+            Log.d(TAG, e.toString());
+        }
+    }
+
+
 }

@@ -13,12 +13,13 @@ public class Filter {
 
     public static final float THRESHOLD_FOR_PEAK = 0.7f;
 
-    public static final int N_ZEROS = 2;
-    public static final int N_POLES = 2;
+    public static final int N_ZEROS = 4;
+    public static final int N_POLES = 4;
     //Max for ADC is 200 ksps
     public static final double GAIN_DEBUG =  1.554127469e+03;    //At 40 kHz
     //public static final double GAIN =  4.740642571e+00;    //At 100 Hz
-    public static final double GAIN =  2.031823796e+01;    //At 500 Hz
+    //public static final double GAIN =  2.031823796e+01;    //At 500 Hz
+    public static final double GAIN =  6.800073801e+10;    //At 500 Hz, Cheby
 
     private float[] xv = new float[N_ZEROS+1];
     private float[] yv = new float[N_POLES+1];
@@ -59,11 +60,16 @@ public class Filter {
         //100 Hz
         yv[2] =   (float) ((xv[2] - xv[0])
                 + ( -0.6128007881 * yv[0]) + (  1.5998427471 * yv[1]));
-        */
+
         //500 Hz
         yv[2] = (float) ((xv[2] - xv[0])
                 + ( -0.9099299882 * yv[0]) + (  1.9093263649 * yv[1]));
+        */
 
+        //Chebyshev 0.5 -10 Hz, 4th order, -5dB ripple
+        yv[4] = (float) ((xv[0] + xv[4]) + 4 * (xv[1] + xv[3]) + 6 * xv[2]
+                + ( -0.9973807989 * yv[0]) + (  3.9920995701 * yv[1])
+                + ( -5.9920566743 * yv[2]) + (  3.9973379029 * yv[3]));
 
         numPoints ++;
         currentIndex = numPoints% MAX_POINTS_ARRAY;
@@ -116,6 +122,15 @@ public class Filter {
     public void amplify(float gain) {
         y[currentIndex] *= gain;
     }
+
+    /**
+     * Adds a constant to the data
+     * @param offset How much to offset data
+     */
+    public void setYOffset(float offset) {
+        y[currentIndex] += offset;
+    }
+
 
 
     public static final int NO_PEAK_DETECTED = -1;

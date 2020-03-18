@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
 MERGED from [androidx.databinding:databinding-adapters:3.5.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\053e9c87eb50abcf67189f50de43015e\databinding-adapters-3.5.0\AndroidManifest.xml:17:1-24:12
 MERGED from [androidx.databinding:databinding-runtime:3.5.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\d2a4a4674c12e64aea297b49a1101c84\databinding-runtime-3.5.0\AndroidManifest.xml:17:1-24:12
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:17:1-24:12
@@ -40,20 +40,20 @@ MERGED from [androidx.localbroadcastmanager:localbroadcastmanager:1.0.0] C:\User
 MERGED from [androidx.print:print:1.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\7ec682ca46f5c90ea9a9e0cba0c0310a\print-1.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.lifecycle:lifecycle-viewmodel:2.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\85b59553d84ac8d04663d7d81848664c\lifecycle-viewmodel-2.0.0\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.interpolator:interpolator:1.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\d4ef17d609918d2a5f5a86d1ea02678f\interpolator-1.0.0\AndroidManifest.xml:17:1-22:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
-INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
+INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
 	package
 		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:3:5-33
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
 	android:versionName
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
 	android:versionCode
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-55:12
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:1-57:12
 		INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
 	xmlns:android
 		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:2:11-69
@@ -73,14 +73,22 @@ uses-permission#android.permission.VIBRATE
 ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:8:5-66
 	android:name
 		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:8:22-63
-uses-feature#android.hardware.bluetooth_le
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:5-12:35
-	android:required
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:9-32
+uses-permission#android.permission.WRITE_EXTERNAL_STORAGE
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:9:5-81
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:11:9-53
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:9:22-78
+uses-permission#android.permission.WRITE_INTERNAL_STORAGE
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:5-81
+	android:name
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:22-78
+uses-feature#android.hardware.bluetooth_le
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:5-14:35
+	android:required
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:14:9-32
+	android:name
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:13:9-53
 application
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:17:5-53:19
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:19:5-55:19
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [com.google.android.material:material:1.0.0] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\cb634fe4b4d1fdfcd5255e485d30a0c1\material-1.0.0\AndroidManifest.xml:22:5-20
 MERGED from [androidx.constraintlayout:constraintlayout:1.1.3] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\8392647ca9531c13a8f0d6b7ad086e7e\constraintlayout-1.1.3\AndroidManifest.xml:9:5-20
@@ -94,75 +102,75 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.0.0] C:\Users\ph
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.0.1] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\72b2b92ec4ab73ff21fb9bc348de3b22\core-1.0.1\AndroidManifest.xml:22:18-86
 	android:supportsRtl
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:22:9-35
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:24:9-35
 	android:label
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:20:9-41
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:22:9-41
 	android:roundIcon
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:21:9-54
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:23:9-54
 	android:icon
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:19:9-43
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:21:9-43
 	android:allowBackup
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:18:9-35
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:20:9-35
 	android:theme
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:23:9-40
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:25:9-40
 activity#tan.philip.nrf_ble.GraphScreen.GraphDebugActivity
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:24:9-27:61
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:26:9-29:61
 	android:screenOrientation
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:27:13-49
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:29:13-49
 	android:configChanges
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:26:13-74
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:28:13-74
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:25:13-59
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:27:13-59
 activity#tan.philip.nrf_ble.GraphScreen.GraphActivity
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:28:9-33:59
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:30:9-35:59
 	android:screenOrientation
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:32:13-49
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:34:13-49
 	android:label
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:31:13-57
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:33:13-57
 	android:configChanges
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:30:13-74
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:32:13-74
 	android:theme
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:33:13-56
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:35:13-56
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:29:13-54
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:31:13-54
 activity#tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:34:9-37:59
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:36:9-39:59
 	android:label
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:36:13-64
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:38:13-64
 	android:theme
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:37:13-56
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:39:13-56
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:35:13-63
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:37:13-63
 activity#tan.philip.nrf_ble.ScanScreen.ClientActivity
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:38:9-49:20
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:40:9-51:20
 	android:screenOrientation
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:42:13-49
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:44:13-49
 	android:label
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:41:13-58
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:43:13-58
 	android:configChanges
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:40:13-74
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:42:13-74
 	android:theme
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:43:13-56
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:13-56
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:39:13-54
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:41:13-54
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:44:13-48:29
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:46:13-50:29
 action#android.intent.action.MAIN
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:17-69
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:17-69
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:25-66
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:25-66
 category#android.intent.category.LAUNCHER
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:17-77
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:49:17-77
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:27-74
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:49:27-74
 activity#tan.philip.nrf_ble.ScanScreen.TestUI
-ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:50:9-55
-	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:50:19-52
-service#tan.philip.nrf_ble.BluetoothLeService
 ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:9-55
 	android:name
-		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:18-52
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:19-52
+service#tan.philip.nrf_ble.BluetoothLeService
+ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:54:9-55
+	android:name
+		ADDED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:54:18-52
 uses-sdk
 INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml

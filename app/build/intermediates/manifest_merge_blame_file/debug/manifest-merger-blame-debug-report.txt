@@ -7,7 +7,7 @@
 7    <uses-sdk
 8        android:minSdkVersion="26"
 8-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
-9        android:targetSdkVersion="29" />
+9        android:targetSdkVersion="28" />
 9-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml
 10
 11    <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -22,96 +22,102 @@
 14    <uses-permission android:name="android.permission.VIBRATE" />
 14-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:8:5-66
 14-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:8:22-63
-15
-16    <uses-feature
-16-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:5-12:35
-17        android:name="android.hardware.bluetooth_le"
-17-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:11:9-53
-18        android:required="true" />
-18-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:9-32
-19    <uses-feature
-19-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:5-12:35
-20        android:name="android.hardware.bluetooth_le"
-20-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:11:9-53
-21        android:required="true" />
-21-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:9-32
-22
-23    <application
-23-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:17:5-53:19
-24        android:allowBackup="true"
-24-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:18:9-35
-25        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-25-->[androidx.core:core:1.0.1] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\72b2b92ec4ab73ff21fb9bc348de3b22\core-1.0.1\AndroidManifest.xml:22:18-86
-26        android:debuggable="true"
-27        android:icon="@drawable/heartrate"
-27-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:19:9-43
-28        android:label="@string/app_name"
-28-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:20:9-41
-29        android:roundIcon="@mipmap/ic_launcher_round"
-29-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:21:9-54
-30        android:supportsRtl="true"
-30-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:22:9-35
-31        android:testOnly="true"
-32        android:theme="@style/AppTheme" >
-32-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:23:9-40
-33        <activity
-33-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:24:9-27:61
-34            android:name="tan.philip.nrf_ble.GraphScreen.GraphDebugActivity"
-34-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:25:13-59
-35            android:configChanges="keyboardHidden|orientation|screenSize"
-35-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:26:13-74
-36            android:screenOrientation="portrait" />
-36-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:27:13-49
-37        <activity
-37-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:28:9-33:59
-38            android:name="tan.philip.nrf_ble.GraphScreen.GraphActivity"
-38-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:29:13-54
-39            android:configChanges="keyboardHidden|orientation|screenSize"
-39-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:30:13-74
-40            android:label="@string/title_activity_graph"
-40-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:31:13-57
-41            android:screenOrientation="portrait"
-41-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:32:13-49
-42            android:theme="@style/AppTheme.NoActionBar" />
-42-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:33:13-56
-43        <activity
-43-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:34:9-37:59
-44            android:name="tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity"
-44-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:35:13-63
-45            android:label="@string/title_activity_scan_results"
-45-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:36:13-64
-46            android:theme="@style/AppTheme.NoActionBar" />
-46-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:37:13-56
-47        <activity
-47-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:38:9-49:20
-48            android:name="tan.philip.nrf_ble.ScanScreen.ClientActivity"
-48-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:39:13-54
-49            android:configChanges="keyboardHidden|orientation|screenSize"
-49-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:40:13-74
-50            android:label="@string/title_activity_client"
-50-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:41:13-58
-51            android:screenOrientation="portrait"
-51-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:42:13-49
-52            android:theme="@style/AppTheme.NoActionBar" >
-52-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:43:13-56
-53            <intent-filter>
-53-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:44:13-48:29
-54                <action android:name="android.intent.action.MAIN" />
-54-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:17-69
-54-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:25-66
-55
-56                <category android:name="android.intent.category.LAUNCHER" />
-56-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:17-77
-56-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:27-74
-57            </intent-filter>
-58        </activity>
-59        <activity android:name="tan.philip.nrf_ble.ScanScreen.TestUI" />
-59-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:50:9-55
-59-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:50:19-52
-60
-61        <service android:name="tan.philip.nrf_ble.BluetoothLeService" />
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:9:5-81
+15-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:9:22-78
+16    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+16-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:5-81
+16-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:10:22-78
+17
+18    <uses-feature
+18-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:5-14:35
+19        android:name="android.hardware.bluetooth_le"
+19-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:13:9-53
+20        android:required="true" />
+20-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:14:9-32
+21    <uses-feature
+21-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:12:5-14:35
+22        android:name="android.hardware.bluetooth_le"
+22-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:13:9-53
+23        android:required="true" />
+23-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:14:9-32
+24
+25    <application
+25-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:19:5-55:19
+26        android:allowBackup="true"
+26-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:20:9-35
+27        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+27-->[androidx.core:core:1.0.1] C:\Users\philt\.gradle\caches\transforms-2\files-2.1\72b2b92ec4ab73ff21fb9bc348de3b22\core-1.0.1\AndroidManifest.xml:22:18-86
+28        android:debuggable="true"
+29        android:icon="@drawable/heartrate"
+29-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:21:9-43
+30        android:label="@string/app_name"
+30-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:22:9-41
+31        android:roundIcon="@mipmap/ic_launcher_round"
+31-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:23:9-54
+32        android:supportsRtl="true"
+32-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:24:9-35
+33        android:testOnly="true"
+34        android:theme="@style/AppTheme" >
+34-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:25:9-40
+35        <activity
+35-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:26:9-29:61
+36            android:name="tan.philip.nrf_ble.GraphScreen.GraphDebugActivity"
+36-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:27:13-59
+37            android:configChanges="keyboardHidden|orientation|screenSize"
+37-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:28:13-74
+38            android:screenOrientation="portrait" />
+38-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:29:13-49
+39        <activity
+39-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:30:9-35:59
+40            android:name="tan.philip.nrf_ble.GraphScreen.GraphActivity"
+40-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:31:13-54
+41            android:configChanges="keyboardHidden|orientation|screenSize"
+41-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:32:13-74
+42            android:label="@string/title_activity_graph"
+42-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:33:13-57
+43            android:screenOrientation="portrait"
+43-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:34:13-49
+44            android:theme="@style/AppTheme.NoActionBar" />
+44-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:35:13-56
+45        <activity
+45-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:36:9-39:59
+46            android:name="tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity"
+46-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:37:13-63
+47            android:label="@string/title_activity_scan_results"
+47-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:38:13-64
+48            android:theme="@style/AppTheme.NoActionBar" />
+48-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:39:13-56
+49        <activity
+49-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:40:9-51:20
+50            android:name="tan.philip.nrf_ble.ScanScreen.ClientActivity"
+50-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:41:13-54
+51            android:configChanges="keyboardHidden|orientation|screenSize"
+51-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:42:13-74
+52            android:label="@string/title_activity_client"
+52-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:43:13-58
+53            android:screenOrientation="portrait"
+53-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:44:13-49
+54            android:theme="@style/AppTheme.NoActionBar" >
+54-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:45:13-56
+55            <intent-filter>
+55-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:46:13-50:29
+56                <action android:name="android.intent.action.MAIN" />
+56-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:17-69
+56-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:47:25-66
+57
+58                <category android:name="android.intent.category.LAUNCHER" />
+58-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:49:17-77
+58-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:49:27-74
+59            </intent-filter>
+60        </activity>
+61        <activity android:name="tan.philip.nrf_ble.ScanScreen.TestUI" />
 61-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:9-55
-61-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:18-52
-62    </application>
-63
-64</manifest>
+61-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:52:19-52
+62
+63        <service android:name="tan.philip.nrf_ble.BluetoothLeService" />
+63-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:54:9-55
+63-->C:\Users\philt\Desktop\Lu Lab\PPG Radius\PulseApp\app\src\main\AndroidManifest.xml:54:18-52
+64    </application>
+65
+66</manifest>

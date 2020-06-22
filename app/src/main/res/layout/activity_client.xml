@@ -134,7 +134,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginTop="68dp"
             android:backgroundTint="#FFEB3B"
-            android:text="List Devices"
+            android:text="List Devices (1)"
             android:textColor="#2D5492"
             app:layout_constraintEnd_toEndOf="@+id/btn_Scan"
             app:layout_constraintHorizontal_bias="0.493"

@@ -51,6 +51,7 @@ public class ClientActivity extends AppCompatActivity {
 
     private ActivityClientBinding mBinding;
 
+    private int numDevicesFound = 0;
     private boolean mScanning = false;
     private Handler mHandler;
     private Handler mLogHandler;
@@ -115,6 +116,7 @@ public class ClientActivity extends AppCompatActivity {
         mBinding.btnListDevices.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                stopScan();
                 viewScanList(view);
             }
         });
@@ -193,13 +195,19 @@ public class ClientActivity extends AppCompatActivity {
                 //.setDeviceAddress("EF:C6:E7:96:D4:D6")
                 .setDeviceName("PWV Sensor")
                 .build();
+
+        ScanFilter scanFilter2 = new ScanFilter.Builder()
+                .setDeviceName("ECG SCG Sensor")
+                .build();
+
         filters.add(scanFilter);
+        filters.add(scanFilter2);
 
 
 
 
         ScanSettings settings = new ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build();
 
 
@@ -228,16 +236,17 @@ public class ClientActivity extends AppCompatActivity {
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(mScanResults.isEmpty())
-                    mHandler.postDelayed(this, 200);
-                else
-                    stopScan();
+                if(numDevicesFound != mScanResults.size())
+                    foundDevice();
+                mHandler.postDelayed(this, 200);
             }
         }, 200);
     }
 
     private void stopScan() {
         //valueAnimator.cancel();
+        mScanning = false;
+
         if(mHandler != null)
             mHandler.removeCallbacksAndMessages(null);
 
@@ -248,38 +257,38 @@ public class ClientActivity extends AppCompatActivity {
 
         if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mBluetoothLeScanner != null) {
             mBluetoothLeScanner.stopScan(mScanCallback);
-            //Display message
-            //Toast toast = Toast.makeText(getApplicationContext(), "Scan complete", Toast.LENGTH_LONG);
-            //toast.show();
 
-            scanComplete();
+            if (mScanResults.isEmpty()) {
+                Toast toast = Toast.makeText(getApplicationContext(), "No devices found", Toast.LENGTH_SHORT);
+                toast.show();
+                return;
+            }
         }
 
         mScanCallback = null;
-        mScanning = false;
         mHandler = null;
 
     }
 
-    private void scanComplete() {
-        if (mScanResults.isEmpty()) {
-            Toast toast = Toast.makeText(getApplicationContext(), "No devices found", Toast.LENGTH_SHORT);
-            toast.show();
-            return;
-        } else {
+    private void foundDevice() {
+        if(numDevicesFound == 0) {
+            //Animate button
             mBinding.btnListDevices.setVisibility(View.VISIBLE);
 
-            ValueAnimator newButton = ValueAnimator.ofInt(0,255);
+            ValueAnimator newButton = ValueAnimator.ofInt(0, 255);
             newButton.setDuration(1000);
             newButton.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override
                 public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    mBinding.btnListDevices.getBackground().setAlpha((int)newButton.getAnimatedValue());
-                    mBinding.btnListDevices.setTextColor((mBinding.btnListDevices.getTextColors().withAlpha((int)newButton.getAnimatedValue())));
+                    mBinding.btnListDevices.getBackground().setAlpha((int) newButton.getAnimatedValue());
+                    mBinding.btnListDevices.setTextColor((mBinding.btnListDevices.getTextColors().withAlpha((int) newButton.getAnimatedValue())));
                 }
             });
             newButton.start();
         }
+
+        numDevicesFound = mScanResults.size();
+        mBinding.btnListDevices.setText("List Devices (" + numDevicesFound + ")");
 
         for (String deviceAddress : mScanResults.keySet()) {
             Log.d(TAG, "Found device: " + deviceAddress);

@@ -9,7 +9,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".GraphScreen.GraphActivity">
+        tools:context=".GraphScreen.PWVGraphActivity">
 
         <com.jjoe64.graphview.GraphView
             android:id="@+id/graph1"
@@ -48,6 +48,19 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView4" />
 
+
+            <ImageButton
+                android:id="@+id/imageButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
+                android:background="@android:color/transparent"
+                android:onClick="showOptions"
+                app:layout_constraintBottom_toBottomOf="@+id/textView4"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/textView4"
+                app:srcCompat="@drawable/options" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -55,9 +68,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
             app:layout_constraintStart_toStartOf="@+id/graph1"
-            app:layout_constraintTop_toBottomOf="@+id/graph1">
+            app:layout_constraintTop_toBottomOf="@+id/amplificationText">
 
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -281,18 +293,6 @@
             app:layout_constraintBottom_toBottomOf="@+id/graph1"
             app:layout_constraintStart_toStartOf="@+id/graph1" />
 
-        <ToggleButton
-            android:id="@+id/toggleButtonRecord"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:alpha="0.5"
-            android:backgroundTint="#FFEB3B"
-            android:textColor="#2D5492"
-            android:textOff="Record"
-            android:textOn="Stop"
-            app:layout_constraintBottom_toBottomOf="@+id/graph1"
-            app:layout_constraintEnd_toEndOf="parent" />
-
         <TextView
             android:id="@+id/txt_proximal"
             android:layout_width="wrap_content"
@@ -330,8 +330,8 @@
             android:layout_marginEnd="8dp"
             android:text="PWV"
             android:textColor="#FF0000"
-            app:layout_constraintBottom_toTopOf="@+id/toggleButtonRecord"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txt_lf" />
 
         <TextView
             android:id="@+id/recordTimer"
@@ -340,6 +340,24 @@
             android:text="0s"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
+
+        <SeekBar
+            android:id="@+id/amplification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:progress="50"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/graph1" />
+
+        <TextView
+            android:id="@+id/amplificationText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Amplification"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/amplification" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

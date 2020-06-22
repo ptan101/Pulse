@@ -1,6 +1,19 @@
 <resources>
-    <string name="app_name">Pulse App</string>
+    <string name="app_name">Pulse</string>
     <string name="title_activity_client">ClientActivity</string>
     <string name="title_activity_scan_results">ScanResultsActivity</string>
     <string name="title_activity_graph">GraphActivity</string>
+
+    <string-array name="options_pwv">
+        <item>Invert Distal</item>
+        <item>Invert Proximal</item>
+    </string-array>
+
+    <string-array name="options_xcg">
+        <item>Invert ECG</item>
+        <item>Invert SCG</item>
+    </string-array>
+
+
+
 </resources>

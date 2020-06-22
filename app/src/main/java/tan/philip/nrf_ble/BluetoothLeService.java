@@ -15,13 +15,10 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
-
-import java.util.List;
-import java.util.UUID;
 
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UUID;
+import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_NOTIFY_UUID;
+import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_WRITE_UUID;
 import static tan.philip.nrf_ble.Constants.SERVICE_UUID;
 
 public class BluetoothLeService extends Service {
@@ -172,6 +169,32 @@ public class BluetoothLeService extends Service {
         sendBroadcast(intent);
     }
 
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+    }
+
+    public void writeCharacteristic(byte[] txBytes) {
+        BluetoothGattService service = mBluetoothGatt.getService(SERVICE_UUID);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_WRITE_UUID);
+
+        if(characteristic != null){
+            characteristic.setValue(txBytes);
+        }
+
+        mBluetoothGatt.writeCharacteristic(characteristic);
+
+        this.setCharacteristicNotification(characteristic, true);
+    }
 
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -217,7 +240,7 @@ public class BluetoothLeService extends Service {
             }
 
             BluetoothGattService service = gatt.getService(SERVICE_UUID);
-            BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_UUID);
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_NOTIFY_UUID);
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
 

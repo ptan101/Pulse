@@ -8,14 +8,14 @@ import androidx.databinding.DataBindingUtil;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
-import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.DataPointInterface;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.opencsv.CSVWriter;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Build;
@@ -30,74 +31,95 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.provider.DocumentsContract;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.Switch;
-import android.widget.TextView;
+import android.widget.PopupMenu;
+import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Random;
 
 import tan.philip.nrf_ble.BluetoothLeService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
-import tan.philip.nrf_ble.Vibration;
-import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
+import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MAX_POSSIBLE_HR;
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MIN_POSSIBLE_HR;
 
-public class GraphActivity extends AppCompatActivity {
+public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
+
+    public static final String TAG = "PWVGraphActivity";
+    public static final int MAX_POINTS_PLOT = 10000;
+    public static final int MAX_POINTS_ARRAY = 20000;
+    public static final int SAMPLE_RATE = 500;  //Hz
+    public static final int TARGET_SAMPLE_RATE = 1000;
+    public static final float SAMPLE_PERIOD = 1000f / (float) TARGET_SAMPLE_RATE; //ms
+    public static final int GRAPHING_PERIOD = 20; //In ms
+
+    public static final byte STREAM_OFF = 0;
+    public static final byte STREAM_ON = 1;
 
     private final double MIN_VALUE = -1.5;
     private final double MAX_VALUE = 1.5;
     private final double MARGIN = 1;
-    //private static final int INDEX_TO_START_FILTER_DISPLAY = 5000;
-    private static final int INPUT_DELAY = 100;
-
-
-    public static final String TAG = "GraphActivity";
-    public static final int MAX_POINTS_PLOT = 10000;
-    public static final int MAX_POINTS_ARRAY = 20000;
-    public static final float SAMPLE_PERIOD = 2;
-    //public static final float SAMPLE_PERIOD = 0.025f; //At 40 ksps sample rate
-    public static final int GRAPHING_PERIOD = 20; //In ms
+    private static final int INPUT_DELAY = 0;
+    private static final int MAX_ECG_DISPLAY_LENGTH = 10; //seconds
+    private static final int NUM_POINTS_IN_ECG_VIEW = (int) ((float) MAX_ECG_DISPLAY_LENGTH / (float) GRAPHING_PERIOD * 1000f);
 
     public static final int SENSOR_1_IDENTIFIER = 1;
     public static final int SENSOR_2_IDENTIFIER = 2;
 
-    private LineGraphSeries<DataPoint> sensor1Input;
-    private LineGraphSeries<DataPoint> sensor2Output;
-    private LineGraphSeries<DataPoint> sensor2Input;
-    private LineGraphSeries<DataPoint> sensor3Input;
 
-    //private LineGraphSeries<DataPoint> sensor2Output;
-    //private BarGraphSeries<DataPoint> peaks;
-
+    //Graphing Initializers
     private GraphView graph;
     private boolean graph1Scrollable = false;
 
+    //Series for Interactive Mode
+    private LineGraphSeries<DataPoint> series1_Interactive;
+    private LineGraphSeries<DataPoint> series2_Interactive;
+    private LineGraphSeries<DataPoint> series3_Interactive;
+    private LineGraphSeries<DataPoint> series4_Interactive;
+
+    //Series for ECG Mode
+    private PointsGraphSeries<DataPoint> ECG_Mask;
+    private LineGraphSeries<DataPoint> series1_ECG;
+    private LineGraphSeries<DataPoint> series2_ECG;
+    private LineGraphSeries<DataPoint> series3_ECG;
+    private LineGraphSeries<DataPoint> series4_ECG;
+
+    //ECG
+    private DataPoint[] series1_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
+    private DataPoint[] series2_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
+    private DataPoint[] series3_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
+    private DataPoint[] series4_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
+    private DataPoint[] mask = new DataPoint[1];
+
+
+    //Interactive, for filtering
     private float sensor1x[] = new float[MAX_POINTS_ARRAY];
     private float sensor1y[] = new float[MAX_POINTS_ARRAY];
     private float sensor2x[] = new float[MAX_POINTS_ARRAY];
     private float sensor2y[] = new float[MAX_POINTS_ARRAY];
     private float sensor3x[] = new float[MAX_POINTS_ARRAY];
 
-    Filter sensor1Filter = new Filter(sensor1x, sensor1y);
-    Filter sensor2Filter = new Filter(sensor2x, sensor2y);
+
+    //Graphing, filtering, etc.
+    Filter sensor1Filter = new Filter(sensor1x, sensor1y, SAMPLE_RATE, TARGET_SAMPLE_RATE, Filter.SignalType.PPG);
+    Filter sensor2Filter = new Filter(sensor2x, sensor2y, SAMPLE_RATE, TARGET_SAMPLE_RATE, Filter.SignalType.PPG);
     private int numPoints = 0;
+    private int numGraphedPoints = 0;
     private int numLFPoints = 0;
+    private float proximalGain = 1;
+    private float distalGain = 1;
+    private float amplification;
+    private boolean ECGView = true;
 
 
     private HeartDataAnalysis hda;
@@ -107,15 +129,15 @@ public class GraphActivity extends AppCompatActivity {
     private int indexLastPeakSensor1 = HeartDataAnalysis.NO_DATA;
     private int indexLastPeakSensor2 = HeartDataAnalysis.NO_DATA;
 
-    private ActivityGraphBinding mBinding;
+    private ActivityPwvgraphBinding mBinding;
     private String deviceIdentifier;
 
     private final Handler mHandler = new Handler();
     private Runnable graphTimer;
 
     private boolean mConnected;
+    private boolean mStream = true;
 
-    private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BluetoothLeService mBluetoothLeService;
 
     //Saving
@@ -126,88 +148,62 @@ public class GraphActivity extends AppCompatActivity {
     private long startRecordTime;
 
 
-    // Code to manage Service lifecycle.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                finish();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
-
-    private static final int GRAPHING_FREQUENCY = Math.round(GRAPHING_PERIOD / SAMPLE_PERIOD);
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)|| BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
-                runOnUiThread(() -> Toast.makeText(GraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
-                mBinding.textView5.setText(deviceIdentifier + " disconnected");
-                mBinding.textView5.setTextColor(Color.rgb(255,0,0));
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
-
-                if(numPoints % GRAPHING_FREQUENCY == 0) {
-                    displayData();
-                    drawHrRanges();
-                }
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_graph);
+        setContentView(R.layout.activity_pwvgraph);
+        invalidateOptionsMenu();
 
-
-
+        //Setup from prior activity
         Intent intent = getIntent();
         deviceIdentifier = (String) intent.getSerializableExtra(ScanResultsActivity.EXTRA_BT_IDENTIFIER);
+
+        //Bluetooth Setup
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-        mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_graph);
 
+        //UI Setup
+        mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_pwvgraph);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
-        recordButton = mBinding.toggleButtonRecord;
-        setupSwitch(recordButton);
-
-
-
         mBinding.textView5.setText("Reading from device " + deviceIdentifier);
-        graph = mBinding.graph1;
-
-        sensor1Input = new LineGraphSeries<>();
-        sensor2Input = new LineGraphSeries<>();
-        sensor3Input = new LineGraphSeries<>();
-        sensor2Output = new LineGraphSeries<>();
-        //sensor2Output = new LineGraphSeries<>();
-        //peaks = new BarGraphSeries<>();
-
-        setupGraph();
-
-
         mBinding.btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 resetViewport();
             }
         });
+        mBinding.amplification.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                amplification = (float) (Math.pow(2, (float) i / 9) / 30);
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        //Graphing setup
+        graph = mBinding.graph1;
+        ECG_Mask = new PointsGraphSeries<>();
+        series1_ECG = new LineGraphSeries<>();
+        series3_ECG = new LineGraphSeries<>();
+        series4_ECG = new LineGraphSeries<>();
+        series2_ECG = new LineGraphSeries<>();
+        series1_Interactive = new LineGraphSeries<>();
+        series3_Interactive = new LineGraphSeries<>();
+        series4_Interactive = new LineGraphSeries<>();
+        series2_Interactive = new LineGraphSeries<>();
+        setupGraph();
+
+
+        //Data setup
         hda = new HeartDataAnalysis();
         heartRateAnimator = ValueAnimator.ofInt(255, 0);
         heartRateAnimator.setRepeatCount(1);
@@ -236,7 +232,7 @@ public class GraphActivity extends AppCompatActivity {
             @Override
             public void run() {
                 //Reached end of data, scroll automatically
-                if(graph1Scrollable && graph.getViewport().getMinX(false) < graph.getViewport().getMinX(true)) {
+                if(!ECGView && graph1Scrollable && graph.getViewport().getMinX(false) < graph.getViewport().getMinX(true)) {
                     double viewportWidth = graph.getViewport().getMaxX(false) - graph.getViewport().getMinX(false);
                     graph.getViewport().setMinX(graph.getViewport().getMinX(true));
                     graph.getViewport().setMaxX(graph.getViewport().getMinX(true) + viewportWidth);
@@ -294,25 +290,24 @@ public class GraphActivity extends AppCompatActivity {
         graph.getGridLabelRenderer().setGridStyle( GridLabelRenderer.GridStyle.NONE );
 
         graph.getViewport().setYAxisBoundsManual(true);
-        //graph.getViewport().setMinY(MIN_VALUE - MARGIN/2);
         graph.getViewport().setMinY(-0.5);
         graph.getViewport().setMaxY(6*MAX_VALUE - MIN_VALUE + 3/2*MARGIN);
 
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(3);
+        graph.getViewport().setMaxX(10);
 
-        graph.addSeries(sensor1Input);
-        graph.addSeries(sensor2Input);
-        graph.addSeries(sensor3Input);
-        graph.addSeries(sensor2Output);
-        //graph.addSeries(sensor2Output);
-        //graph.addSeries(peaks);
+        graph.addSeries(series1_ECG);
+        graph.addSeries(series3_ECG);
+        graph.addSeries(series4_ECG);
+        graph.addSeries(series2_ECG);
+        graph.addSeries(ECG_Mask);
 
+        //Click on graph to enable scroll in interactive view
         graph.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!graph1Scrollable) {
+                if(!graph1Scrollable && !ECGView) {
                     graph1Scrollable = true;
                     graph.getViewport().setScrollable(true);
                     graph.getViewport().setScalable(true);
@@ -333,13 +328,35 @@ public class GraphActivity extends AppCompatActivity {
             }
         });
 
-        setSeriesPaint(255, 166, 166, 166, 5, sensor1Input);
-        setSeriesPaint(255, 107, 107, 107, 5, sensor2Input);
-        setSeriesPaint(255, 0, 0, 0, 5, sensor3Input);
-        setSeriesPaint(255, 255, 0, 0, 5, sensor2Output);
+        setSeriesPaint(255, 166, 166, 166, 5, series1_ECG);
+        //setSeriesPaint(255, 255, 255, 255, 6, ECG_Mask);
 
-        //peaks.setDataWidth(0.01);
-        //peaks.setSize(5);
+        int color = Color.rgb(255, 250,250);
+        //int color = Color.rgb(0, 250,0);
+
+        ECG_Mask.setColor(color);
+        ECG_Mask.setCustomShape(new PointsGraphSeries.CustomShape() {
+            @Override
+            public void draw(Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint) {
+                paint.setStrokeWidth(50);
+                canvas.drawLine(x, y, x, y-1000, paint);
+            }
+        });
+
+        setSeriesPaint(255, 107, 107, 107, 5, series3_ECG);
+        setSeriesPaint(255, 0, 0, 0, 5, series4_ECG);
+        setSeriesPaint(255, 255, 0, 0, 5, series2_ECG);
+        setSeriesPaint(255, 166, 166, 166, 5, series1_Interactive);
+        setSeriesPaint(255, 107, 107, 107, 5, series3_Interactive);
+        setSeriesPaint(255, 0, 0, 0, 5, series4_Interactive);
+        setSeriesPaint(255, 255, 0, 0, 5, series2_Interactive);
+
+        for (int i = 0; i < series1_Buffer.length; i ++) {
+            series1_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_1_OFFSET);
+            series2_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_2_OFFSET);
+            series3_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_3_OFFSET);
+            series4_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, 0);
+        }
     }
 
     private void setSeriesPaint(int a, int r, int g, int b, int strokeWidth, LineGraphSeries<DataPoint> series) {
@@ -350,12 +367,15 @@ public class GraphActivity extends AppCompatActivity {
     }
 
     private void resetViewport() {
-        graph1Scrollable = false;
-        graph.getViewport().setScrollable(false);
-        graph.getViewport().setScalable(false);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(3);
-        graph.getViewport().scrollToEnd();
+        if(!ECGView) {
+            graph1Scrollable = false;
+            graph.getViewport().setScrollable(false);
+            graph.getViewport().setScalable(false);
+            graph.getViewport().setMinX(0);
+            graph.getViewport().setMaxX(3);
+            graph.getViewport().scrollToEnd();
+        }
+
         mBinding.btnReset.setVisibility(View.GONE);
     }
 
@@ -363,26 +383,43 @@ public class GraphActivity extends AppCompatActivity {
     private static final float SENSOR_2_OFFSET = 5;
     private static final float SENSOR_3_OFFSET = 2;
     private void displayData() {
-        if(numPoints > INPUT_DELAY) {
+        if(numPoints >= INPUT_DELAY) {
+
+            //Determine next plotting point
             float xPoint = (float) (numPoints - INPUT_DELAY/100) * SAMPLE_PERIOD / 1000;
-            float yPoint1 = sensor1x[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_1_OFFSET ;
-            float yPoint2 = sensor2x[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_2_OFFSET;
+
+            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * distalGain * amplification + SENSOR_1_OFFSET ;
+            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * proximalGain * amplification + SENSOR_2_OFFSET ;
             float yPoint3 = sensor3x[(numLFPoints - INPUT_DELAY / 50) % MAX_POINTS_ARRAY] + SENSOR_3_OFFSET;
 
+            //Plot the data
 
-            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_1_OFFSET ;
-            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] + SENSOR_2_OFFSET ;
+            //Interactive series
+            series1_Interactive.appendData(new DataPoint(xPoint, yPoint1Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
+            series3_Interactive.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
+            series4_Interactive.appendData(new DataPoint(xPoint, yPoint3), !graph1Scrollable, MAX_POINTS_PLOT);
+            series2_Interactive.appendData(new DataPoint(xPoint, 0), !graph1Scrollable, MAX_POINTS_PLOT);
 
-            //Log.d(TAG, Float.toString(yPoint1));
+            //ECG style series, buffer the data so they are in order.
+            series1_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint1Filtered);
+            series2_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint2Filtered);
+            series3_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint3);
+            series4_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, 0);
 
-            sensor1Input.appendData(new DataPoint(xPoint, yPoint1), !graph1Scrollable, MAX_POINTS_PLOT);
-            sensor2Input.appendData(new DataPoint(xPoint, yPoint2), !graph1Scrollable, MAX_POINTS_PLOT);
-            sensor3Input.appendData(new DataPoint(xPoint, yPoint3), !graph1Scrollable, MAX_POINTS_PLOT);
+            //Actually plot the ECG data
+            series1_ECG.resetData(series1_Buffer);
+            series2_ECG.resetData(series2_Buffer);
+            series3_ECG.resetData(series3_Buffer);
+            series4_ECG.resetData(series4_Buffer);
 
-            //sensor1Input.appendData(new DataPoint(xPoint, yPoint1Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
-            //sensor2Input.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
-            sensor2Output.appendData(new DataPoint(xPoint, 0), !graph1Scrollable, MAX_POINTS_PLOT);
+            //Draw Mask over old data points
+            //float maskX = (float)((numGraphedPoints + 1) % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f;
+            float maskX = (float)((numGraphedPoints + 1) % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f;
+            mask[0] = new DataPoint(maskX, 0);
+            ECG_Mask.resetData(mask);
 
+
+            //Display HR and PWV
             if((int)heartRateAnimator.getAnimatedValue() <= 10 && heartRate != -1)
                 mBinding.txtHeartRate.setText(String.valueOf(heartRate) + " bpm");
 
@@ -390,9 +427,46 @@ public class GraphActivity extends AppCompatActivity {
                 float pwvAvg = hda.calculateWeightedAveragePWV();
                 mBinding.txtPWV.setText(decimalFormat.format(pwvAvg) + " m/s");
             }
+
+            numGraphedPoints ++;
         }
     }
 
+    private void toggleView() {
+        if(ECGView) {
+            ECGView = false;
+
+            resetViewport();
+
+            //Remove series from graph
+            graph.removeAllSeries();
+
+            //Add the correct series
+            graph.addSeries(series1_Interactive);
+            graph.addSeries(series3_Interactive);
+            graph.addSeries(series4_Interactive);
+            graph.addSeries(series2_Interactive);
+        } else {
+            ECGView = true;
+
+            //Set viewport to 10 seconds
+            graph.getViewport().setXAxisBoundsManual(true);
+            graph.getViewport().setMinX(0);
+            graph.getViewport().setMaxX(10);
+
+            //Remove series from graph
+            graph.removeAllSeries();
+
+            //Add the correct series
+            graph.addSeries(series1_ECG);
+            graph.addSeries(series3_ECG);
+            graph.addSeries(series4_ECG);
+            graph.addSeries(series2_ECG);
+            graph.addSeries(ECG_Mask);
+
+            mBinding.btnReset.setVisibility(View.GONE);
+        }
+    }
 
     ////////////////////////////////////////DATA RECEPTION//////////////////////////////////////////
 
@@ -410,6 +484,10 @@ public class GraphActivity extends AppCompatActivity {
         //ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
         int[] shorts = convertByteArray(input);
 
+        for(int i = 0; i < input.length; i ++) {
+            Log.d("", Byte.toString(input[i]));
+        }
+
         for(int i = 0; i < (shorts.length); i +=2) {
 
             //Check if first 2 bytes is LF data flag
@@ -419,7 +497,7 @@ public class GraphActivity extends AppCompatActivity {
                 Log.d(TAG, Float.toString(lfDataBuff));
                 availableLFData = true;
                 sensor3x[numLFPoints % MAX_POINTS_ARRAY] = lfDataBuff;
-                filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
+                //filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
                 numLFPoints ++;
             } else {
                 //Input is pulsatile signal
@@ -441,12 +519,12 @@ public class GraphActivity extends AppCompatActivity {
                     mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
                 }
 
-                //Log.d("", Float.toString(sensor2FloatData));
+//                Log.d("", Float.toString(sensor2FloatData));
 
-                gatherInputData(sensor1x, sensor1FloatData);
-                gatherInputData(sensor2x, sensor2FloatData);
-                filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
-                filterData(sensor2Filter, sensor2x, sensor2y, SENSOR_2_IDENTIFIER);
+                gatherInputData(sensor1x, sensor1FloatData, proximalGain);
+                gatherInputData(sensor2x, sensor2FloatData, distalGain);
+                filterData(sensor1Filter, sensor1x, sensor1y, proximalGain, SENSOR_1_IDENTIFIER);
+                filterData(sensor2Filter, sensor2x, sensor2y, distalGain, SENSOR_2_IDENTIFIER);
 
                 numPoints++;
             }
@@ -454,15 +532,14 @@ public class GraphActivity extends AppCompatActivity {
         //Log.d(TAG, "///////////////////////");
     }
 
-    private void gatherInputData(float inputArray[], float dataIn) {
+    private void gatherInputData(float inputArray[], float dataIn, float gain) {
         inputArray[numPoints % MAX_POINTS_ARRAY] = dataIn;
     }
 
-    private void filterData(Filter filter, float inputArray[], float outputArray[], int sensorIdentifier) {
+    private void filterData(Filter filter, float inputArray[], float outputArray[], float gain, int sensorIdentifier) {
         float newInput = inputArray[numPoints % MAX_POINTS_ARRAY];
 
         if(numPoints > Filter.N_POLES) {
-            filter.amplify(30f);
             filter.findNextY();
         } else {
             filter.setXv(newInput, numPoints);
@@ -481,6 +558,8 @@ public class GraphActivity extends AppCompatActivity {
      * @param peakIndex Index of the last peak detected
      * @param sensorIdentifier Which sensor the peak was detected from
      */
+
+    /*
     private void handlePeaks(int peakIndex, int sensorIdentifier) {
         int indexLastPeak = indexLastPeakSensor1;
 
@@ -514,7 +593,54 @@ public class GraphActivity extends AppCompatActivity {
         }
     }
 
+     */
 
+    ///////////////////////////////////////////////////////BT///////////////////////////////////////
+    // Code to manage Service lifecycle.
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+            if (!mBluetoothLeService.initialize()) {
+                Log.e(TAG, "Unable to initialize Bluetooth");
+                finish();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBluetoothLeService = null;
+        }
+    };
+
+    private static final int GRAPHING_FREQUENCY = Math.round(GRAPHING_PERIOD / SAMPLE_PERIOD);
+    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+                mConnected = true;
+                invalidateOptionsMenu();
+            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)|| BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
+                mConnected = false;
+                runOnUiThread(() -> Toast.makeText(PWVGraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
+                mBinding.textView5.setText(deviceIdentifier + " disconnected");
+                mBinding.textView5.setTextColor(Color.rgb(255,0,0));
+                invalidateOptionsMenu();
+            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
+
+                if(numPoints % GRAPHING_FREQUENCY == 0) {
+                    displayData();
+                    drawHrRanges();
+                }
+            }
+        }
+    };
+
+
+    ////////////////////////////////////////////////GRAPHICAL UI//////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Draw the heart rate range bar on the bottom
@@ -537,12 +663,12 @@ public class GraphActivity extends AppCompatActivity {
             return;
         }
 
-        //If there is a min value available, display
+        //If there is a min value available, series1_Buffer
         if(hda.getMinHR() != HeartDataAnalysis.NO_DATA) {
             lowPosition = (hda.getMinHR() - MIN_POSSIBLE_HR) * positionPerHR;
             mBinding.txtLowHr.setText(String.valueOf(hda.getMinHR()));
         }
-        //If there is a max value available, display
+        //If there is a max value available, series1_Buffer
         if(hda.getMaxHR() != HeartDataAnalysis.NO_DATA) {
             highPosition = (hda.getMaxHR() - MIN_POSSIBLE_HR) * positionPerHR;
             mBinding.txtHighHr.setText(String.valueOf(hda.getMaxHR()));
@@ -617,32 +743,39 @@ public class GraphActivity extends AppCompatActivity {
         return out;
     }
 
+    //////////////////////////////////////////SEND DATA TO NRF/////////////////////////////////////
+    private void toggleStream() {
+        if(mStream) {
+            mStream = false;
+            byte[] output = {STREAM_OFF};
+            mBluetoothLeService.writeCharacteristic(output);
+        } else {
+            mStream = true;
+            byte[] output = {STREAM_ON};
+            mBluetoothLeService.writeCharacteristic(output);
+        }
+    }
+
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
-    private void setupSwitch(ToggleButton mySwitch) {
-        mySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked) {
-                    startRecordTime = System.currentTimeMillis();
-                    mBinding.toggleButtonRecord.getBackground().setAlpha(0xFF);
-                    mBinding.recordTimer.setVisibility(View.VISIBLE);
-                    storeData = true;
+    private void toggleRecord() {
+        if(!storeData) {
+            startRecordTime = System.currentTimeMillis();
+            mBinding.recordTimer.setVisibility(View.VISIBLE);
+            storeData = true;
 
-                    //Set File Name to current time
-                    fileName = Calendar.getInstance().getTime().toString() + ".csv";
+            //Set File Name to current time
+            fileName = Calendar.getInstance().getTime().toString() + ".csv";
 
-                    //Check Permission
-                    while(!isStoragePermissionGranted());
+            //Check Permission
+            while(!isStoragePermissionGranted());
 
-                    //Create Folder
-                    createFolder();
+            //Create Folder
+            createFolder();
 
-                } else {
-                    mBinding.toggleButtonRecord.getBackground().setAlpha(0x77);
-                    mBinding.recordTimer.setVisibility(View.INVISIBLE);
-                    storeData = false;
-                }
-            }
-        });
+        } else {
+            mBinding.recordTimer.setVisibility(View.INVISIBLE);
+            storeData = false;
+        }
     }
 
     public  boolean isStoragePermissionGranted() {
@@ -702,6 +835,60 @@ public class GraphActivity extends AppCompatActivity {
             Log.d(TAG, "SUCCESSFUL WRITE");
         } catch (IOException e) {
             Log.d(TAG, e.toString());
+        }
+    }
+
+
+    //////////////////////////////////////////User Interface//////////////////////////////////////////
+    public void showOptions(View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.setOnMenuItemClickListener(this);
+        popup.inflate(R.menu.popup_menu_pwv);
+
+        //Record Text
+        MenuItem recordMenuItem = popup.getMenu().findItem(R.id.record);
+        if(storeData)
+            recordMenuItem.setTitle("Stop recording");
+        else
+            recordMenuItem.setTitle("Record");
+
+        //View Text
+        MenuItem switchViewMenuItem = popup.getMenu().findItem(R.id.switchView);
+        if(ECGView)
+            switchViewMenuItem.setTitle("Interactive View");
+        else
+            switchViewMenuItem.setTitle("Medical ECG View");
+
+        //Stream Text
+        MenuItem switchStreamMenuItem = popup.getMenu().findItem(R.id.toggleStreaming);
+        if(mStream)
+            switchStreamMenuItem.setTitle("Stop Stream");
+        else
+            switchStreamMenuItem.setTitle("Continue Stream");
+
+
+        popup.show();
+    }
+
+
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        switch(menuItem.getItemId()) {
+            case R.id.invertProximal:
+                proximalGain *= -1;
+                return true;
+            case R.id.invertDistal:
+                distalGain *= -1;
+                return true;
+            case R.id.record:
+                toggleRecord();
+                return true;
+            case R.id.switchView:
+                toggleView();
+            case R.id.toggleStreaming:
+                toggleStream();
+            default:
+                return false;
         }
     }
 

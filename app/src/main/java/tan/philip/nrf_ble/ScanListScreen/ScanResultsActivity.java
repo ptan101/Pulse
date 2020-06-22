@@ -5,12 +5,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
-import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,22 +16,16 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import tan.philip.nrf_ble.BluetoothLeService;
-import tan.philip.nrf_ble.Constants;
-import tan.philip.nrf_ble.GraphScreen.GraphActivity;
+import tan.philip.nrf_ble.GraphScreen.PWVGraphActivity;
 import tan.philip.nrf_ble.GraphScreen.GraphDebugActivity;
+import tan.philip.nrf_ble.GraphScreen.XCGGraphActivity;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanScreen.ClientActivity;
-
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UUID;
-import static tan.philip.nrf_ble.Constants.SERVICE_UUID;
 
 public class ScanResultsActivity extends AppCompatActivity {
 
@@ -52,6 +40,7 @@ public class ScanResultsActivity extends AppCompatActivity {
     private Map<String, BluetoothDevice> mScanResults;
     private ArrayList<String> bluetoothAddresses;
     private ArrayList<BluetoothDevice> bluetoothDevices;
+    private String deviceNameToConnect = "";
 
     //For the recycler viewer
     private ArrayList<BluetoothItem> bluetoothList;
@@ -97,7 +86,12 @@ public class ScanResultsActivity extends AppCompatActivity {
                 resetConnectingText();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 runOnUiThread(() -> Toast.makeText(ScanResultsActivity.this, "Connection successful!", Toast.LENGTH_SHORT).show());
-                startGraphActivity();
+
+                if(deviceNameToConnect.contains("ECG SCG Sensor"))
+                    startXCGGraphActivity();
+                else if(deviceNameToConnect.contains("PWV Sensor"))
+                    startPWVGraphActivity();
+
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
@@ -196,8 +190,8 @@ public class ScanResultsActivity extends AppCompatActivity {
             return "Debug Mode";
 
         if(mScanResults.get(deviceAddress).getName() != null)
-            return mScanResults.get(deviceAddress).getName();
-        return deviceAddress;
+            return mScanResults.get(deviceAddress).getName() + " (" + deviceAddress + ")";
+        return "Unknown (" + deviceAddress + ")";
     }
 
     //Bluetooth methods
@@ -205,7 +199,8 @@ public class ScanResultsActivity extends AppCompatActivity {
         if(device == null) {
             startGraphDebugActivity();
         } else {
-            Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + getBluetoothIdentifier(device.getAddress()), Toast.LENGTH_SHORT);
+            deviceNameToConnect = getBluetoothIdentifier(device.getAddress());
+            Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + deviceNameToConnect, Toast.LENGTH_SHORT);
             toast.show();
             mBluetoothLeService.connect(device.getAddress());
         }
@@ -224,8 +219,17 @@ public class ScanResultsActivity extends AppCompatActivity {
         mConnected = false;
     }
 
-    private void startGraphActivity() {
-        Intent intent = new Intent(this, GraphActivity.class);
+    private void startPWVGraphActivity() {
+        Log.d(TAG, "Starting PWV Graph Activity");
+        Intent intent = new Intent(this, PWVGraphActivity.class);
+        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(bluetoothAddresses.get(mConnectingIndex)));
+
+        startActivity(intent);
+    }
+
+    private void startXCGGraphActivity() {
+        Log.d(TAG, "Starting XCG Graph Activity");
+        Intent intent = new Intent(this, XCGGraphActivity.class);
         intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(bluetoothAddresses.get(mConnectingIndex)));
 
         startActivity(intent);

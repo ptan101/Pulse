@@ -1,9 +1,6 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-import android.util.Log;
-import android.widget.Toast;
-
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.MAX_POINTS_ARRAY;
+import static tan.philip.nrf_ble.GraphScreen.PWVGraphActivity.MAX_POINTS_ARRAY;
 
 public class Filter {
     /*
@@ -11,22 +8,26 @@ public class Filter {
     Holy shit this website is literally a lifesaver
      */
 
-    public static final float THRESHOLD_FOR_PEAK = 0.7f;
+    public static final int N_ZEROS = 2;
+    public static final int N_POLES = 2;
+    public static final double GAIN =  2.031823796e+01;    //At 500 Hz
+    //public static final double GAIN =  6.800073801e+10;    //At 500 Hz, Cheby
 
-    public static final int N_ZEROS = 4;
-    public static final int N_POLES = 4;
-    //Max for ADC is 200 ksps
-    public static final double GAIN_DEBUG =  1.554127469e+03;    //At 40 kHz
-    //public static final double GAIN =  4.740642571e+00;    //At 100 Hz
-    //public static final double GAIN =  2.031823796e+01;    //At 500 Hz
-    public static final double GAIN =  6.800073801e+10;    //At 500 Hz, Cheby
-
+    //Small array for next y calculation
     private float[] xv = new float[N_ZEROS+1];
     private float[] yv = new float[N_POLES+1];
 
+    //Full array of input / outputs
     private float[] x;
     private float[] y;
 
+    //Array of filter coefficients
+    private double gain;
+    private double[] fx = new double[N_ZEROS +1];
+    private double[] fy = new double[N_POLES +1];
+
+    private int fs;
+    private int tfs;
     private int currentIndex = N_POLES;
     private int numPoints = N_POLES;
 
@@ -35,10 +36,44 @@ public class Filter {
     private float normalizationFactor = 1;
     private int peakIndex;
 
+    private SignalType signalType;
 
-    public Filter(float[] inputs, float[] outputs) {
+    public enum SignalType {
+        PPG,
+        ECG,
+        SCG
+    }
+
+
+    public Filter(float[] inputs, float[] outputs, int sampleRate, int targetSampleRate, SignalType signal) {
         x = inputs;
         y = outputs;
+        fs = sampleRate;
+        tfs = targetSampleRate;
+        signalType = signal;
+
+        switch(signalType) {
+            case PPG:
+                //fs = 500 Hz, fc1 = 0.5Hz, fc2 = 8Hz
+                gain = 2.031823796e+01;
+                fx[0] = -1; fx[1] = 0; fx[2] = 1;
+                fy[0] = -0.90992998823; fy[1] = 1.9093263649;
+                break;
+            case ECG:
+                //fs = 100 Hz, fc1 = 0.5Hz, fc2 = 40Hz
+                gain = 1.599548128e+00;
+                fx[0] = -1; fx[1] = 0; fx[2] = 1;
+                fy[0] = -0.5956466294; fy[1] = 1.5930745223;
+                break;
+            case SCG:
+                //fs = 100 Hz, fc1 = 0.5Hz, fc2 = 40Hz
+                gain = 1.599548128e+00;
+                fx[0] = -1; fx[1] = 0; fx[2] = 1;
+                fy[0] = -0.5956466294; fy[1] = 1.5930745223;
+                break;
+            default:
+                break;
+        }
     }
 
 
@@ -47,56 +82,20 @@ public class Filter {
         xv[0] = xv[1]; xv[1] = xv[2];
 
         //Set the next input
-        xv[2] = (float) (x[currentIndex] / GAIN);
+        xv[2] = (float) (x[currentIndex] / gain);
 
         //Advance in time
         yv[0] = yv[1]; yv[1] = yv[2];
 
         //Calculate current output
-        /*
-        //40 kHz
-        yv[2] =   (float) ((xv[2] - xv[0])
-                + ( -0.9988225962 * yv[0]) + (  1.9988224975 * yv[1]));
-        //100 Hz
-        yv[2] =   (float) ((xv[2] - xv[0])
-                + ( -0.6128007881 * yv[0]) + (  1.5998427471 * yv[1]));
+        yv[2] = (float) (xv[0] * fx[0] + xv[1] * fx[1] + xv[2] * fx[2]
+            + yv[0] * fy[0] + yv[1] * fy[1]);
 
-        //500 Hz
-        yv[2] = (float) ((xv[2] - xv[0])
-                + ( -0.9099299882 * yv[0]) + (  1.9093263649 * yv[1]));
-        */
-
-        //Chebyshev 0.5 -10 Hz, 4th order, -5dB ripple
-        yv[4] = (float) ((xv[0] + xv[4]) + 4 * (xv[1] + xv[3]) + 6 * xv[2]
-                + ( -0.9973807989 * yv[0]) + (  3.9920995701 * yv[1])
-                + ( -5.9920566743 * yv[2]) + (  3.9973379029 * yv[3]));
 
         numPoints ++;
         currentIndex = numPoints% MAX_POINTS_ARRAY;
         y[currentIndex] = yv[2];
     }
-
-    public void findNextYDebug() {
-        //Advance in time
-        xv[0] = xv[1]; xv[1] = xv[2];
-
-        //Set the next input
-        xv[2] = (float) (x[currentIndex] / GAIN_DEBUG);
-
-        //Advance in time
-        yv[0] = yv[1]; yv[1] = yv[2];
-
-        //40 kHz
-        yv[2] =   (float) ((xv[2] - xv[0])
-                + ( -0.9988225962 * yv[0]) + (  1.9988224975 * yv[1]));
-
-        numPoints ++;
-        currentIndex = numPoints% MAX_POINTS_ARRAY;
-        y[currentIndex] = yv[2];
-    }
-
-
-
 
     public void setXv(float xvValue, int index) {
         xv[index] = (float) (xvValue / GAIN);
@@ -106,90 +105,8 @@ public class Filter {
         yv[index] = yvValue;
     }
 
+    public void lerp() {
 
-    private static final float PREFACTOR = 2f;
-    /**
-     * Amplifies the peaks in the data by raising y[t] to the 8th power.
-     */
-    public void amplifyPeaks() {
-        y[currentIndex] = (float) Math.pow(PREFACTOR * y[currentIndex], 8);
-    }
-
-    /**
-     * Amplifies the data by a constant
-     * @param gain How much to amplify y[t] by
-     */
-    public void amplify(float gain) {
-        y[currentIndex] *= gain;
-    }
-
-    /**
-     * Adds a constant to the data
-     * @param offset How much to offset data
-     */
-    public void setYOffset(float offset) {
-        y[currentIndex] += offset;
-    }
-
-
-
-    public static final int NO_PEAK_DETECTED = -1;
-    private int firstIndexAboveThreshold = 0;
-    private int lastIndexAboveThreshold = 0;
-
-    /**
-     * Returns the index of the last detected peak in set of data
-     * @return Index of last detected peak
-     */
-    public int findPeak() {
-        if(aboveThreshold) {
-            if (y[currentIndex] < THRESHOLD_FOR_PEAK) {
-                aboveThreshold = false;
-
-                normalizePeak(firstIndexAboveThreshold, currentIndex, peak);
-                lastIndexAboveThreshold = numPoints;
-
-                peak = NO_PEAK_DETECTED;
-                return peakIndex;
-            } else {
-                if(y[currentIndex] > peak) {
-                    peakIndex = numPoints;
-                    peak = y[currentIndex];
-                }
-                return NO_PEAK_DETECTED;
-            }
-        } else {
-            if(y[currentIndex] >= THRESHOLD_FOR_PEAK) {
-                aboveThreshold = true;
-                firstIndexAboveThreshold = numPoints;
-            }
-            return NO_PEAK_DETECTED;
-        }
-    }
-
-    public int getFirstIndexAboveThreshold() {
-        return firstIndexAboveThreshold;
-    }
-
-    public int getLastIndexAboveThreshold() {
-        return lastIndexAboveThreshold;
-    }
-
-    public float getPeakAmplitude() {
-        return peak;
-    }
-
-    public int getLastPeakIndex() {
-        return peakIndex;
-    }
-
-    private void normalizePeak(int firstIndex, int finalIndex, float peakAmplitude) {
-        int i = firstIndex;
-
-        while (i != finalIndex) {
-            y[i % MAX_POINTS_ARRAY] /= peakAmplitude;
-            i = (i+1) % MAX_POINTS_ARRAY;
-        }
     }
 
 }

@@ -38,7 +38,13 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait" />
         <activity
-            android:name="tan.philip.nrf_ble.GraphScreen.GraphActivity"
+            android:name="tan.philip.nrf_ble.GraphScreen.PWVGraphActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/title_activity_graph"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name="tan.philip.nrf_ble.GraphScreen.XCGGraphActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/title_activity_graph"
             android:screenOrientation="portrait"
@@ -46,11 +52,11 @@
         <activity
             android:name="tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity"
             android:label="@string/title_activity_scan_results"
+            android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name="tan.philip.nrf_ble.ScanScreen.ClientActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:label="@string/title_activity_client"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" >
             <intent-filter>

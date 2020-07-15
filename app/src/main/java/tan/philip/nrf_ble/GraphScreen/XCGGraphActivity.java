@@ -64,8 +64,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public static final float SAMPLE_PERIOD = 1000f / (float) SAMPLE_RATE; //ms
     public static final int GRAPHING_PERIOD = 10; //In ms
 
-    public static final byte STREAM_OFF = 0;
-    public static final byte STREAM_ON = 1;
+    public static final byte CHECK_SD = 0;
 
     private final double MIN_VALUE = -1.5;
     private final double MAX_VALUE = 1.5;
@@ -109,7 +108,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     Filter sensor2Filter = new Filter(sensor2x, sensor2y, SAMPLE_RATE, SAMPLE_RATE, Filter.SignalType.ECG);
     private int numPoints = 0;
     private int numGraphedPoints = 0;
-    private float SCG_gain = 6f;
+    private float SCG_gain = 0.6f;
     private float ECG_gain = 0.8f;
     private float amplification = 5;
     private boolean ECGView = true;
@@ -126,8 +125,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private final Handler mHandler = new Handler();
     private Runnable graphTimer;
 
-    private boolean mConnected;
-    private boolean mStream = true;
+    private boolean sdGood = false;
 
     private BluetoothLeService mBluetoothLeService;
 
@@ -168,6 +166,8 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 //amplification = i / 10; //(float) (Math.pow(2, (float) i / 9) / 30);
                 amplification = i * i / 500;
+
+                //resetAllSeries();
             }
 
             @Override
@@ -334,6 +334,14 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         });
 
         setSeriesPaint(255, 255, 0, 0, 5, series2_ECG);
+
+        resetAllSeries();
+
+    }
+
+    private void resetAllSeries() {
+        series1_Interactive = new LineGraphSeries<>();
+        series2_Interactive = new LineGraphSeries<>();
         setSeriesPaint(255, 166, 166, 166, 5, series1_Interactive);
         setSeriesPaint(255, 255, 0, 0, 5, series2_Interactive);
 
@@ -400,9 +408,9 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                 }
                 maskX -= 10;
             }
-            mBinding.txtHeartRate.setText(Float.toString(maskX));
+            //mBinding.txtHeartRate.setText(Float.toString(maskX));
 
-            mask[0] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, 0);
+            mask[0] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, -0.5);
             ECG_Mask.resetData(mask);
 
 
@@ -450,44 +458,54 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
     private static final int INDEX_SENSOR_1_DATA = 1;      //Change to 1 for original code from XX
     private static final int INDEX_SENSOR_2_DATA = 0;      //Change to 5 for original code from XX
-    private static final float PRESCALER = 3f / 1024f;     //10 bit resolution
+    private static final float PRESCALER = 3f / 1024f;     //10 bit resolution to convert to volts (nRF has 1/3 prescaler)
+    private static final int SD_GOOD = 0xFFFF;            //Make this into an enum
+    private static final int SD_BAD = 0xFFFE;             //Make this into an enum
 
     private void runData(byte[] input) {
         //Little endian conversion
-        //short[] shorts = new short[input.length/2];
-        //ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
         int[] shorts = convertByteArray(input);
 
+        //Log all received bytes
         for(int i = 0; i < input.length; i ++) {
             Log.d("", Byte.toString(input[i]));
         }
 
         for(int i = 0; i < (shorts.length); i +=2) {
 
-            float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
-            float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
+            int short1 = shorts[INDEX_SENSOR_1_DATA + i];
+            int short2 = shorts[INDEX_SENSOR_2_DATA + i];
 
-            //Saving Data in memory
-            if(storeData) {
-                //Store data
-                String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
-                writeCSV(data, data.length);
+            if (short1 == SD_GOOD && short2 == SD_GOOD) {
+                sdGood = true;
+            } else if (short1 == SD_BAD && short2 == SD_BAD) {
+                sdGood = false;
+                mBinding.sdDetectedText.setText("SD card not detected");
+                mBinding.sdDetectedText.setTextColor(Color.rgb(255,0,0));
+            } else {
 
-                mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+                float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
+                float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
+
+                //Saving Data in memory
+                if (storeData) {
+                    //Store data
+                    String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
+                    writeCSV(data, data.length);
+
+                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+                }
+
+                gatherInputData(sensor1x, sensor1FloatData, SCG_gain);
+                gatherInputData(sensor2x, sensor2FloatData, ECG_gain);
+                filterData(sensor1Filter, sensor1x, sensor1y, SCG_gain, SENSOR_1_IDENTIFIER);
+                filterData(sensor2Filter, sensor2x, sensor2y, ECG_gain, SENSOR_2_IDENTIFIER);
+
+                displayData();
+                numPoints++;
             }
 
-//                Log.d("", Float.toString(sensor2FloatData));
-
-            gatherInputData(sensor1x, sensor1FloatData, SCG_gain);
-            gatherInputData(sensor2x, sensor2FloatData, ECG_gain);
-            filterData(sensor1Filter, sensor1x, sensor1y, SCG_gain, SENSOR_1_IDENTIFIER);
-            filterData(sensor2Filter, sensor2x, sensor2y, ECG_gain, SENSOR_2_IDENTIFIER);
-
-            displayData();
-            numPoints++;
-
         }
-        //Log.d(TAG, "///////////////////////");
     }
 
     private void gatherInputData(float inputArray[], float dataIn, float gain) {
@@ -578,10 +596,10 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
+                //mConnected = true;
                 invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)|| BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
+                //mConnected = false;
                 runOnUiThread(() -> Toast.makeText(XCGGraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
                 mBinding.textView5.setText(deviceIdentifier + " disconnected");
                 mBinding.textView5.setTextColor(Color.rgb(255,0,0));
@@ -702,17 +720,12 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     //////////////////////////////////////////SEND DATA TO NRF/////////////////////////////////////
-    private void toggleStream() {
-        if(mStream) {
-            mStream = false;
-            byte[] output = {STREAM_OFF};
-            mBluetoothLeService.writeCharacteristic(output);
-        } else {
-            mStream = true;
-            byte[] output = {STREAM_ON};
-            mBluetoothLeService.writeCharacteristic(output);
-        }
+    /*
+    private void checkSD() {
+        byte[] output = {CHECK_SD};
+        mBluetoothLeService.writeCharacteristic(output);
     }
+    */
 
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
     private void toggleRecord() {
@@ -817,14 +830,6 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         else
             switchViewMenuItem.setTitle("Medical ECG View");
 
-        //Stream Text
-        MenuItem switchStreamMenuItem = popup.getMenu().findItem(R.id.toggleStreaming);
-        if(mStream)
-            switchStreamMenuItem.setTitle("Stop Stream");
-        else
-            switchStreamMenuItem.setTitle("Continue Stream");
-
-
         popup.show();
     }
 
@@ -843,9 +848,6 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                 return true;
             case R.id.switchView:
                 toggleView();
-                return true;
-            case R.id.toggleStreaming:
-                toggleStream();
                 return true;
             default:
                 return false;

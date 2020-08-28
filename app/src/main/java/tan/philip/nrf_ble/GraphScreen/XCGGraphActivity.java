@@ -60,22 +60,31 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public static final String TAG = "XCGGraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
     public static final int MAX_POINTS_ARRAY = 20000;
-    public static final int SAMPLE_RATE = 100;  //Hz
-    public static final float SAMPLE_PERIOD = 1000f / (float) SAMPLE_RATE; //ms
-    public static final int GRAPHING_PERIOD = 10; //In ms
+    public static final int GRAPHING_RATE = 50; //In Hz
+    private float GRAPHING_PERIOD = 1000f / (float) GRAPHING_RATE; //ms
+    public static final int MAX_ECG_DISPLAY_LENGTH = 10; //seconds
 
-    public static final byte CHECK_SD = 0;
+
+
 
     private final double MIN_VALUE = -1.5;
     private final double MAX_VALUE = 1.5;
     private final double MARGIN = 1;
     private static final int INPUT_DELAY = 10;
-    private static final int MAX_ECG_DISPLAY_LENGTH = 10; //seconds
-    private static final int NUM_POINTS_IN_ECG_VIEW = (int) ((float) MAX_ECG_DISPLAY_LENGTH * SAMPLE_RATE);
 
     public static final int SENSOR_1_IDENTIFIER = 1;
     public static final int SENSOR_2_IDENTIFIER = 2;
 
+    //Sample rate
+    private int ecg_sample_rate = 100;  //Hz
+    private int scg_sample_rate = 100;  //Hz
+    private float ecg_sample_period = 1000f / (float) ecg_sample_rate; //ms
+    private float scg_sample_period = 1000f / (float) scg_sample_rate; //ms
+    private int NUM_POINTS_IN_ECG_VIEW = (int) ((float) MAX_ECG_DISPLAY_LENGTH * GRAPHING_RATE);
+
+    //Timer
+    private long start;
+    private long finish;
 
     //Graphing Initializers
     private GraphView graph;
@@ -90,7 +99,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private LineGraphSeries<DataPoint> series1_ECG;
     private LineGraphSeries<DataPoint> series2_ECG;
 
-    //ECG
+    //ECG View
     private DataPoint[] series1_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
     private DataPoint[] series2_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
     private DataPoint[] mask = new DataPoint[1];
@@ -104,9 +113,10 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
 
     //Graphing, filtering, etc.
-    Filter sensor1Filter = new Filter(sensor1x, sensor1y, SAMPLE_RATE, SAMPLE_RATE, Filter.SignalType.SCG);
-    Filter sensor2Filter = new Filter(sensor2x, sensor2y, SAMPLE_RATE, SAMPLE_RATE, Filter.SignalType.ECG);
-    private int numPoints = 0;
+    Filter sensor1Filter = new Filter(sensor1x, sensor1y, ecg_sample_rate, ecg_sample_rate, Filter.SignalType.SCG);
+    Filter sensor2Filter = new Filter(sensor2x, sensor2y, ecg_sample_rate, ecg_sample_rate, Filter.SignalType.ECG);
+    private int numPointsECG = 0;
+    private int numPointsSCG = 0;
     private int numGraphedPoints = 0;
     private float SCG_gain = 0.6f;
     private float ECG_gain = 0.8f;
@@ -189,7 +199,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         series1_Interactive = new LineGraphSeries<>();
         series2_Interactive = new LineGraphSeries<>();
         setupGraph();
-
+        start = System.currentTimeMillis();
 
         //Data setup
         hda = new HeartDataAnalysis();
@@ -219,6 +229,8 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         graphTimer = new Runnable() {
             @Override
             public void run() {
+                displayData();
+
                 //Reached end of data, scroll automatically
                 if(!ECGView && graph1Scrollable && graph.getViewport().getMinX(false) < graph.getViewport().getMinX(true)) {
                     double viewportWidth = graph.getViewport().getMaxX(false) - graph.getViewport().getMinX(false);
@@ -226,7 +238,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                     graph.getViewport().setMaxX(graph.getViewport().getMinX(true) + viewportWidth);
                 }
 
-                mHandler.postDelayed(this, 200);
+                mHandler.postDelayed(this, (long) GRAPHING_PERIOD);
             }
         };
         mHandler.postDelayed(graphTimer, 200);
@@ -328,7 +340,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         ECG_Mask.setCustomShape(new PointsGraphSeries.CustomShape() {
             @Override
             public void draw(Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint) {
-                paint.setStrokeWidth(50);
+                paint.setStrokeWidth(15);
                 canvas.drawLine(x, y, x, y-2000, paint);
             }
         });
@@ -346,7 +358,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         setSeriesPaint(255, 255, 0, 0, 5, series2_Interactive);
 
         for (int i = 0; i < series1_Buffer.length; i ++) {
-            series1_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_1_OFFSET);
+            series1_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD/ 1000f, SENSOR_1_OFFSET);
             series2_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_2_OFFSET);
         }
     }
@@ -367,21 +379,30 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             graph.getViewport().setMaxX(6);
             graph.getViewport().scrollToEnd();
         }
-
         mBinding.btnReset.setVisibility(View.GONE);
     }
 
     private static final float SENSOR_1_OFFSET = 6;
     private static final float SENSOR_2_OFFSET = 2;
     private void displayData() {
-        if(numPoints >= INPUT_DELAY) {
-
+        if(Math.min(numPointsECG, numPointsSCG) >= INPUT_DELAY) {
             //Determine next plotting point
-            float xPoint = (float) (numPoints - INPUT_DELAY/100) * SAMPLE_PERIOD / 1000;
+            //float xPoint = (float) (numPoints - INPUT_DELAY/100) * ecg_sample_period / 1000;
 
-            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * SCG_gain * amplification + SENSOR_1_OFFSET ;
-            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * ECG_gain * amplification + SENSOR_2_OFFSET ;
+            float xPoint = (float) (numGraphedPoints - INPUT_DELAY) * GRAPHING_PERIOD / 1000;
+            //Log.d(TAG, Integer.toString(numGraphedPoints) + " " + Integer.toString(numPointsECG) + " " + Integer.toString(numPointsSCG));
+            finish = System.currentTimeMillis();
+            Long elapsedTime = start - finish;
+            //Log.d("", Long.toString(elapsedTime));
+            start = finish;
 
+
+            //Take the last point in each sensor data array
+            float yPoint1Filtered = sensor1y[(numPointsSCG) % MAX_POINTS_ARRAY] * SCG_gain * amplification + SENSOR_1_OFFSET ;
+            float yPoint2Filtered = sensor2y[(numPointsECG) % MAX_POINTS_ARRAY] * ECG_gain * amplification + SENSOR_2_OFFSET ;
+
+            Log.d("", Integer.toString(numGraphedPoints) + " " + Integer.toString((numPointsSCG) % MAX_POINTS_ARRAY) + " " + Integer.toString((numPointsSCG) % MAX_POINTS_ARRAY));
+            Log.d("", Float.toString(sensor1y[(numPointsECG) % MAX_POINTS_ARRAY]) + " " + Float.toString(sensor2y[(numPointsSCG) % MAX_POINTS_ARRAY]));
             //Plot the data
 
             //Interactive series
@@ -389,8 +410,8 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             series2_Interactive.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
 
             //ECG style series, buffer the data so they are in order.
-            series1_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, yPoint1Filtered);
-            series2_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, yPoint2Filtered);
+            series1_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * GRAPHING_PERIOD / 1000f, yPoint1Filtered);
+            series2_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * GRAPHING_PERIOD / 1000f, yPoint2Filtered);
 
             //Actually plot the ECG data
             series1_ECG.resetData(series1_Buffer);
@@ -410,7 +431,8 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             }
             //mBinding.txtHeartRate.setText(Float.toString(maskX));
 
-            mask[0] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, -0.5);
+            //Again, follows ECG data
+            mask[0] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float) GRAPHING_PERIOD / 1000f, -0.5);
             ECG_Mask.resetData(mask);
 
 
@@ -459,60 +481,119 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private static final int INDEX_SENSOR_1_DATA = 1;      //Change to 1 for original code from XX
     private static final int INDEX_SENSOR_2_DATA = 0;      //Change to 5 for original code from XX
     private static final float PRESCALER = 3f / 1024f;     //10 bit resolution to convert to volts (nRF has 1/3 prescaler)
-    private static final int SD_GOOD = 0xFFFF;            //Make this into an enum
-    private static final int SD_BAD = 0xFFFE;             //Make this into an enum
+
+    private static final int DATA_FLAG = 0x0000;
+    private static final int SD_FLAG = 0xF000;
+    private static final int FS_FLAG = 0xE000;
+    private static final int SD_GOOD = 0xFF;
+    private static final int SD_BAD = 0xFE;
+    private static final int SCG_FLAG = 0x0;
+    private static final int ECG_FLAG = 0x0400;
+
 
     private void runData(byte[] input) {
         //Little endian conversion
-        int[] shorts = convertByteArray(input);
+        int[] shorts = convertByteArrayToShorts(input);
 
         //Log all received bytes
         for(int i = 0; i < input.length; i ++) {
-            Log.d("", Byte.toString(input[i]));
+            //Log.d("", Byte.toString(input[i]));
         }
 
-        for(int i = 0; i < (shorts.length); i +=2) {
+        for(int i = 0; i < shorts.length; i ++) {
+            int currentShort = shorts[i];
+            //Log.d("", Integer.toString(currentShort));
 
-            int short1 = shorts[INDEX_SENSOR_1_DATA + i];
-            int short2 = shorts[INDEX_SENSOR_2_DATA + i];
+            int flag = currentShort & 0xF000;
+            //Log.d("", Integer.toString(flag));
 
-            if (short1 == SD_GOOD && short2 == SD_GOOD) {
+            switch(flag) {
+                case DATA_FLAG:
+                    //float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
+                    //float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
+
+                    handleADCdata(shorts[i]);
+                    break;
+                case SD_FLAG:
+                    int SD_BITS = currentShort & 0x00FF;
+
+                    if (SD_BITS == SD_GOOD) {
+                        sdGood = true;
+                    } else if (SD_BITS == SD_BAD) {
+                        sdGood = false;
+                        mBinding.sdDetectedText.setText("SD card not detected");
+                        mBinding.sdDetectedText.setTextColor(Color.rgb(255,0,0));
+                    }
+                    break;
+                case FS_FLAG:
+                    int FS_BITS = currentShort & 0x00FF;
+                    int ID_BIT = currentShort & 0x0400;
+
+                    updateSampleRates(ID_BIT, FS_BITS);
+
+                    break;
+                default:
+                    break;
+            }
+
+            //Check flags
+
+
+            /*
+            if (currentShort == SD_GOOD) {
                 sdGood = true;
-            } else if (short1 == SD_BAD && short2 == SD_BAD) {
+            } else if (currentShort == SD_BAD) {
                 sdGood = false;
                 mBinding.sdDetectedText.setText("SD card not detected");
                 mBinding.sdDetectedText.setTextColor(Color.rgb(255,0,0));
             } else {
-
+                //Not right
                 float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
                 float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
 
-                //Saving Data in memory
-                if (storeData) {
-                    //Store data
-                    String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
-                    writeCSV(data, data.length);
-
-                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
-                }
-
-                gatherInputData(sensor1x, sensor1FloatData, SCG_gain);
-                gatherInputData(sensor2x, sensor2FloatData, ECG_gain);
-                filterData(sensor1Filter, sensor1x, sensor1y, SCG_gain, SENSOR_1_IDENTIFIER);
-                filterData(sensor2Filter, sensor2x, sensor2y, ECG_gain, SENSOR_2_IDENTIFIER);
-
-                displayData();
-                numPoints++;
+                handleADCdata(sensor1FloatData, sensor2FloatData);
             }
+            */
+
 
         }
     }
 
-    private void gatherInputData(float inputArray[], float dataIn, float gain) {
+    private void handleADCdata(int sensorData){
+        int ID_BIT = sensorData & 0x0400;
+        if(ID_BIT == ECG_FLAG) {
+            sensorData &= 0xFBFF;
+        }
+        float floatData = (float) sensorData * PRESCALER;
+
+        //Saving Data in memory
+        if (storeData && ID_BIT == ECG_FLAG) {
+            //Store data
+            String data[] = {Float.toString(floatData)};
+            writeCSV(data, data.length);
+
+            mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+        }
+
+        //Put data into right array based on sensor ID
+        if(ID_BIT == SCG_FLAG) {
+            numPointsSCG ++;
+            gatherInputData(sensor1x, floatData, SCG_gain, numPointsSCG);
+            filterData(sensor1Filter, sensor1x, sensor1y, SCG_gain, SENSOR_1_IDENTIFIER, numPointsSCG);
+        } else if (ID_BIT == ECG_FLAG) {
+            numPointsECG ++;
+            gatherInputData(sensor2x, floatData, ECG_gain, numPointsECG);
+            filterData(sensor2Filter, sensor2x, sensor2y, ECG_gain, SENSOR_2_IDENTIFIER, numPointsECG);
+        }
+
+        //displayData();
+    }
+
+    private void gatherInputData(float inputArray[], float dataIn, float gain, int numPoints) {
         inputArray[numPoints % MAX_POINTS_ARRAY] = dataIn;
     }
 
-    private void filterData(Filter filter, float inputArray[], float outputArray[], float gain, int sensorIdentifier) {
+    private void filterData(Filter filter, float inputArray[], float outputArray[], float gain, int sensorIdentifier, int numPoints) {
         float newInput = inputArray[numPoints % MAX_POINTS_ARRAY];
 
         if(numPoints > Filter.N_POLES) {
@@ -527,6 +608,25 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
         //if(numPoints > INPUT_DELAY)
         //    handlePeaks(peakIndex, sensorIdentifier);
+    }
+
+    private void updateSampleRates(int sensorID, int newFs){
+        if(sensorID == ECG_FLAG) {
+            //I send the sample period instead of sample rate
+            if(ecg_sample_period != newFs) {
+                ecg_sample_period = newFs;  //ms
+                ecg_sample_rate = (int) (1000/ecg_sample_period); //Hz
+                mBinding.txtEcg.setText("ECG ("+ Integer.toString(ecg_sample_rate) +" Hz)");
+                resetAllSeries();
+            }
+        } else {
+            if(scg_sample_period != newFs) {
+                scg_sample_period = newFs;  //Hz
+                scg_sample_rate = (int) (1000f / (float) scg_sample_period); //ms
+                mBinding.txtScg.setText("SCG ("+ Integer.toString(scg_sample_rate) +" Hz)");
+                resetAllSeries();
+            }
+        }
     }
 
     /**
@@ -544,7 +644,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
         if(peakIndex != Filter.NO_PEAK_DETECTED) {
             if(indexLastPeak != -1) {
-                int hrBuffer = hda.calculateHeartRate((float) (peakIndex - indexLastPeak) / 1000f * SAMPLE_PERIOD);
+                int hrBuffer = hda.calculateHeartRate((float) (peakIndex - indexLastPeak) / 1000f * ecg_sample_period);
 
                 if (!graph1Scrollable)
                     Vibration.vibrate(this, 100);
@@ -557,7 +657,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                 }
 
                 if(sensorIdentifier == SENSOR_2_IDENTIFIER) {
-                    float currentPWV = hda.calculatePWV((float) (peakIndex - indexLastPeakSensor1) / 10f * SAMPLE_PERIOD);
+                    float currentPWV = hda.calculatePWV((float) (peakIndex - indexLastPeakSensor1) / 10f * ecg_sample_period);
                 }
 
             }
@@ -590,7 +690,6 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         }
     };
 
-    private static final int GRAPHING_FREQUENCY = Math.round(GRAPHING_PERIOD / SAMPLE_PERIOD);
     private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -607,10 +706,10 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
 
-                if(numPoints % GRAPHING_FREQUENCY == 0) {
+                //if(numPoints % GRAPHING_FREQUENCY == 0) {
                     //displayData();
-                    drawHrRanges();
-                }
+                drawHrRanges();
+                //}
             }
         }
     };
@@ -699,7 +798,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
      * Convert an unsigned byte array to an array of ints (2 bytes -> short -> int, Little Endian)
      * @return Array of ints
      */
-    private static int[] convertByteArray(byte[] in) {
+    private static int[] convertByteArrayToShorts(byte[] in) {
         int[] out = new int[in.length/2];
 
         for(int i = 0; i < in.length; i += 2) {

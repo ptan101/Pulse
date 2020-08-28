@@ -10,9 +10,6 @@
     <item android:id ="@+id/switchView"
         android:title="Interactive Plot"/>
 
-    <item android:id ="@+id/toggleStreaming"
-        android:title="Turn off streaming"/>
-
     <item android:id ="@+id/record"
         android:title="Record"/>
 

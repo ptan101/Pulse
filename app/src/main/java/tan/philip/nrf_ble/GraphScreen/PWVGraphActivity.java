@@ -1,5 +1,32 @@
 package tan.philip.nrf_ble.GraphScreen;
 
+import android.Manifest;
+import android.animation.ValueAnimator;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.IBinder;
+import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.PopupMenu;
+import android.widget.SeekBar;
+import android.widget.Toast;
+import android.widget.ToggleButton;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
@@ -14,31 +41,6 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.opencsv.CSVWriter;
 
-import android.Manifest;
-import android.animation.ValueAnimator;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.IBinder;
-import android.util.Log;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.PopupMenu;
-import android.widget.SeekBar;
-import android.widget.Toast;
-import android.widget.ToggleButton;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -49,6 +51,7 @@ import tan.philip.nrf_ble.BluetoothLeService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
+import tan.philip.nrf_ble.databinding.ActivityXcggraphBinding;
 
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MAX_POSSIBLE_HR;
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MIN_POSSIBLE_HR;
@@ -59,19 +62,15 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public static final int MAX_POINTS_PLOT = 10000;
     public static final int MAX_POINTS_ARRAY = 20000;
     public static final int SAMPLE_RATE = 500;  //Hz
-    public static final int TARGET_SAMPLE_RATE = 1000;
-    public static final float SAMPLE_PERIOD = 1000f / (float) TARGET_SAMPLE_RATE; //ms
+    public static final float SAMPLE_PERIOD = 1000f / (float) SAMPLE_RATE; //ms
     public static final int GRAPHING_PERIOD = 20; //In ms
-
-    public static final byte STREAM_OFF = 0;
-    public static final byte STREAM_ON = 1;
 
     private final double MIN_VALUE = -1.5;
     private final double MAX_VALUE = 1.5;
     private final double MARGIN = 1;
-    private static final int INPUT_DELAY = 0;
+    private static final int INPUT_DELAY = 10;
     private static final int MAX_ECG_DISPLAY_LENGTH = 10; //seconds
-    private static final int NUM_POINTS_IN_ECG_VIEW = (int) ((float) MAX_ECG_DISPLAY_LENGTH / (float) GRAPHING_PERIOD * 1000f);
+    private static final int NUM_POINTS_IN_ECG_VIEW = (int) ((float) MAX_ECG_DISPLAY_LENGTH * SAMPLE_RATE);
 
     public static final int SENSOR_1_IDENTIFIER = 1;
     public static final int SENSOR_2_IDENTIFIER = 2;
@@ -84,21 +83,15 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     //Series for Interactive Mode
     private LineGraphSeries<DataPoint> series1_Interactive;
     private LineGraphSeries<DataPoint> series2_Interactive;
-    private LineGraphSeries<DataPoint> series3_Interactive;
-    private LineGraphSeries<DataPoint> series4_Interactive;
 
     //Series for ECG Mode
     private PointsGraphSeries<DataPoint> ECG_Mask;
     private LineGraphSeries<DataPoint> series1_ECG;
     private LineGraphSeries<DataPoint> series2_ECG;
-    private LineGraphSeries<DataPoint> series3_ECG;
-    private LineGraphSeries<DataPoint> series4_ECG;
 
     //ECG
     private DataPoint[] series1_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
     private DataPoint[] series2_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
-    private DataPoint[] series3_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
-    private DataPoint[] series4_Buffer = new DataPoint[NUM_POINTS_IN_ECG_VIEW];
     private DataPoint[] mask = new DataPoint[1];
 
 
@@ -111,14 +104,14 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
 
     //Graphing, filtering, etc.
-    Filter sensor1Filter = new Filter(sensor1x, sensor1y, SAMPLE_RATE, TARGET_SAMPLE_RATE, Filter.SignalType.PPG);
-    Filter sensor2Filter = new Filter(sensor2x, sensor2y, SAMPLE_RATE, TARGET_SAMPLE_RATE, Filter.SignalType.PPG);
+    Filter sensor1Filter = new Filter(sensor1x, sensor1y, SAMPLE_RATE, SAMPLE_RATE, Filter.SignalType.PPG);
+    Filter sensor2Filter = new Filter(sensor2x, sensor2y, SAMPLE_RATE, SAMPLE_RATE, Filter.SignalType.PPG);
     private int numPoints = 0;
     private int numGraphedPoints = 0;
     private int numLFPoints = 0;
-    private float proximalGain = 1;
-    private float distalGain = 1;
-    private float amplification;
+    private float proximal_gain = 1f;
+    private float distal_gain = 1f;
+    private float amplification = 5;
     private boolean ECGView = true;
 
 
@@ -126,8 +119,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private ValueAnimator heartRateAnimator;
     private int heartRate = HeartDataAnalysis.NO_DATA;
     DecimalFormat decimalFormat;
-    private int indexLastPeakSensor1 = HeartDataAnalysis.NO_DATA;
-    private int indexLastPeakSensor2 = HeartDataAnalysis.NO_DATA;
 
     private ActivityPwvgraphBinding mBinding;
     private String deviceIdentifier;
@@ -135,8 +126,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private final Handler mHandler = new Handler();
     private Runnable graphTimer;
 
-    private boolean mConnected;
-    private boolean mStream = true;
+    private boolean sdGood = false;
 
     private BluetoothLeService mBluetoothLeService;
 
@@ -175,7 +165,10 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         mBinding.amplification.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                amplification = (float) (Math.pow(2, (float) i / 9) / 30);
+                //amplification = i / 10; //(float) (Math.pow(2, (float) i / 9) / 30);
+                amplification = i * i / 500;
+
+                //resetAllSeries();
             }
 
             @Override
@@ -193,12 +186,8 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         graph = mBinding.graph1;
         ECG_Mask = new PointsGraphSeries<>();
         series1_ECG = new LineGraphSeries<>();
-        series3_ECG = new LineGraphSeries<>();
-        series4_ECG = new LineGraphSeries<>();
         series2_ECG = new LineGraphSeries<>();
         series1_Interactive = new LineGraphSeries<>();
-        series3_Interactive = new LineGraphSeries<>();
-        series4_Interactive = new LineGraphSeries<>();
         series2_Interactive = new LineGraphSeries<>();
         setupGraph();
 
@@ -293,13 +282,12 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         graph.getViewport().setMinY(-0.5);
         graph.getViewport().setMaxY(6*MAX_VALUE - MIN_VALUE + 3/2*MARGIN);
 
-        graph.getViewport().setXAxisBoundsManual(true);
+        //graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
         graph.getViewport().setMaxX(10);
+        graph.getViewport().setXAxisBoundsManual(true);
 
         graph.addSeries(series1_ECG);
-        graph.addSeries(series3_ECG);
-        graph.addSeries(series4_ECG);
         graph.addSeries(series2_ECG);
         graph.addSeries(ECG_Mask);
 
@@ -331,7 +319,10 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         setSeriesPaint(255, 166, 166, 166, 5, series1_ECG);
         //setSeriesPaint(255, 255, 255, 255, 6, ECG_Mask);
 
-        int color = Color.rgb(255, 250,250);
+        int color = Color.WHITE;
+        Drawable background = mBinding.backgroundCL.getBackground();
+        if (background instanceof ColorDrawable)
+            color = ((ColorDrawable) background).getColor();
         //int color = Color.rgb(0, 250,0);
 
         ECG_Mask.setColor(color);
@@ -339,23 +330,25 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             @Override
             public void draw(Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint) {
                 paint.setStrokeWidth(50);
-                canvas.drawLine(x, y, x, y-1000, paint);
+                canvas.drawLine(x, y, x, y-2000, paint);
             }
         });
 
-        setSeriesPaint(255, 107, 107, 107, 5, series3_ECG);
-        setSeriesPaint(255, 0, 0, 0, 5, series4_ECG);
         setSeriesPaint(255, 255, 0, 0, 5, series2_ECG);
+
+        resetAllSeries();
+
+    }
+
+    private void resetAllSeries() {
+        series1_Interactive = new LineGraphSeries<>();
+        series2_Interactive = new LineGraphSeries<>();
         setSeriesPaint(255, 166, 166, 166, 5, series1_Interactive);
-        setSeriesPaint(255, 107, 107, 107, 5, series3_Interactive);
-        setSeriesPaint(255, 0, 0, 0, 5, series4_Interactive);
         setSeriesPaint(255, 255, 0, 0, 5, series2_Interactive);
 
         for (int i = 0; i < series1_Buffer.length; i ++) {
             series1_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_1_OFFSET);
             series2_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_2_OFFSET);
-            series3_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_3_OFFSET);
-            series4_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, 0);
         }
     }
 
@@ -372,61 +365,59 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             graph.getViewport().setScrollable(false);
             graph.getViewport().setScalable(false);
             graph.getViewport().setMinX(0);
-            graph.getViewport().setMaxX(3);
+            graph.getViewport().setMaxX(6);
             graph.getViewport().scrollToEnd();
         }
 
         mBinding.btnReset.setVisibility(View.GONE);
     }
 
-    private static final float SENSOR_1_OFFSET = 8;
-    private static final float SENSOR_2_OFFSET = 5;
-    private static final float SENSOR_3_OFFSET = 2;
+    private static final float SENSOR_1_OFFSET = 6;
+    private static final float SENSOR_2_OFFSET = 2;
     private void displayData() {
         if(numPoints >= INPUT_DELAY) {
 
             //Determine next plotting point
             float xPoint = (float) (numPoints - INPUT_DELAY/100) * SAMPLE_PERIOD / 1000;
 
-            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * distalGain * amplification + SENSOR_1_OFFSET ;
-            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * proximalGain * amplification + SENSOR_2_OFFSET ;
-            float yPoint3 = sensor3x[(numLFPoints - INPUT_DELAY / 50) % MAX_POINTS_ARRAY] + SENSOR_3_OFFSET;
+            float yPoint1Filtered = sensor1y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * proximal_gain * amplification + SENSOR_1_OFFSET ;
+            float yPoint2Filtered = sensor2y[(numPoints - INPUT_DELAY) % MAX_POINTS_ARRAY] * distal_gain * amplification + SENSOR_2_OFFSET ;
 
             //Plot the data
 
             //Interactive series
-            series1_Interactive.appendData(new DataPoint(xPoint, yPoint1Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
-            series3_Interactive.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
-            series4_Interactive.appendData(new DataPoint(xPoint, yPoint3), !graph1Scrollable, MAX_POINTS_PLOT);
-            series2_Interactive.appendData(new DataPoint(xPoint, 0), !graph1Scrollable, MAX_POINTS_PLOT);
+            series1_Interactive.appendData(new DataPoint(xPoint, yPoint1Filtered), !graph1Scrollable, MAX_POINTS_PLOT);;
+            series2_Interactive.appendData(new DataPoint(xPoint, yPoint2Filtered), !graph1Scrollable, MAX_POINTS_PLOT);
 
             //ECG style series, buffer the data so they are in order.
-            series1_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint1Filtered);
-            series2_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint2Filtered);
-            series3_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, yPoint3);
-            series4_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f, 0);
+            series1_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, yPoint1Filtered);
+            series2_Buffer[numGraphedPoints % NUM_POINTS_IN_ECG_VIEW] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, yPoint2Filtered);
 
             //Actually plot the ECG data
             series1_ECG.resetData(series1_Buffer);
             series2_ECG.resetData(series2_Buffer);
-            series3_ECG.resetData(series3_Buffer);
-            series4_ECG.resetData(series4_Buffer);
 
             //Draw Mask over old data points
-            //float maskX = (float)((numGraphedPoints + 1) % NUM_POINTS_IN_ECG_VIEW) * (float)GRAPHING_PERIOD / 1000f;
-            float maskX = (float)((numGraphedPoints + 1) % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f;
-            mask[0] = new DataPoint(maskX, 0);
+            float maskX = xPoint;
+            //Inefficient but I'm too tired to think of a better way
+            while(maskX > 10) {
+                while(maskX > 100) {
+                    while(maskX > 1000) {
+                        maskX -= 1000;
+                    }
+                    maskX -= 100;
+                }
+                maskX -= 10;
+            }
+            //mBinding.txtHeartRate.setText(Float.toString(maskX));
+
+            mask[0] = new DataPoint((float)(numGraphedPoints % NUM_POINTS_IN_ECG_VIEW) * (float)SAMPLE_PERIOD / 1000f, -0.5);
             ECG_Mask.resetData(mask);
 
 
             //Display HR and PWV
             if((int)heartRateAnimator.getAnimatedValue() <= 10 && heartRate != -1)
                 mBinding.txtHeartRate.setText(String.valueOf(heartRate) + " bpm");
-
-            if(hda.getNumPWVPoints() > 5) {
-                float pwvAvg = hda.calculateWeightedAveragePWV();
-                mBinding.txtPWV.setText(decimalFormat.format(pwvAvg) + " m/s");
-            }
 
             numGraphedPoints ++;
         }
@@ -443,14 +434,12 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
             //Add the correct series
             graph.addSeries(series1_Interactive);
-            graph.addSeries(series3_Interactive);
-            graph.addSeries(series4_Interactive);
             graph.addSeries(series2_Interactive);
         } else {
             ECGView = true;
 
             //Set viewport to 10 seconds
-            graph.getViewport().setXAxisBoundsManual(true);
+            //graph.getViewport().setXAxisBoundsManual(true);
             graph.getViewport().setMinX(0);
             graph.getViewport().setMaxX(10);
 
@@ -459,8 +448,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
             //Add the correct series
             graph.addSeries(series1_ECG);
-            graph.addSeries(series3_ECG);
-            graph.addSeries(series4_ECG);
             graph.addSeries(series2_ECG);
             graph.addSeries(ECG_Mask);
 
@@ -470,22 +457,24 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
     ////////////////////////////////////////DATA RECEPTION//////////////////////////////////////////
 
-    private static final int INDEX_SENSOR_1_DATA = 0;      //Change to 1 for original code from XX
-    private static final int INDEX_SENSOR_2_DATA = 1;      //Change to 5 for original code from XX
+    private static final int INDEX_SENSOR_1_DATA = 0;
+    private static final int INDEX_SENSOR_2_DATA = 1;
     private static final int INDEX_SENSOR_3_DATA = 1;
-    private static final float PRESCALER = 3f / 1024f;     //10 bit resolution
+    private static final float PRESCALER = 3f / 1024f;     //10 bit resolution to convert to volts (nRF has 1/3 prescaler)
+    private static final int SD_GOOD = 0xFFFF;            //Make this into an enum
+    private static final int SD_BAD = 0xFFFE;             //Make this into an enum
 
     private float lfDataBuff;
     private boolean availableLFData = false;
 
     private void runData(byte[] input) {
         //Little endian conversion
-        //short[] shorts = new short[input.length/2];
-        //ByteBuffer.wrap(input).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
         int[] shorts = convertByteArray(input);
 
-        for(int i = 0; i < input.length; i ++) {
-            Log.d("", Byte.toString(input[i]));
+        //Log all received shorts
+        for(int i = 0; i < shorts.length; i ++) {
+            Log.d("", Integer.toString(shorts[i]));
+            //Log.d("", String.format("%02X ", shorts[i]));
         }
 
         for(int i = 0; i < (shorts.length); i +=2) {
@@ -499,37 +488,41 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                 sensor3x[numLFPoints % MAX_POINTS_ARRAY] = lfDataBuff;
                 //filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
                 numLFPoints ++;
+
             } else {
-                //Input is pulsatile signal
+                int short1 = shorts[INDEX_SENSOR_1_DATA + i];
+                int short2 = shorts[INDEX_SENSOR_2_DATA + i];
 
-                float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
-                float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
+                if (short1 == SD_GOOD && short2 == SD_GOOD) {
+                    sdGood = true;
+                } else if (short1 == SD_BAD && short2 == SD_BAD) {
+                    sdGood = false;
+                    mBinding.sdDetectedText.setText("SD card not detected");
+                    mBinding.sdDetectedText.setTextColor(Color.rgb(255, 0, 0));
+                } else {
 
-                //Saving Data in memory
-                if(storeData) {
-                    //Store data
-                    if(availableLFData) {
-                        String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData), Float.toString(lfDataBuff)};
-                        writeCSV(data, data.length);
-                        availableLFData = false;
-                    } else {
+                    float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
+                    float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
+
+                    //Saving Data in memory
+                    if (storeData) {
+                        //Store data
                         String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
                         writeCSV(data, data.length);
+
+                        mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
                     }
-                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+
+                    gatherInputData(sensor1x, sensor1FloatData, proximal_gain);
+                    gatherInputData(sensor2x, sensor2FloatData, distal_gain);
+                    filterData(sensor1Filter, sensor1x, sensor1y, proximal_gain, SENSOR_1_IDENTIFIER);
+                    filterData(sensor2Filter, sensor2x, sensor2y, distal_gain, SENSOR_2_IDENTIFIER);
+
+                    displayData();
+                    numPoints++;
                 }
-
-//                Log.d("", Float.toString(sensor2FloatData));
-
-                gatherInputData(sensor1x, sensor1FloatData, proximalGain);
-                gatherInputData(sensor2x, sensor2FloatData, distalGain);
-                filterData(sensor1Filter, sensor1x, sensor1y, proximalGain, SENSOR_1_IDENTIFIER);
-                filterData(sensor2Filter, sensor2x, sensor2y, distalGain, SENSOR_2_IDENTIFIER);
-
-                numPoints++;
             }
         }
-        //Log.d(TAG, "///////////////////////");
     }
 
     private void gatherInputData(float inputArray[], float dataIn, float gain) {
@@ -620,10 +613,10 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
+                //mConnected = true;
                 invalidateOptionsMenu();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)|| BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
+                //mConnected = false;
                 runOnUiThread(() -> Toast.makeText(PWVGraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
                 mBinding.textView5.setText(deviceIdentifier + " disconnected");
                 mBinding.textView5.setTextColor(Color.rgb(255,0,0));
@@ -632,7 +625,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
                 runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
 
                 if(numPoints % GRAPHING_FREQUENCY == 0) {
-                    displayData();
+                    //displayData();
                     drawHrRanges();
                 }
             }
@@ -744,17 +737,12 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     //////////////////////////////////////////SEND DATA TO NRF/////////////////////////////////////
-    private void toggleStream() {
-        if(mStream) {
-            mStream = false;
-            byte[] output = {STREAM_OFF};
-            mBluetoothLeService.writeCharacteristic(output);
-        } else {
-            mStream = true;
-            byte[] output = {STREAM_ON};
-            mBluetoothLeService.writeCharacteristic(output);
-        }
+    /*
+    private void checkSD() {
+        byte[] output = {CHECK_SD};
+        mBluetoothLeService.writeCharacteristic(output);
     }
+    */
 
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
     private void toggleRecord() {
@@ -780,7 +768,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
     public  boolean isStoragePermissionGranted() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {
                 Log.v(TAG,"Permission is granted");
                 return true;
@@ -843,7 +831,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public void showOptions(View v) {
         PopupMenu popup = new PopupMenu(this, v);
         popup.setOnMenuItemClickListener(this);
-        popup.inflate(R.menu.popup_menu_pwv);
+        popup.inflate(R.menu.popup_menu_xcg);
 
         //Record Text
         MenuItem recordMenuItem = popup.getMenu().findItem(R.id.record);
@@ -859,14 +847,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         else
             switchViewMenuItem.setTitle("Medical ECG View");
 
-        //Stream Text
-        MenuItem switchStreamMenuItem = popup.getMenu().findItem(R.id.toggleStreaming);
-        if(mStream)
-            switchStreamMenuItem.setTitle("Stop Stream");
-        else
-            switchStreamMenuItem.setTitle("Continue Stream");
-
-
         popup.show();
     }
 
@@ -875,18 +855,17 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public boolean onMenuItemClick(MenuItem menuItem) {
         switch(menuItem.getItemId()) {
             case R.id.invertProximal:
-                proximalGain *= -1;
+                proximal_gain *= -1;
                 return true;
             case R.id.invertDistal:
-                distalGain *= -1;
+                distal_gain *= -1;
                 return true;
             case R.id.record:
                 toggleRecord();
                 return true;
             case R.id.switchView:
                 toggleView();
-            case R.id.toggleStreaming:
-                toggleStream();
+                return true;
             default:
                 return false;
         }

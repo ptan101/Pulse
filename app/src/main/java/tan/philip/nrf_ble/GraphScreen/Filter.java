@@ -54,10 +54,10 @@ public class Filter {
 
         switch(signalType) {
             case PPG:
-                //fs = 500 Hz, fc1 = 0.5Hz, fc2 = 8Hz
-                gain = 2.031823796e+01;
+                //fs = 500 Hz, fc1 = 1.5Hz, fc2 = 8Hz
+                gain = 2.410311073e+01;
                 fx[0] = -1; fx[1] = 0; fx[2] = 1;
-                fy[0] = -0.90992998823; fy[1] = 1.9093263649;
+                fy[0] = -0.9214816746; fy[1] = 1.9196603801;
                 break;
             case ECG:
                 //fs = 100 Hz, fc1 = 1.5Hz, fc2 = 40Hz
@@ -94,7 +94,8 @@ public class Filter {
 
         numPoints ++;
         currentIndex = numPoints% MAX_POINTS_ARRAY;
-        y[currentIndex] = yv[2];
+        //y[currentIndex] = yv[2];
+        y[currentIndex] = x[currentIndex];
     }
 
     public void setXv(float xvValue, int index) {

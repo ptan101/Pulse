@@ -267,24 +267,24 @@
             app:layout_constraintStart_toStartOf="@+id/graph1" />
 
         <TextView
-            android:id="@+id/txt_ecg"
+            android:id="@+id/txt_scg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
-            android:text="SCG"
+            android:text="SCG (100 Hz)"
             android:textColor="#a6a6a6"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
 
         <TextView
-            android:id="@+id/txt_scg"
+            android:id="@+id/txt_ecg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ECG"
+            android:text="ECG (100 Hz)"
             android:textColor="#ff0000"
-            app:layout_constraintEnd_toEndOf="@+id/txt_ecg"
-            app:layout_constraintStart_toStartOf="@+id/txt_ecg"
-            app:layout_constraintTop_toBottomOf="@+id/txt_ecg" />
+            app:layout_constraintEnd_toEndOf="@+id/txt_scg"
+            app:layout_constraintStart_toStartOf="@+id/txt_scg"
+            app:layout_constraintTop_toBottomOf="@+id/txt_scg" />
 
         <TextView
             android:id="@+id/recordTimer"

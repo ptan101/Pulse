@@ -109,8 +109,8 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     private int numPoints = 0;
     private int numGraphedPoints = 0;
     private int numLFPoints = 0;
-    private float proximal_gain = 1f;
-    private float distal_gain = 1f;
+    private float proximal_gain = 10f;
+    private float distal_gain = 10f;
     private float amplification = 5;
     private boolean ECGView = true;
 
@@ -347,8 +347,8 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         setSeriesPaint(255, 255, 0, 0, 5, series2_Interactive);
 
         for (int i = 0; i < series1_Buffer.length; i ++) {
-            series1_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_1_OFFSET);
-            series2_Buffer[i] = new DataPoint((float) i * GRAPHING_PERIOD / 1000f, SENSOR_2_OFFSET);
+            series1_Buffer[i] = new DataPoint((float) i * SAMPLE_PERIOD / 1000f, SENSOR_1_OFFSET);
+            series2_Buffer[i] = new DataPoint((float) i * SAMPLE_PERIOD / 1000f, SENSOR_2_OFFSET);
         }
     }
 

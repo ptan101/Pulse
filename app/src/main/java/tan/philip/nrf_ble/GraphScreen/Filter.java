@@ -94,8 +94,8 @@ public class Filter {
 
         numPoints ++;
         currentIndex = numPoints% MAX_POINTS_ARRAY;
-        //y[currentIndex] = yv[2];
-        y[currentIndex] = x[currentIndex];
+        y[currentIndex] = yv[2];
+        //y[currentIndex] = x[currentIndex];
     }
 
     public void setXv(float xvValue, int index) {

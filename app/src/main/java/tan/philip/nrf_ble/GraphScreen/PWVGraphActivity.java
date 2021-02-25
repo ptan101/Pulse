@@ -42,8 +42,11 @@ import com.jjoe64.graphview.series.PointsGraphSeries;
 import com.opencsv.CSVWriter;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
 import java.util.Calendar;
 
@@ -166,7 +169,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 //amplification = i / 10; //(float) (Math.pow(2, (float) i / 9) / 30);
-                amplification = i * i / 500;
+                amplification = (float)Math.pow(10, i/30) / 10;
 
                 //resetAllSeries();
             }
@@ -456,16 +459,9 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     ////////////////////////////////////////DATA RECEPTION//////////////////////////////////////////
-
-    private static final int INDEX_SENSOR_1_DATA = 0;
-    private static final int INDEX_SENSOR_2_DATA = 1;
-    private static final int INDEX_SENSOR_3_DATA = 1;
     private static final float PRESCALER = 3f / 1024f;     //10 bit resolution to convert to volts (nRF has 1/3 prescaler)
     private static final int SD_GOOD = 0xFFFF;            //Make this into an enum
     private static final int SD_BAD = 0xFFFE;             //Make this into an enum
-
-    private float lfDataBuff;
-    private boolean availableLFData = false;
 
     private void runData(byte[] input) {
         //Little endian conversion
@@ -473,54 +469,55 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
         //Log all received shorts
         for(int i = 0; i < shorts.length; i ++) {
-            Log.d("", Integer.toString(shorts[i]));
-            //Log.d("", String.format("%02X ", shorts[i]));
-        }
+            //Log.d("", Integer.toString(shorts[i]));
 
-        for(int i = 0; i < (shorts.length); i +=2) {
 
-            //Check if first 2 bytes is LF data flag
-            if(shorts[INDEX_SENSOR_1_DATA + i] == 0xFFFF) {
-                //Input is LF signal
-                lfDataBuff = (float) shorts[INDEX_SENSOR_3_DATA + i] * PRESCALER;
-                Log.d(TAG, Float.toString(lfDataBuff));
-                availableLFData = true;
-                sensor3x[numLFPoints % MAX_POINTS_ARRAY] = lfDataBuff;
-                //filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
-                numLFPoints ++;
+            int curShort = shorts[i];
+            int sensor_flag = curShort & 0xFC00;
+            float sensorFloatData = (float) (shorts[i] & 0x3FF) * PRESCALER;
+            //Log.d("", Integer.toString(sensor_flag));
 
-            } else {
-                int short1 = shorts[INDEX_SENSOR_1_DATA + i];
-                int short2 = shorts[INDEX_SENSOR_2_DATA + i];
-
-                if (short1 == SD_GOOD && short2 == SD_GOOD) {
-                    sdGood = true;
-                } else if (short1 == SD_BAD && short2 == SD_BAD) {
-                    sdGood = false;
-                    mBinding.sdDetectedText.setText("SD card not detected");
-                    mBinding.sdDetectedText.setTextColor(Color.rgb(255, 0, 0));
-                } else {
-
-                    float sensor1FloatData = (float) shorts[INDEX_SENSOR_1_DATA + i] * PRESCALER;
-                    float sensor2FloatData = (float) shorts[INDEX_SENSOR_2_DATA + i] * PRESCALER;
-
-                    //Saving Data in memory
+            switch(sensor_flag) {
+                case 0x0:
                     if (storeData) {
-                        //Store data
-                        String data[] = {Float.toString(sensor1FloatData), Float.toString(sensor2FloatData)};
-                        writeCSV(data, data.length);
-
+                        writeBIN((short)curShort);
                         mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
                     }
 
-                    gatherInputData(sensor1x, sensor1FloatData, proximal_gain);
-                    gatherInputData(sensor2x, sensor2FloatData, distal_gain);
+                    gatherInputData(sensor1x, sensorFloatData, proximal_gain);
                     filterData(sensor1Filter, sensor1x, sensor1y, proximal_gain, SENSOR_1_IDENTIFIER);
-                    filterData(sensor2Filter, sensor2x, sensor2y, distal_gain, SENSOR_2_IDENTIFIER);
+                    break;
+                case 0x400:
+                    if (storeData) {
+                        writeBIN((short)curShort);
+                        mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+                    }
 
-                    displayData();
+                    gatherInputData(sensor2x, sensorFloatData, distal_gain);
+                    filterData(sensor2Filter, sensor2x, sensor2y, distal_gain, SENSOR_2_IDENTIFIER);
                     numPoints++;
-                }
+                    displayData();
+                    break;
+                case 0x800:
+                    if (storeData) {
+                        writeBIN((short)curShort);
+                        mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+                    }
+
+                    sensor3x[numLFPoints % MAX_POINTS_ARRAY] = sensorFloatData;
+                    //filterData(sensor1Filter, sensor1x, sensor1y, SENSOR_1_IDENTIFIER);
+                    numLFPoints ++;
+                    break;
+                case 0xFC00:
+                    if (curShort == SD_GOOD) {
+                        sdGood = true;
+                    } else if (curShort == SD_BAD) {
+                        sdGood = false;
+                        mBinding.sdDetectedText.setText("SD card not detected");
+                        mBinding.sdDetectedText.setTextColor(Color.rgb(255, 0, 0));
+                    }
+                default:
+                    Log.d(TAG, "Unknown data received.");
             }
         }
     }
@@ -752,13 +749,14 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             storeData = true;
 
             //Set File Name to current time
-            fileName = Calendar.getInstance().getTime().toString() + ".csv";
+            fileName = Calendar.getInstance().getTime().toString() + ".bin";
 
             //Check Permission
             while(!isStoragePermissionGranted());
 
             //Create Folder
             createFolder();
+            writeBIN((short)0xFFFF);
 
         } else {
             mBinding.recordTimer.setVisibility(View.INVISIBLE);
@@ -795,6 +793,28 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
             Log.d(TAG, "Successfully created new folder / already exists");
         } else {
             Log.d(TAG, "Failed to create new folder");
+        }
+    }
+
+    public void writeBIN(short data) {
+        String filePath = path + File.separator + fileName;
+
+        try {
+            new File(path).mkdir();
+            File file = new File(filePath);
+            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            if (!file.exists()) {
+                if (!file.createNewFile()) {
+                    Toast.makeText(getApplicationContext(), "Error creating file", Toast.LENGTH_SHORT).show();
+                }
+            }
+            Log.d("", Short.toString(data));
+            fileOutputStream.write(ByteBuffer.allocate(2).putShort(data).array());
+
+        } catch (FileNotFoundException ex) {
+            Log.d(TAG, ex.getMessage());
+        } catch (IOException ex) {
+            Log.d(TAG, ex.getMessage());
         }
     }
 

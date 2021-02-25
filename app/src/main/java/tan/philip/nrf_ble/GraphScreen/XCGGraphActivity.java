@@ -60,7 +60,7 @@ public class XCGGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public static final String TAG = "XCGGraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
     public static final int MAX_POINTS_ARRAY = 20000;
-    public static final int GRAPHING_RATE = 50; //In Hz
+    public static final int GRAPHING_RATE = 100; //In Hz
     private float GRAPHING_PERIOD = 1000f / (float) GRAPHING_RATE; //ms
     public static final int MAX_ECG_DISPLAY_LENGTH = 10; //seconds
 

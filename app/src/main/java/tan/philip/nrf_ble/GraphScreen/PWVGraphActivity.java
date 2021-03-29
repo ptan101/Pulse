@@ -54,7 +54,6 @@ import tan.philip.nrf_ble.BluetoothLeService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
-import tan.philip.nrf_ble.databinding.ActivityXcggraphBinding;
 
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MAX_POSSIBLE_HR;
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MIN_POSSIBLE_HR;

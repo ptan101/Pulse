@@ -8,6 +8,10 @@ public class Constants {
     // Stops scanning after 5 seconds.
     public static final long SCAN_PERIOD = 10000;
 
+    //Nordic UART Service UUID
+    public static String NUS_UUID_STRING = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
+    public static UUID NUS_UUID = UUID.fromString(NUS_UUID_STRING);
+
     public static String SERVICE_STRING = "ACDCDCD0-0451-9D97-CC4B-F5A1B93E25BA";
     public static UUID SERVICE_UUID = UUID.fromString(SERVICE_STRING);
 

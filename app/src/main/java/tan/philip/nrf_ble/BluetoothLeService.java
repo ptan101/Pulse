@@ -16,8 +16,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_NOTIFY_UUID;
+import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_WRITE_UUID;
 import static tan.philip.nrf_ble.Constants.SERVICE_UUID;
 

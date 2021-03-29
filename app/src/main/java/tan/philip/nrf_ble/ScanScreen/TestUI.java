@@ -1,8 +1,5 @@
 package tan.philip.nrf_ble.ScanScreen;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.databinding.DataBindingUtil;
-
 import android.animation.ValueAnimator;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -12,6 +9,9 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.view.View;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;

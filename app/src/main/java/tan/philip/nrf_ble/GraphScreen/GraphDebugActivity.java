@@ -1,17 +1,5 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.app.ActivityCompat;
-import androidx.databinding.DataBindingUtil;
-
-import com.jjoe64.graphview.DefaultLabelFormatter;
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.GridLabelRenderer;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
-import com.opencsv.CSVWriter;
-
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.content.Intent;
@@ -28,6 +16,18 @@ import android.view.View;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.ToggleButton;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.databinding.DataBindingUtil;
+
+import com.jjoe64.graphview.DefaultLabelFormatter;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.GridLabelRenderer;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileWriter;

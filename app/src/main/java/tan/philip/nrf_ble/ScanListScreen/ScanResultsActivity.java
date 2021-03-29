@@ -1,28 +1,27 @@
 package tan.philip.nrf_ble.ScanListScreen;
 
+import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+import android.util.Log;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.ServiceConnection;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.util.Log;
-import android.widget.Toast;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
-import tan.philip.nrf_ble.BluetoothLeService;
+import tan.philip.nrf_ble.BLEHandlerService;
 import tan.philip.nrf_ble.GraphScreen.PWVGraphActivity;
-import tan.philip.nrf_ble.GraphScreen.GraphDebugActivity;
 import tan.philip.nrf_ble.GraphScreen.XCGGraphActivity;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanScreen.ClientActivity;
@@ -36,11 +35,14 @@ public class ScanResultsActivity extends AppCompatActivity {
     private BluetoothItemAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
+    //Stuff for interacting with the service
+    Messenger mService = null;
+    boolean mIsBound;
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+
     //Bluetooth stuff
-    private Map<String, BluetoothDevice> mScanResults;
     private ArrayList<String> bluetoothAddresses;
     private ArrayList<BluetoothDevice> bluetoothDevices;
-    private String deviceNameToConnect = "";
 
     //For the recycler viewer
     private ArrayList<BluetoothItem> bluetoothList;
@@ -49,113 +51,181 @@ public class ScanResultsActivity extends AppCompatActivity {
     private int mConnectingIndex;
     private boolean mConnected;
 
-    private BluetoothLeService mBluetoothLeService;
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                Toast toast = Toast.makeText(ScanResultsActivity.this, "Unable to initialize Bluetooth", Toast.LENGTH_SHORT);
-                toast.show();
-                finish();
-            }
-        }
+    ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
 
+    //Handles messages from the BLEHandlerService
+    class IncomingHandler extends Handler {
         @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-                resetConnectingText();
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-                runOnUiThread(() -> Toast.makeText(ScanResultsActivity.this, "Connection failed", Toast.LENGTH_SHORT).show());
-                resetConnectingText();
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                runOnUiThread(() -> Toast.makeText(ScanResultsActivity.this, "Connection successful!", Toast.LENGTH_SHORT).show());
-
-                if(deviceNameToConnect.contains("ECG SCG Sensor"))
-                    startXCGGraphActivity();
-                else if(deviceNameToConnect.contains("PWV Sensor"))
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case BLEHandlerService.MSG_BT_DEVICES:
+                    //The service is sending the list of Bluetooth devices
+                    bluetoothAddresses = (ArrayList<String>)msg.getData().getSerializable("btAddresses");
+                    bluetoothDevices = (ArrayList<BluetoothDevice>)msg.getData().getSerializable("btDevices");
+                    buildRecyclerView();
+                    break;
+                case BLEHandlerService.MSG_GATT_CONNECTED:
+                    mConnected = true;
+                    invalidateOptionsMenu();
+                    break;
+                case BLEHandlerService.MSG_GATT_DISCONNECTED:
+                    mConnected = false;
+                    mConnecting = false;
+                    invalidateOptionsMenu();
+                    break;
+                case BLEHandlerService.MSG_GATT_FAILED:
+                    mConnected = false;
+                    mConnecting = false;
+                    resetConnectingText();
+                    break;
+                case BLEHandlerService.MSG_GATT_SERVICES_DISCOVERED:
+                    resetConnectingText();
+                    mConnected = true;
+                    mConnecting = false;
                     startPWVGraphActivity();
-
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+                    break;
+                default:
+                    super.handleMessage(msg);
             }
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mService = new Messenger(service);
+            try {
+                Message msg = Message.obtain(null, BLEHandlerService.MSG_REGISTER_CLIENT);
+                msg.replyTo = mMessenger;
+                mService.send(msg);
+                getBluetoothDevices();
+            }
+            catch (RemoteException e) {
+                // In this case the service has crashed before we could even do anything with it
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
+            mService = null;
         }
     };
 
+    private void CheckIfServiceIsRunning() {
+        //If the service is running when the activity starts, we want to automatically bind to it.
+        if (BLEHandlerService.isRunning()) {
+            doBindService();
+        }
+    }
+
+    void doBindService() {
+        mIsBound = bindService(new Intent(ScanResultsActivity.this, BLEHandlerService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+    void doUnbindService() {
+        if (mIsBound) {
+            // If we have received the service, and hence registered with it, then now is the time to unregister.
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, BLEHandlerService.MSG_UNREGISTER_CLIENT);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                    // There is nothing special we need to do if the service has crashed.
+                }
+            }
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+
+    private void sendMessageToService(int msgID) {
+        if (mIsBound) {
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, msgID);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                }
+            }
+        }
+    }
+
+    private void connectDevice(String deviceAddress) {
+        if (mIsBound) {
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, BLEHandlerService.MSG_CONNECT, deviceAddress);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                }
+            }
+        }
+    }
+
+    ////////////////////////Life cycle Methods/////////////////////////////////////////////////////
     @Override
-    @SuppressWarnings("unchecked")  //For HashMap cast
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan_results);
 
-        Intent intent = getIntent();
-        mScanResults = (HashMap<String, BluetoothDevice>)intent.getSerializableExtra(ClientActivity.EXTRA_BT_SCAN_RESULTS);
+        //Bind this activity to the BLEHandlerService
+        doBindService();
+        //CheckIfServiceIsRunning();
+
+        //Initialize our ArrayLists
         bluetoothList = new ArrayList<>();
         bluetoothAddresses = new ArrayList<>();
         bluetoothDevices = new ArrayList<>();
 
-        for(String deviceAddress : mScanResults.keySet()) {
-            bluetoothList.add(new BluetoothItem(R.drawable.ic_bluetooth_black_24dp, getBluetoothIdentifier(deviceAddress)));
+        //Get the bluetooth devices and addresses from BLEHandlerService
 
-            bluetoothAddresses.add(deviceAddress);
-            bluetoothDevices.add(mScanResults.get(deviceAddress));
+        //buildRecyclerView();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        doBindService();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        try {
+            doUnbindService();
         }
-
-        bluetoothList.add(new BluetoothItem(R.drawable.ic_bug_report_black_24dp, "Debug mode"));
-        bluetoothAddresses.add("00:00:00:00:00:00");
-        bluetoothDevices.add(null);
-
-        buildRecyclerView();
-
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-
-    }
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mConnecting = false;
-        resetConnectingText();
-        mConnectingIndex = -1;
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        disconnectGattServer();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mConnecting = false;
-        resetConnectingText();
-        mConnectingIndex = -1;
-        unregisterReceiver(mGattUpdateReceiver);
+        catch (Throwable t) {
+            Log.e(TAG, "Failed to unbind from the service", t);
+        }
     }
 
     @Override
     protected void onDestroy(){
         super.onDestroy();
+
+        try {
+            doUnbindService();
+        }
+        catch (Throwable t) {
+            Log.e(TAG, "Failed to unbind from the service", t);
+        }
         Log.d(TAG, "Destroyed ScanResultsActivity");
-        disconnectGattServer();
-        unbindService(mServiceConnection);
-        mBluetoothLeService = null;
     }
 
     public void buildRecyclerView() {
+        //Populate the lists with BT information
+        bluetoothList = new ArrayList<>();
+
+        for(int i = 0; i < bluetoothAddresses.size(); i++) {
+            bluetoothList.add(new BluetoothItem(R.drawable.ic_bluetooth_black_24dp, getBluetoothIdentifier(i)));
+        }
+
         mRecyclerView = findViewById(R.id.recyclerView);
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this);
@@ -171,7 +241,8 @@ public class ScanResultsActivity extends AppCompatActivity {
                     mConnecting = true;
                     mConnectingIndex = position;
                     changeItem(position, "Connecting...");
-                    connectDevice(bluetoothDevices.get(position));
+
+                    connectDevice(bluetoothAddresses.get(position));
                 }
             }
         });
@@ -184,45 +255,13 @@ public class ScanResultsActivity extends AppCompatActivity {
         mAdapter.notifyItemChanged(position);
     }
 
-    //Returns the name, or address if name is null
-    private String getBluetoothIdentifier (String deviceAddress) {
-        if(mScanResults.get(deviceAddress) == null)
-            return "Debug Mode";
 
-        if(mScanResults.get(deviceAddress).getName() != null)
-            return mScanResults.get(deviceAddress).getName() + " (" + deviceAddress + ")";
-        return "Unknown (" + deviceAddress + ")";
-    }
 
     //Bluetooth methods
-    private void connectDevice(BluetoothDevice device) {
-        if(device == null) {
-            startGraphDebugActivity();
-        } else {
-            deviceNameToConnect = getBluetoothIdentifier(device.getAddress());
-            Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + deviceNameToConnect, Toast.LENGTH_SHORT);
-            toast.show();
-            mBluetoothLeService.connect(device.getAddress());
-        }
-    }
-
-    public void disconnectGattServer() {
-        if (mBluetoothLeService != null) {
-            if(mConnected){
-                String toast = "Device disconnected";
-                runOnUiThread(() -> Toast.makeText(ScanResultsActivity.this, toast, Toast.LENGTH_SHORT).show());
-            }
-
-            mBluetoothLeService.disconnect();
-            mBluetoothLeService.close();
-        }
-        mConnected = false;
-    }
-
     private void startPWVGraphActivity() {
         Log.d(TAG, "Starting PWV Graph Activity");
         Intent intent = new Intent(this, PWVGraphActivity.class);
-        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(bluetoothAddresses.get(mConnectingIndex)));
+        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex));
 
         startActivity(intent);
     }
@@ -230,29 +269,25 @@ public class ScanResultsActivity extends AppCompatActivity {
     private void startXCGGraphActivity() {
         Log.d(TAG, "Starting XCG Graph Activity");
         Intent intent = new Intent(this, XCGGraphActivity.class);
-        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(bluetoothAddresses.get(mConnectingIndex)));
-
-        startActivity(intent);
-    }
-
-    private void startGraphDebugActivity() {
-        Intent intent = new Intent(this, GraphDebugActivity.class);
+        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex));
 
         startActivity(intent);
     }
 
     private void resetConnectingText() {
         if(mConnectingIndex >= 0)
-            changeItem(mConnectingIndex, getBluetoothIdentifier(bluetoothAddresses.get(mConnectingIndex)));
+            changeItem(mConnectingIndex, getBluetoothIdentifier(mConnectingIndex));
     }
 
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_FAILED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
+    private void getBluetoothDevices() {
+        sendMessageToService(BLEHandlerService.MSG_REQUEST_SCAN_RESULTS);
+    }
+
+    //Returns the name, or address if name is null
+    //Not good practice having this and having another method in BLEHandlerService but whatever
+    private String getBluetoothIdentifier (int i) {
+        if(bluetoothDevices.get(i).getName() != null)
+            return bluetoothDevices.get(i).getName() + " (" + bluetoothAddresses.get(i) + ")";
+        return "Unknown (" + bluetoothAddresses.get(i) + ")";
     }
 }

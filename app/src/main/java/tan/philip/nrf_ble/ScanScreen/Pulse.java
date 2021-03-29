@@ -4,19 +4,11 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
-import android.content.Context;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.view.View;
-import android.view.animation.Animation;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TableRow;
-
-import androidx.constraintlayout.widget.ConstraintLayout;
-
-import tan.philip.nrf_ble.R;
 
 public class Pulse {
     private static final int TIME_BETWEEN_PULSES = 1000;

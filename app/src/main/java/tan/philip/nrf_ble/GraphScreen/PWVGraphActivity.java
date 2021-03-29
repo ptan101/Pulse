@@ -2,6 +2,7 @@ package tan.philip.nrf_ble.GraphScreen;
 
 import android.Manifest;
 import android.animation.ValueAnimator;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,6 +20,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -48,8 +52,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 
+import tan.philip.nrf_ble.BLEHandlerService;
 import tan.philip.nrf_ble.BluetoothLeService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
@@ -66,6 +72,7 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     public static final int SAMPLE_RATE = 500;  //Hz
     public static final float SAMPLE_PERIOD = 1000f / (float) SAMPLE_RATE; //ms
     public static final int GRAPHING_PERIOD = 20; //In ms
+    private static final int GRAPHING_FREQUENCY = Math.round(GRAPHING_PERIOD / SAMPLE_PERIOD);
 
     private final double MIN_VALUE = -1.5;
     private final double MAX_VALUE = 1.5;
@@ -130,14 +137,120 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
     private boolean sdGood = false;
 
-    private BluetoothLeService mBluetoothLeService;
-
     //Saving
     private ToggleButton recordButton;
     private String fileName;
     private boolean storeData = false;
     private String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
     private long startRecordTime;
+
+    //Stuff for interacting with the service
+    Messenger mService = null;
+    boolean mIsBound;
+    final Messenger mMessenger = new Messenger(new PWVGraphActivity.IncomingHandler());
+
+    ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
+
+    //Handles messages from the BLEHandlerService
+    class IncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case BLEHandlerService.MSG_GATT_DISCONNECTED:
+                    runOnUiThread(() -> Toast.makeText(PWVGraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
+                    mBinding.textView5.setText(deviceIdentifier + " disconnected");
+                    mBinding.textView5.setTextColor(Color.rgb(255,0,0));
+                    invalidateOptionsMenu();
+                    break;
+                case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
+                    runData((byte[])msg.getData().getSerializable("btData"));
+
+                    if(numPoints % GRAPHING_FREQUENCY == 0) {
+                        //displayData();
+                        drawHrRanges();
+                    }
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            mService = new Messenger(service);
+            try {
+                Message msg = Message.obtain(null, BLEHandlerService.MSG_REGISTER_CLIENT);
+                msg.replyTo = mMessenger;
+                mService.send(msg);
+            }
+            catch (RemoteException e) {
+                // In this case the service has crashed before we could even do anything with it
+            }
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
+            mService = null;
+        }
+    };
+
+    private void CheckIfServiceIsRunning() {
+        //If the service is running when the activity starts, we want to automatically bind to it.
+        if (BLEHandlerService.isRunning()) {
+            doBindService();
+        }
+    }
+
+    void doBindService() {
+        mIsBound = bindService(new Intent(PWVGraphActivity.this, BLEHandlerService.class), mConnection, Context.BIND_AUTO_CREATE);
+    }
+    void doUnbindService() {
+        if (mIsBound) {
+            // If we have received the service, and hence registered with it, then now is the time to unregister.
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, BLEHandlerService.MSG_UNREGISTER_CLIENT);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                    // There is nothing special we need to do if the service has crashed.
+                }
+            }
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+
+    private void sendMessageToService(int msgID) {
+        if (mIsBound) {
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, msgID);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                }
+            }
+        }
+    }
+
+    //Rewrite this to make it possible to reconnect the device on GraphActivity
+    private void connectDevice(String deviceAddress) {
+        if (mIsBound) {
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, BLEHandlerService.MSG_CONNECT, deviceAddress);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                }
+            }
+        }
+    }
 
 
     @Override
@@ -152,7 +265,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
         //Bluetooth Setup
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
         //UI Setup
         mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_pwvgraph);
@@ -209,6 +321,10 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
         decimalFormat = new DecimalFormat("#.####");
 
         drawHrRanges();
+
+        //Bind activity to service
+        doBindService();
+
     }
 
     @Override
@@ -217,7 +333,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
         resetViewport();
 
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
         graphTimer = new Runnable() {
             @Override
@@ -238,7 +353,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     @Override
     public void onPause() {
         mHandler.removeCallbacks(graphTimer);
-        unregisterReceiver(mGattUpdateReceiver);
 
         super.onPause();
     }
@@ -247,11 +361,13 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
     protected void onDestroy() {
         super.onDestroy();
 
-        mBluetoothLeService.disconnect();
-        mBluetoothLeService.close();
-
-        unbindService(mServiceConnection);
-        mBluetoothLeService = null;
+        //Unbind the service
+        try {
+            doUnbindService();
+        }
+        catch (Throwable t) {
+            Log.e(TAG, "Failed to unbind from the service", t);
+        }
     }
 
     ////////////////////////////////////GRAPH STUFF////////////////////////////////////////////////
@@ -584,49 +700,6 @@ public class PWVGraphActivity extends AppCompatActivity implements PopupMenu.OnM
 
      */
 
-    ///////////////////////////////////////////////////////BT///////////////////////////////////////
-    // Code to manage Service lifecycle.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                finish();
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
-
-    private static final int GRAPHING_FREQUENCY = Math.round(GRAPHING_PERIOD / SAMPLE_PERIOD);
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                //mConnected = true;
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)|| BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                //mConnected = false;
-                runOnUiThread(() -> Toast.makeText(PWVGraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
-                mBinding.textView5.setText(deviceIdentifier + " disconnected");
-                mBinding.textView5.setTextColor(Color.rgb(255,0,0));
-                invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                runData(intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA));
-
-                if(numPoints % GRAPHING_FREQUENCY == 0) {
-                    //displayData();
-                    drawHrRanges();
-                }
-            }
-        }
-    };
 
 
     ////////////////////////////////////////////////GRAPHICAL UI//////////////////////////////////////////////////////////////////////////////////

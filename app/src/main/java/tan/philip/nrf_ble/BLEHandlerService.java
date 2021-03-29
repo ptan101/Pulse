@@ -85,6 +85,7 @@ public class BLEHandlerService extends Service {
 
     //Transceiving
 
+
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
     //@Nullable
     @Override
@@ -122,7 +123,11 @@ public class BLEHandlerService extends Service {
         unregisterReceiver(mGattUpdateReceiver);
         disconnectGattServer();
         unbindService(mServiceConnection);
+
+        mBluetoothLeService.disconnect();
+        mBluetoothLeService.close();
         mBluetoothLeService = null;
+
         isRunning = false;
     }
 
@@ -176,6 +181,24 @@ public class BLEHandlerService extends Service {
             }
         }
     }
+
+    private void sendBLEDataToUI(byte data[]) {
+        for (int i = mClients.size()-1; i >= 0; i--) {
+            try {
+                Bundle b = new Bundle();
+                b.putSerializable("btData", data);
+                Message msg = Message.obtain(null, MSG_GATT_ACTION_DATA_AVAILABLE);
+                msg.setData(b);
+                mClients.get(i).send(msg);
+            }
+            catch (RemoteException e) {
+                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
+                mClients.remove(i);
+            }
+        }
+    }
+
+
 
     private void sendMessageToUI(int msg_id) {
         for (int i = mClients.size()-1; i >= 0; i--) {
@@ -419,6 +442,8 @@ public class BLEHandlerService extends Service {
 //                    startPWVGraphActivity();
 
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
+                byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+                sendBLEDataToUI(data);
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
@@ -464,6 +489,10 @@ public class BLEHandlerService extends Service {
     public static boolean isRunning() {
         return isRunning;
     }
+
+    /////////////////////////////////////////Transcieving//////////////////////////////////////////
+
+
 
 }
 

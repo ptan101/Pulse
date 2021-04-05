@@ -47,7 +47,7 @@
 //import java.text.DecimalFormat;
 //import java.util.Calendar;
 //
-//import tan.philip.nrf_ble.BluetoothLeService;
+//import tan.philip.nrf_ble.BLE.BluetoothLeService;
 //import tan.philip.nrf_ble.R;
 //import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 //import tan.philip.nrf_ble.databinding.ActivityXcggraphBinding;

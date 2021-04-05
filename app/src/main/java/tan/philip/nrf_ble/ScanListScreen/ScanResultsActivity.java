@@ -19,11 +19,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
-import tan.philip.nrf_ble.BLEHandlerService;
-import tan.philip.nrf_ble.GraphScreen.BLEPackageParser;
+import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.SignalSetting;
+import tan.philip.nrf_ble.BLE.SignalSetting;
 
 public class ScanResultsActivity extends AppCompatActivity {
 

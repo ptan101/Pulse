@@ -55,8 +55,8 @@
 //import java.util.ArrayList;
 //import java.util.Calendar;
 //
-//import tan.philip.nrf_ble.BLEHandlerService;
-//import tan.philip.nrf_ble.BluetoothLeService;
+//import tan.philip.nrf_ble.BLE.BLEHandlerService;
+//import tan.philip.nrf_ble.BLE.BluetoothLeService;
 //import tan.philip.nrf_ble.R;
 //import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 //import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;

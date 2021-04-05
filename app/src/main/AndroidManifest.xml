@@ -47,8 +47,8 @@
         </activity>
         <activity android:name=".ScanScreen.TestUI" />
 
-        <service android:name=".BluetoothLeService"></service>
-        <service android:name=".BLEHandlerService"></service>
+        <service android:name=".BLE.BluetoothLeService"></service>
+        <service android:name=".BLE.BLEHandlerService"></service>
     </application>
 
 </manifest>

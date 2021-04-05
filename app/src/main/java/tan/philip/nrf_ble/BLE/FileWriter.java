@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble.GraphScreen;
+package tan.philip.nrf_ble.BLE;
 
 import android.Manifest;
 import android.content.Context;

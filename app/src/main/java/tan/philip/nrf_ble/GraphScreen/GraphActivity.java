@@ -4,7 +4,6 @@ import android.animation.ValueAnimator;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -43,11 +42,10 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import tan.philip.nrf_ble.BLEHandlerService;
-import tan.philip.nrf_ble.BluetoothLeService;
+import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
-import tan.philip.nrf_ble.SignalSetting;
+import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
 import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MAX_POSSIBLE_HR;

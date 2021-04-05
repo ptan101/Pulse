@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble;
+package tan.philip.nrf_ble.BLE;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import tan.philip.nrf_ble.GraphScreen.BLEPackageParser;
-
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
@@ -55,6 +53,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_CLEAR_SCAN = 5;
     public static final int MSG_REQUEST_SCAN_RESULTS = 6;
     public static final int MSG_CONNECT = 7;
+    public static final int MSG_CHECK_BT_ENABLED = 16;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
     public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
@@ -63,6 +62,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_GATT_FAILED = 12;
     public static final int MSG_GATT_SERVICES_DISCOVERED = 13;
     public static final int MSG_GATT_ACTION_DATA_AVAILABLE = 14;
+    public static final int MSG_CHECK_PERMISSIONS = 15;
 
     //final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
 
@@ -163,6 +163,12 @@ public class BLEHandlerService extends Service {
 //                    String address = msg.getData().getString("deviceAddress");
                     String address = msg.obj.toString();
                     connectDevice(address);
+                case MSG_CHECK_BT_ENABLED:
+                    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+                        //Request permission to enable BT
+                        sendMessageToUI(MSG_CHECK_PERMISSIONS);
+                    }
+                    break;
                 default:
                     super.handleMessage(msg);
             }
@@ -235,13 +241,6 @@ public class BLEHandlerService extends Service {
         //Get Bluetooth adapter
         final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
-
-        //Enable BT
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            //Request permission to enable BT
-            //Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            //startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
     }
 
     private void startScan() {

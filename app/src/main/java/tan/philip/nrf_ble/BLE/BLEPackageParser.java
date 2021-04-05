@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble.GraphScreen;
+package tan.philip.nrf_ble.BLE;
 
 import android.content.Context;
 import android.util.Log;
@@ -6,12 +6,10 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 
-import tan.philip.nrf_ble.SignalSetting;
+import tan.philip.nrf_ble.BLE.SignalSetting;
+import tan.philip.nrf_ble.GraphScreen.Filter;
 
 public class BLEPackageParser {
     //int numSignals;

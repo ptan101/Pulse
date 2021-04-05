@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble;
+package tan.philip.nrf_ble.BLE;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

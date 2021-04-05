@@ -36,7 +36,7 @@
 //import java.util.Calendar;
 //import java.util.Random;
 //
-//import tan.philip.nrf_ble.BluetoothLeService;
+//import tan.philip.nrf_ble.BLE.BluetoothLeService;
 //import tan.philip.nrf_ble.R;
 //import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 //

@@ -25,7 +25,7 @@ import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
 
-import tan.philip.nrf_ble.BLEHandlerService;
+import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
@@ -66,6 +66,10 @@ public class ClientActivity extends AppCompatActivity {
                     if(newNumDevices > numDevicesFound) {
                         foundDevice(newNumDevices);
                     }
+                    break;
+                case BLEHandlerService.MSG_CHECK_PERMISSIONS:
+                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
                     break;
                 default:
                     super.handleMessage(msg);
@@ -147,7 +151,7 @@ public class ClientActivity extends AppCompatActivity {
         //Start the BLEHandlerService
         Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);
         startService(intent);
-
+        doBindService();
         //this.getSupportActionBar().hide();
 
         //Set up background color transition
@@ -157,7 +161,7 @@ public class ClientActivity extends AppCompatActivity {
 
         //setupBLE();
 
-        doBindService();
+
         //CheckIfServiceIsRunning();
     }
 
@@ -182,6 +186,7 @@ public class ClientActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        //doBindService();
 
         mBinding.btnListDevices.setVisibility(View.GONE);
         //mBinding.layout1.setBackgroundColor(0xFF2c2a3a);
@@ -205,7 +210,7 @@ public class ClientActivity extends AppCompatActivity {
         numDevicesFound = 0;
         sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
 
-        doBindService();
+
     }
 
     @Override
@@ -279,20 +284,23 @@ public class ClientActivity extends AppCompatActivity {
     }
 
     private boolean hasPermissions() {
-        /*
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            requestBluetoothEnable();
-            Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Adapter not enabled", Toast.LENGTH_LONG);
-            toast.show();
-            return false;
 
-        } else if (!hasLocationPermissions()) {
+//        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+//            requestBluetoothEnable();
+//            Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Adapter not enabled", Toast.LENGTH_LONG);
+//            toast.show();
+//            return false;
+//
+//        } else
+        sendMessageToService(BLEHandlerService.MSG_CHECK_BT_ENABLED);
+
+        if (!hasLocationPermissions()) {
             requestLocationPermission();
             Toast toast = Toast.makeText(getApplicationContext(), "Please enable location permissions", Toast.LENGTH_LONG);
             toast.show();
             return false;
         }
-        */
+
         return true;
     }
 

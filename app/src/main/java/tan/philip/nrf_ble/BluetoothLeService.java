@@ -16,10 +16,10 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_NOTIFY_UUID;
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_WRITE_UUID;
-import static tan.philip.nrf_ble.Constants.SERVICE_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_RX_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_UUID;
 
 public class BluetoothLeService extends Service {
     private final static String TAG = BluetoothLeService.class.getSimpleName();
@@ -184,8 +184,8 @@ public class BluetoothLeService extends Service {
     }
 
     public void writeCharacteristic(byte[] txBytes) {
-        BluetoothGattService service = mBluetoothGatt.getService(SERVICE_UUID);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_WRITE_UUID);
+        BluetoothGattService service = mBluetoothGatt.getService(NUS_UUID);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_RX_UUID);
 
         if(characteristic != null){
             characteristic.setValue(txBytes);
@@ -239,8 +239,8 @@ public class BluetoothLeService extends Service {
                 return;
             }
 
-            BluetoothGattService service = gatt.getService(SERVICE_UUID);
-            BluetoothGattCharacteristic characteristic = service.getCharacteristic(CHARACTERISTIC_NOTIFY_UUID);
+            BluetoothGattService service = gatt.getService(NUS_UUID);
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_TX_UUID);
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
 

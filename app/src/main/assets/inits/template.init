@@ -1,0 +1,10 @@
+notification frequency, bytes per package
+end
+0, signal name, bytes per data point, signal sample rate, color (r g b a)
+1, signal name, bytes per data point, signal sample rate, color (r g b a)
+...
+end
+signal number
+signal number
+...
+signal number

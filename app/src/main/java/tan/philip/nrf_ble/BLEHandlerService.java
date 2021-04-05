@@ -18,7 +18,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.ParcelUuid;
@@ -26,13 +25,15 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import tan.philip.nrf_ble.GraphScreen.BLEPackageParser;
+
+import static tan.philip.nrf_ble.Constants.NUS_UUID;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
 public class BLEHandlerService extends Service {
@@ -56,7 +57,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_CONNECT = 7;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
-    public static final int MSG_SEND_NUM_BT_FOUND = 9;
+    public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
     public static final int MSG_GATT_CONNECTED = 10;
     public static final int MSG_GATT_DISCONNECTED = 11;
     public static final int MSG_GATT_FAILED = 12;
@@ -84,7 +85,7 @@ public class BLEHandlerService extends Service {
     private boolean mConnected;
 
     //Transceiving
-
+    private BLEPackageParser bleparser;
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
     //@Nullable
@@ -113,6 +114,9 @@ public class BLEHandlerService extends Service {
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         isRunning = true;
+
+        //Transcieving
+
     }
 
     @Override
@@ -182,7 +186,7 @@ public class BLEHandlerService extends Service {
         }
     }
 
-    private void sendBLEDataToUI(byte data[]) {
+    private void sendBLEDataToUI(ArrayList<float[]> data) {
         for (int i = mClients.size()-1; i >= 0; i--) {
             try {
                 Bundle b = new Bundle();
@@ -198,7 +202,20 @@ public class BLEHandlerService extends Service {
         }
     }
 
-
+    private void sendSignalSettings(ArrayList<SignalSetting> data) {
+        for (int i = mClients.size() - 1; i >= 0; i--) {
+            try {
+                Bundle b = new Bundle();
+                b.putSerializable("sigSettings", data);
+                Message msg = Message.obtain(null, MSG_SEND_PACKAGE_INFORMATION);
+                msg.setData(b);
+                mClients.get(i).send(msg);
+            } catch (RemoteException e) {
+                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
+                mClients.remove(i);
+            }
+        }
+    }
 
     private void sendMessageToUI(int msg_id) {
         for (int i = mClients.size()-1; i >= 0; i--) {
@@ -234,17 +251,10 @@ public class BLEHandlerService extends Service {
 
 
         ScanFilter scanFilter = new ScanFilter.Builder()
-                //.setServiceUuid(new ParcelUuid(SERVICE_UUID))
-                //.setDeviceAddress("EF:C6:E7:96:D4:D6")
-                .setDeviceName("PWV Sensor")
-                .build();
-
-        ScanFilter scanFilter2 = new ScanFilter.Builder()
-                .setDeviceName("ECG SCG Sensor")
+                .setServiceUuid(new ParcelUuid(NUS_UUID))
                 .build();
 
         filters.add(scanFilter);
-        //filters.add(scanFilter2);
 
         ScanSettings settings = new ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
@@ -434,16 +444,11 @@ public class BLEHandlerService extends Service {
                 //resetConnectingText();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-                sendMessageToUI(MSG_GATT_SERVICES_DISCOVERED);
-
-//                if(deviceNameToConnect.contains("ECG SCG Sensor"))
-//                    startXCGGraphActivity();
-//                else if(deviceNameToConnect.contains("PWV Sensor"))
-//                    startPWVGraphActivity();
-
+                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
+                sendSignalSettings(bleparser.getSignalSettings());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-                sendBLEDataToUI(data);
+                processPackage(data);
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
@@ -491,8 +496,25 @@ public class BLEHandlerService extends Service {
     }
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
+    private void initializeBLEParser() {
+        bleparser = new BLEPackageParser(this);
 
+    }
+    private void processPackage(byte[] data) {
+        //Convert byte array into arrays of signals and send over messenger
+        ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePackage(data);
 
+        //For each signal, filter in the right way
+        ArrayList<float[]> filtered_data = new ArrayList<>();
+        for (int i = 0; i < packaged_data.size(); i ++)
+            filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));
 
+        //filtered_data.add(new float[] {2});
+        //filtered_data.add(new float[] {6});
+
+        sendBLEDataToUI(filtered_data);
+
+        //If save enabled, save raw data to phone memory
+    }
 }
 

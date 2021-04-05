@@ -18,18 +18,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import tan.philip.nrf_ble.BLEHandlerService;
-import tan.philip.nrf_ble.GraphScreen.PWVGraphActivity;
-import tan.philip.nrf_ble.GraphScreen.XCGGraphActivity;
+import tan.philip.nrf_ble.GraphScreen.BLEPackageParser;
+import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.ScanScreen.ClientActivity;
+import tan.philip.nrf_ble.SignalSetting;
 
 public class ScanResultsActivity extends AppCompatActivity {
 
     public static final String TAG = "ScanResultsActivity";
     public static final String EXTRA_BT_IDENTIFIER = "bt identifier";
+    public static final String EXTRA_SIGNAL_SETTINGS_IDENTIFIER = "signal settings";
 
     private RecyclerView mRecyclerView;
     private BluetoothItemAdapter mAdapter;
@@ -78,11 +78,11 @@ public class ScanResultsActivity extends AppCompatActivity {
                     mConnecting = false;
                     resetConnectingText();
                     break;
-                case BLEHandlerService.MSG_GATT_SERVICES_DISCOVERED:
+                case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
                     resetConnectingText();
                     mConnected = true;
                     mConnecting = false;
-                    startPWVGraphActivity();
+                    startPWVGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"));
                     break;
                 default:
                     super.handleMessage(msg);
@@ -258,18 +258,13 @@ public class ScanResultsActivity extends AppCompatActivity {
 
 
     //Bluetooth methods
-    private void startPWVGraphActivity() {
-        Log.d(TAG, "Starting PWV Graph Activity");
-        Intent intent = new Intent(this, PWVGraphActivity.class);
-        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex));
-
-        startActivity(intent);
-    }
-
-    private void startXCGGraphActivity() {
-        Log.d(TAG, "Starting XCG Graph Activity");
-        Intent intent = new Intent(this, XCGGraphActivity.class);
-        intent.putExtra(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex));
+    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings) {
+        Log.d(TAG, "Starting Graph Activity");
+        Intent intent = new Intent(this, GraphActivity.class);
+        Bundle extras = new Bundle();
+        extras.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
+        extras.putString(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex)); //Probably not necessary, graph activity can ask for it from the service
+        intent.putExtras(extras);
 
         startActivity(intent);
     }

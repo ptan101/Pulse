@@ -1,11 +1,10 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-import static tan.philip.nrf_ble.GraphScreen.PWVGraphActivity.MAX_POINTS_ARRAY;
-
 public class Filter {
     /*
     https://www-users.cs.york.ac.uk/~fisher/mkfilter/
     Holy shit this website is literally a lifesaver
+    But the guy died and now they took it down :(
      */
 
     public static final int N_ZEROS = 2;
@@ -18,16 +17,14 @@ public class Filter {
     private float[] yv = new float[N_POLES+1];
 
     //Full array of input / outputs
-    private float[] x;
-    private float[] y;
+    //private float[] x;
+    //private float[] y;
 
     //Array of filter coefficients
     private double gain;
     private double[] fx = new double[N_ZEROS +1];
     private double[] fy = new double[N_POLES +1];
 
-    private int fs;
-    private int tfs;
     private int currentIndex = N_POLES;
     private int numPoints = N_POLES;
 
@@ -44,14 +41,11 @@ public class Filter {
         SCG
     }
 
-
-    public Filter(float[] inputs, float[] outputs, int sampleRate, int targetSampleRate, SignalType signal) {
-        x = inputs;
-        y = outputs;
-        fs = sampleRate;
-        tfs = targetSampleRate;
+    //I recommend making the Filter object into some type of Signal object maybe...
+    public Filter(SignalType signal) {
         signalType = signal;
 
+        //Eventually, make this loadable
         switch(signalType) {
             case PPG:
                 //fs = 500 Hz, fc1 = 1.5Hz, fc2 = 8Hz
@@ -77,12 +71,12 @@ public class Filter {
     }
 
 
-    public void findNextY() {
+    public float findNextY(float new_input) {
         //Advance in time
         xv[0] = xv[1]; xv[1] = xv[2];
 
         //Set the next input
-        xv[2] = (float) (x[currentIndex] / gain);
+        xv[2] = (float) (new_input / gain);
 
         //Advance in time
         yv[0] = yv[1]; yv[1] = yv[2];
@@ -93,8 +87,8 @@ public class Filter {
 
 
         numPoints ++;
-        currentIndex = numPoints% MAX_POINTS_ARRAY;
-        y[currentIndex] = yv[2];
+        //currentIndex = numPoints% MAX_POINTS_ARRAY;
+        return yv[2];
         //y[currentIndex] = x[currentIndex];
     }
 
@@ -104,10 +98,6 @@ public class Filter {
 
     public void setYv(float yvValue, int index) {
         yv[index] = yvValue;
-    }
-
-    public void lerp() {
-
     }
 
 }

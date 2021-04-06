@@ -157,7 +157,10 @@ public class BLEHandlerService extends Service {
                     clearScan();
                     break;
                 case MSG_REQUEST_SCAN_RESULTS:
-                    sendScanResultsToUI();  //Should make this a reply
+                    Bundle b = new Bundle();
+                    b.putSerializable("btAddresses", bluetoothAddresses);
+                    b.putSerializable("btDevices", bluetoothDevices);
+                    sendDataToUI(b, MSG_BT_DEVICES);  //Should make this a reply maybe
                     break;
                 case MSG_CONNECT:
 //                    String address = msg.getData().getString("deviceAddress");
@@ -175,6 +178,21 @@ public class BLEHandlerService extends Service {
         }
     }
 
+    private void sendDataToUI(Bundle b, int message_id) {
+        for (int i = mClients.size()-1; i >= 0; i--) {
+            try {
+                Message msg = Message.obtain(null, message_id);
+                msg.setData(b);
+                mClients.get(i).send(msg);
+            }
+            catch (RemoteException e) {
+                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
+                mClients.remove(i);
+            }
+        }
+    }
+
+    /*
     private void sendScanResultsToUI() {
         for (int i = mClients.size()-1; i >= 0; i--) {
             try {
@@ -223,6 +241,8 @@ public class BLEHandlerService extends Service {
         }
     }
 
+
+     */
     private void sendMessageToUI(int msg_id) {
         for (int i = mClients.size()-1; i >= 0; i--) {
             try {
@@ -234,6 +254,8 @@ public class BLEHandlerService extends Service {
             }
         }
     }
+
+
 
 
     //////////////////////////Scanning//////////////////////////////////////////////////
@@ -340,7 +362,10 @@ public class BLEHandlerService extends Service {
             bluetoothDevices.add(mScanResults.get(deviceAddress));
         }
 
-        sendScanResultsToUI();
+        Bundle b = new Bundle();
+        b.putSerializable("btAddresses", bluetoothAddresses);
+        b.putSerializable("btDevices", bluetoothDevices);
+        sendDataToUI(b, MSG_BT_DEVICES);
     }
 
 
@@ -444,7 +469,13 @@ public class BLEHandlerService extends Service {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
                 initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
-                sendSignalSettings(bleparser.getSignalSettings());
+
+                Bundle b = new Bundle();
+                b.putSerializable("sigSettings", bleparser.getSignalSettings());
+                b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
+                sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+
+
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 processPackage(data);
@@ -511,7 +542,9 @@ public class BLEHandlerService extends Service {
         //filtered_data.add(new float[] {2});
         //filtered_data.add(new float[] {6});
 
-        sendBLEDataToUI(filtered_data);
+        Bundle b = new Bundle();
+        b.putSerializable("btData", filtered_data);
+        sendDataToUI(b, MSG_GATT_ACTION_DATA_AVAILABLE);
 
         //If save enabled, save raw data to phone memory
     }

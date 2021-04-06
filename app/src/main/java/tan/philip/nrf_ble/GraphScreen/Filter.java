@@ -91,13 +91,4 @@ public class Filter {
         return yv[2];
         //y[currentIndex] = x[currentIndex];
     }
-
-    public void setXv(float xvValue, int index) {
-        xv[index] = (float) (xvValue / GAIN);
-    }
-
-    public void setYv(float yvValue, int index) {
-        yv[index] = yvValue;
-    }
-
 }

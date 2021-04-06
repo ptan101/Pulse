@@ -1,9 +1,19 @@
 4, 8
 end
-0, Distal Signal, 2, 8, 125 125 125 255
-1, Proximal Signal, 2, 8, 255 0 0 255
+0, Distal Signal, 2, 4
+.graphable
+..color: 125 125 125 255
+1, Proximal Signal, 2, 4
+.graphable
+..color: 255 0 0 255
+2, Temperature, 4, 4
+.digdisplay
+end
+heartrate, 0
+spo2, 0, 0, 0, 0
+pwv, 1, 0
 end
 0
 1
-0
-1
+2
+end

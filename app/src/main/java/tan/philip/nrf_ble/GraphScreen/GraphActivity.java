@@ -19,6 +19,7 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -48,8 +49,6 @@ import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
-import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MAX_POSSIBLE_HR;
-import static tan.philip.nrf_ble.GraphScreen.HeartDataAnalysis.MIN_POSSIBLE_HR;
 import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDENTIFIER;
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
@@ -70,24 +69,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private GraphView graph;
     private boolean graph1Scrollable = false;
     private ArrayList<TextView> legend = new ArrayList<TextView>();
-
-    //Holds the y offsets per signal series
-    //private float[] offsets = new float[num_series];
+    private ArrayList<DigitalDisplay> digitalDisplays = new ArrayList<>();
 
     private ArrayList<GraphSignal> signals = new ArrayList<>();
-
-    /*
-    //Series for Interactive Mode
-    private ArrayList<LineGraphSeries<DataPoint>> series_interactive = new ArrayList();
-
-    //Series for Patient Monitor Mode
-    private ArrayList<PointsGraphSeries<DataPoint>> series_monitor = new ArrayList();
-    private ArrayList<DataPoint[]> monitor_buffer = new ArrayList<>();
-    */
     private PointsGraphSeries<DataPoint> monitor_mask = new PointsGraphSeries<>();
     private DataPoint[] mask = new DataPoint[1];
-
-
 
     //Graphing, filtering, etc.
     private float proximal_gain = 10f;
@@ -97,6 +83,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
 
 
+    private Biometrics biometrics;
     private HeartDataAnalysis hda;
     private ValueAnimator heartRateAnimator;
     private int heartRate = HeartDataAnalysis.NO_DATA;
@@ -128,9 +115,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
-
-                    break;
+                case BLEHandlerService.MSG_GATT_FAILED:
                 case BLEHandlerService.MSG_GATT_DISCONNECTED:
                     runOnUiThread(() -> Toast.makeText(GraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
                     mBinding.textView5.setText(deviceIdentifier + " disconnected");
@@ -243,6 +228,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         monitor_mask = new PointsGraphSeries<>();
 
         setupGraph((ArrayList<SignalSetting>)extras.getSerializable(ScanResultsActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
+        biometrics = (Biometrics)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
+        setupBiometricsDigitalDisplay();
 
 
         //Data setup
@@ -253,7 +240,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         heartRateAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                mBinding.txtHeartRate.setTextColor((mBinding.txtHeartRate.getTextColors().withAlpha((int)heartRateAnimator.getAnimatedValue())));
+                //mBinding.txtHeartRate.setTextColor((mBinding.txtHeartRate.getTextColors().withAlpha((int)heartRateAnimator.getAnimatedValue())));
             }
         });
 
@@ -343,10 +330,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         graph.getViewport().setMaxX(10);
         graph.getViewport().setXAxisBoundsManual(true);
 
-        //graph.addSeries(series1_ECG);
-        //graph.addSeries(series2_ECG);
-        //graph.addSeries(ECG_Mask);
-
         //Click on graph to enable scroll in interactive view
         graph.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -390,25 +373,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         for (int i = 0; i < signalSettings.size(); i ++) {
             SignalSetting cur_setting = signalSettings.get(i);
             float offset = (signalSettings.size() - i) * (MAX_Y - MIN_Y) / (signalSettings.size() + 1);
-            signals.add(new GraphSignal(cur_setting.fs, offset, MAX_MONITOR_DISPLAY_LENGTH, cur_setting.color));
-
-            //Add a new TextView to the legend with the signal name
-            ConstraintSet set = new ConstraintSet();
-            TextView test = new TextView(this);
-            test.setText(cur_setting.name);
-            test.setTextColor(signals.get(i).getColorARGB());
-            test.setId(View.generateViewId());
-            mBinding.graphLegendCL.addView(test, 0);
-
-            set.clone(mBinding.graphLegendCL);
-            if(legend.size() == 0) {
-                set.connect(test.getId(), ConstraintSet.TOP, mBinding.graphLegendCL.getId(), ConstraintSet.TOP, 20);
-            } else {
-                set.connect(test.getId(), ConstraintSet.TOP, legend.get(i - 1).getId(), ConstraintSet.BOTTOM, 0);
-            }
-            set.connect(test.getId(), ConstraintSet.END, mBinding.graphLegendCL.getId(), ConstraintSet.END, 60);
-            set.applyTo(mBinding.graphLegendCL);
-            legend.add(test);
+            signals.add(new GraphSignal(cur_setting, offset, MAX_MONITOR_DISPLAY_LENGTH));
+            signals.get(i).setupDisplay(this);
         }
 
         //Set up the textviews for the legend
@@ -421,24 +387,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
     private void resetAllSeries() {
         graph.removeAllSeries();
-        //series_interactive.clear();
-        //series_monitor.clear();
-        //monitor_buffer.clear();
 
-
-        for (int i = 0; i < signals.size(); i ++) {
-            //series_interactive.add(new LineGraphSeries<>());
-            //series_monitor.add(new PointsGraphSeries<>());
-            //monitor_buffer.add(new DataPoint[NUM_POINTS_IN_MONITOR_VIEW]);
-            signals.get(i).resetSeries();
-
-            //graph.addSeries(series_interactive.get(i));
-            graph.addSeries(signals.get(i).interactive_series);
-
-            //for (int j = 0; j < monitor_buffer.get(i).length; j ++) {
-            //    monitor_buffer.get(i)[j] = new DataPoint((float) i * SAMPLE_PERIOD / 1000f, offsets[i]);
-            //}
-
+        for (GraphSignal signal: signals) {
+            if(signal.graphable()) {
+                signal.resetSeries();
+                graph.addSeries(signal.interactive_series);
+            }
         }
     }
 
@@ -470,19 +424,22 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             //Determine the time between each data point as the time between packages / number of data points per package
             float deltaT = NOTIFICATION_PERIOD / signal_packet.length;  //In ms
 
-            //Plot every data point in the packet. We alter both series since we want them to both be updated when we switch between
-            for (int j = 0; j < signal_packet.length; j++) {
-                float x = (t + (j * deltaT)) / 1000;
-                float y = signal_packet[j] + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
+            if(signals.get(i).graphable()) {
+                //Plot every data point in the packet. We alter both series since we want them to both be updated when we switch between
+                for (int j = 0; j < signal_packet.length; j++) {
+                    float x = (t + (j * deltaT)) / 1000;
+                    float y = signal_packet[j] + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
 
-                //Add the data to the interactive series
-                signals.get(i).interactive_series.appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
-                //series_interactive.get(i).appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
+                    //Add the data to the interactive series
+                    signals.get(i).interactive_series.appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
 
-                //Add the data to the monitor series
-                //monitor_buffer.get(i)[0] = new DataPoint(0, y);
-                //series_monitor.get(i).resetData(monitor_buffer.get(i));
-                signals.get(i).addDataToMonitorBuffer(y);
+                    //Add the data to the monitor series;
+                    signals.get(i).addDataToMonitorBuffer(y);
+                }
+            }
+
+            if(signals.get(i).useDigitalDisplay) {
+                //Do something here
             }
         }
         t += NOTIFICATION_PERIOD;
@@ -533,6 +490,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
      * Draw the heart rate range bar on the bottom
      */
     private void drawHrRanges() {
+        /*
         float positionPerHR = (float) mBinding.imgGreyBar.getLayoutParams().width/ (float) (MAX_POSSIBLE_HR - MIN_POSSIBLE_HR);
 
         float lowPosition = 0;
@@ -594,6 +552,30 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         } else {
             mBinding.txtWarning.setText("Extremely irregular heart rhythm");
         }
+
+         */
+    }
+
+    private void setupBiometricsDigitalDisplay() {
+        ArrayList<Integer> hr_list = biometrics.getHr_signals();
+        for (Integer i : hr_list) {
+            DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "Heart rate", "heartrate"),
+                    mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+        }
+
+        ArrayList<int[]> spo2_list = biometrics.getSpo2_signals();
+        for (int[] i : spo2_list) {
+            DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "SpO2", "spo2"),
+                    mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+        }
+
+        ArrayList<int[]> pwv_list = biometrics.getPwv_signals();
+        for (int[] i : pwv_list) {
+            DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "PWV", "pwv"),
+                    mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+        }
+
+
     }
 
 
@@ -656,7 +638,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     public boolean onMenuItemClick(MenuItem menuItem) {
         switch(menuItem.getItemId()) {
             case R.id.invertProximal:
-                //seproximal_gain *= -1;
+                //proximal_gain *= -1;
                 return true;
             case R.id.invertDistal:
                 //distal_gain *= -1;
@@ -709,34 +691,48 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         int sample_period;
         float offset;
         int num_points = 0;
+        String name;
 
+        //For graphable
+        boolean graphable = false;
         LineGraphSeries<DataPoint> interactive_series;
         LineGraphSeries<DataPoint> monitor_series;
         DataPoint[] monitor_buffer;
         int[] color;
 
-        public GraphSignal(int fs, float offset, int monitor_length, int color[]) {
-            this.fs = fs;
+        //For Digital Dispaly
+        boolean useDigitalDisplay = false;
+
+        public GraphSignal(SignalSetting settings, float offset, int monitor_length) {
+            this.fs = settings.fs;
+            this.name = settings.name;
             this.offset = offset;
-            this.color = color;
+            this.graphable = settings.graphable;
+            this.useDigitalDisplay = settings.digitalDisplay;
+
             sample_period = 1000 /  fs;
 
-            interactive_series = new LineGraphSeries<>();
-            monitor_series = new LineGraphSeries<>();
-            monitor_buffer = new DataPoint[fs * monitor_length];
+            if(this.graphable) {
+                interactive_series = new LineGraphSeries<>();
+                monitor_series = new LineGraphSeries<>();
+                monitor_buffer = new DataPoint[fs * monitor_length];
+                this.color = settings.color;
 
-            resetSeries();
+                resetSeries();
+            }
         }
 
         public void resetSeries() {
-            interactive_series = new LineGraphSeries<>();
-            monitor_series = new LineGraphSeries<>();
+            if(graphable) {
+                interactive_series = new LineGraphSeries<>();
+                monitor_series = new LineGraphSeries<>();
 
-            for (int i = 0; i < monitor_buffer.length; i ++) {
-                monitor_buffer[i] = new DataPoint(i * sample_period, offset);
+                for (int i = 0; i < monitor_buffer.length; i++) {
+                    monitor_buffer[i] = new DataPoint(i * sample_period, offset);
+                }
+                monitor_series.resetData(monitor_buffer);
+                setColor(color);
             }
-            monitor_series.resetData(monitor_buffer);
-            setColor(color);
         }
 
         public void addDataToMonitorBuffer(float data) {
@@ -755,6 +751,46 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         public int getColorARGB() {
             return Color.argb(color[3], color[0], color[1], color[2]);
+        }
+
+        public boolean graphable() {
+            return graphable;
+        }
+
+        public boolean isUseDigitalDisplay() {
+            return useDigitalDisplay;
+        }
+
+        //Depending on if it is a graphable or digitial display, add the right UI
+        public void setupDisplay(Context context) {
+            //If graphable, set up legends
+            if(this.graphable) {
+                //Add a new TextView to the legend with the signal name
+                ConstraintSet set = new ConstraintSet();
+                TextView signal_name = new TextView(context);
+                signal_name.setText(this.name);
+                signal_name.setTextColor(this.getColorARGB());
+                signal_name.setId(View.generateViewId());
+                mBinding.graphLegendCL.addView(signal_name);
+
+                set.clone(mBinding.graphLegendCL);
+                if(legend.size() == 0) {
+                    set.connect(signal_name.getId(), ConstraintSet.TOP, mBinding.graphLegendCL.getId(), ConstraintSet.TOP, 20);
+                } else {
+                    set.connect(signal_name.getId(), ConstraintSet.TOP, legend.get(legend.size() - 1).getId(), ConstraintSet.BOTTOM, 0);
+                }
+                set.connect(signal_name.getId(), ConstraintSet.END, mBinding.graphLegendCL.getId(), ConstraintSet.END, 60);
+                set.applyTo(mBinding.graphLegendCL);
+                legend.add(signal_name);
+            }
+
+            //If digital display, set up digital display
+            //Try making constraint layout for each
+            if(this.useDigitalDisplay) {
+                //Add a new TextView to the legend with the signal name
+                DigitalDisplay newDD = new DigitalDisplay(context, this.name, "temperature");
+                DigitalDisplay.addToDigitalDisplay(newDD, mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+            }
         }
     }
 }

@@ -71,221 +71,52 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/bottomData"
-            android:layout_width="match_parent"
+            android:id="@+id/digitalDisplayLeft"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            android:layout_marginTop="10dp"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent="0.5"
             app:layout_constraintStart_toStartOf="@+id/graph1"
             app:layout_constraintTop_toBottomOf="@+id/amplificationText">
 
+            <View
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible"
+                app:layout_constraintTop_toTopOf="@+id/digitalDisplayLeft"
+                tools:layout_editor_absoluteX="10dp" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/HR_layout"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                app:layout_constraintEnd_toStartOf="@+id/PWV_layout"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/digitalDisplayRight"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:layout_constraintWidth_default="percent"
+            app:layout_constraintWidth_percent="0.5"
+            app:layout_constraintEnd_toEndOf="@+id/graph1"
+            app:layout_constraintTop_toBottomOf="@+id/amplificationText">
 
-                <ImageView
-                    android:id="@+id/img_HR"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
+            <View
+                android:id="@+id/divider2"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider"
+                android:visibility="invisible"
+                app:layout_constraintTop_toTopOf="@+id/digitalDisplayRight" />
 
-                    android:scaleType="fitCenter"
-                    android:src="@drawable/heartrate"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <TextView
-                    android:id="@+id/txt_heart_rate"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Heart rate"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/img_HR"
-                    app:layout_constraintTop_toTopOf="parent" />
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/PWV_layout"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/HR_layout"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <ImageView
-                    android:id="@+id/img_PWV"
-                    android:layout_width="45dp"
-                    android:layout_height="45dp"
-
-                    android:scaleType="fitEnd"
-                    android:src="@drawable/ic_trending_flat_black_24dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <TextView
-                    android:id="@+id/txt_PWV_label"
-                    android:layout_width="wrap_content"
-
-                    android:layout_height="wrap_content"
-                    android:text="PWV"
-                    android:textColor="#FF0000"
-                    android:textSize="8dp"
-                    app:layout_constraintBottom_toBottomOf="@+id/img_PWV"
-                    app:layout_constraintEnd_toEndOf="@+id/img_PWV"
-                    app:layout_constraintStart_toStartOf="@+id/img_PWV"
-                    app:layout_constraintTop_toTopOf="@+id/img_PWV"
-                    app:layout_constraintVertical_bias="0.7" />
-
-                <TextView
-                    android:id="@+id/txt_PWV"
-                    android:layout_width="wrap_content"
-
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="5dp"
-                    android:text="Pulse wave velocity"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintStart_toEndOf="@+id/img_PWV"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/constraintLayout3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/HR_layout">
-
-                <TextView
-                    android:id="@+id/txtMinHR"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="0"
-                    app:layout_constraintStart_toStartOf="@id/img_left_circle"
-                    app:layout_constraintTop_toBottomOf="@id/img_left_circle" />
-
-                <TextView
-                    android:id="@+id/maxHR"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="200"
-                    app:layout_constraintEnd_toEndOf="@id/img_right_circle"
-                    app:layout_constraintTop_toBottomOf="@id/img_right_circle" />
-
-                <ImageView
-                    android:id="@+id/img_grey_bar"
-                    android:layout_width="300dp"
-                    android:layout_height="14dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/grey_bar"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <ImageView
-                    android:id="@+id/img_left_circle"
-                    android:layout_width="7dp"
-                    android:layout_height="14dp"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/grey_half_circle"
-                    app:layout_constraintEnd_toStartOf="@+id/img_grey_bar"
-                    app:layout_constraintTop_toTopOf="@+id/img_grey_bar" />
-
-                <ImageView
-                    android:id="@+id/img_right_circle"
-                    android:layout_width="7dp"
-                    android:layout_height="14dp"
-                    android:rotation="180"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/grey_half_circle"
-                    app:layout_constraintBottom_toBottomOf="@+id/img_grey_bar"
-                    app:layout_constraintStart_toEndOf="@+id/img_grey_bar"
-                    app:layout_constraintTop_toTopOf="@+id/img_grey_bar" />
-
-
-                <ImageView
-                    android:id="@+id/img_blue_bar"
-                    android:layout_width="100dp"
-                    android:layout_height="14dp"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/blue_bar"
-                    app:layout_constraintStart_toStartOf="@+id/img_grey_bar"
-                    app:layout_constraintTop_toTopOf="@+id/img_grey_bar" />
-
-                <ImageView
-                    android:id="@+id/img_left_blue_circle"
-                    android:layout_width="7dp"
-                    android:layout_height="14dp"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/blue_circle"
-                    app:layout_constraintEnd_toStartOf="@+id/img_blue_bar"
-                    app:layout_constraintTop_toTopOf="@+id/img_grey_bar" />
-
-                <ImageView
-                    android:id="@+id/img_right_blue_circle"
-                    android:layout_width="7dp"
-                    android:layout_height="14dp"
-                    android:rotation="180"
-                    android:scaleType="fitXY"
-                    android:src="@drawable/blue_circle"
-                    app:layout_constraintBottom_toBottomOf="@+id/img_grey_bar"
-                    app:layout_constraintStart_toEndOf="@+id/img_blue_bar"
-                    app:layout_constraintTop_toTopOf="@+id/img_grey_bar" />
-
-                <TextView
-                    android:id="@+id/txt_low_hr"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="LOW"
-                    app:layout_constraintEnd_toStartOf="@id/img_left_blue_circle"
-                    app:layout_constraintTop_toBottomOf="@id/img_left_circle" />
-
-                <TextView
-                    android:id="@+id/txt_high_hr"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="HIGH"
-                    app:layout_constraintStart_toEndOf="@id/img_right_blue_circle"
-                    app:layout_constraintTop_toBottomOf="@id/img_right_circle" />
-
-                <TextView
-                    android:id="@+id/txt_single_hr"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="ONLY"
-                    app:layout_constraintStart_toEndOf="@id/img_right_blue_circle"
-                    app:layout_constraintStart_toStartOf="@id/img_left_blue_circle"
-                    app:layout_constraintTop_toBottomOf="@id/img_right_circle" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <TextView
-                android:id="@+id/txt_warning"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginEnd="8dp"
-                android:text="WARNING"
-                app:layout_constraintEnd_toEndOf="@+id/constraintLayout3"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/constraintLayout3" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/digitalDisplayCenter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="0dp"
+            app:layout_constraintStart_toStartOf="@+id/graph1"
+            app:layout_constraintTop_toBottomOf="@+id/digitalDisplayLeft">
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

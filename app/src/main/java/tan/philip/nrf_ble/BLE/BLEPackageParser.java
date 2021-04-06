@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import tan.philip.nrf_ble.BLE.SignalSetting;
+import tan.philip.nrf_ble.GraphScreen.Biometrics;
 import tan.philip.nrf_ble.GraphScreen.Filter;
 
 public class BLEPackageParser {
@@ -18,6 +19,7 @@ public class BLEPackageParser {
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Integer> signalOrder;
     ArrayList<Filter> filters;
+    Biometrics biometrics = new Biometrics();
 
     //Use this to instantiate a new BLEPackageParser object
     public BLEPackageParser (Context context) {
@@ -26,7 +28,7 @@ public class BLEPackageParser {
         filters = new ArrayList<>();
 
         //Eventually, load in data from some init file to tell how to parse the BT package.
-        loadInitFile("", context);
+        parseInitFile("", context);
     }
 
     //To do: make this arraylist of arrays
@@ -64,63 +66,54 @@ public class BLEPackageParser {
         return parsedData;
     }
 
-    private void loadInitFile(String initFileName, Context context) {
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("inits/ppg_v2.init")));
-                    //new InputStreamReader(context.getAssets().open("ppg_v2.init")));
+    private void parseInitFile(String initFileName, Context context) {
+        ArrayList<String> lines = loadInitFile(initFileName, context);
+        int i = 0;
+        String cur_line;
 
-            // do reading, usually loop until end of file reading
-            String mLine;
-            //First, get information about the whole packet
-            while (!(mLine = reader.readLine()).contains("end")) {
-                String[] line_info = mLine.split(", ");
-                Log.d("1", mLine);
-                notificationFrequency = Integer.parseInt(line_info[0]);
-                packageSizeBytes = Integer.parseInt(line_info[1]);
-            }
-            //Then, get information about each signal
-            while (!(mLine = reader.readLine()).contains("end")) {
-                String[] line_info = mLine.split(", ");
-                Log.d("2", mLine);
+        //First section (information about the packet as a whole)
+        cur_line = lines.get(i);
+        String[] packet_data = cur_line.split(", ");
+        notificationFrequency = Integer.parseInt(packet_data[0]);
+        packageSizeBytes = Integer.parseInt(packet_data[1]);
+        i+=2;
 
-                int index = Integer.parseInt(line_info[0]);                 //Index might not be necessary but oh well
-                String name = line_info[1];
-                int bytesPerPoint = Integer.parseInt(line_info[2]);
-                int fs = Integer.parseInt(line_info[3]);
-
-                int color[] = new int[4];
-                String[] color_s = line_info[4].split(" ");
-                for(int i = 0; i < color_s.length; i ++) {
-                    color[i] = Integer.parseInt(color_s[i]);
-                }
-
-
-                signalSettings.add(new SignalSetting(index, name, bytesPerPoint, fs, color));
-            }
-            //Finally, get information about the structure of the packet
-            while ((mLine = reader.readLine()) != null) {
-                Log.d("3", mLine);
-                signalOrder.add(Integer.parseInt(mLine));
+        //Second section (information about each signal)
+        while(true) {
+            cur_line = lines.get(i);
+            //If main heading, add a new signal setting
+            i++;
+            if (cur_line.equals("end"))
+                break;
+            if(cur_line.charAt(0) != '.') {
+                String[] signal_info = cur_line.split(", ");
+                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1], Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]));
+                signalSettings.add(cur_setting);
+            } else if (cur_line.charAt(0) == '.') {
+                if (cur_line.substring(0, 2).equals("..")) {
+                    parseSignalSecondaryOptions(signalSettings.get(signalSettings.size() - 1), cur_line);
+                } else
+                    parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line);
             }
 
-        } catch (IOException e) {
-            //log the exception
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    //log the exception
-                }
-            }
+
         }
-
-        //numSignals = 2;         //Load this in
-
-        //signalOrder.add(new SignalSetting(0, 2, 8));
-        //signalOrder.add(new SignalSetting(1, 2, 8));
+        //Third section (information about calculated biometrics)
+        while(true) {
+            cur_line = lines.get(i);
+            i++;
+            if (cur_line.equals("end"))
+                break;
+            parseBiometricsOptions(biometrics, cur_line);
+        }
+        //Fourth section (information about order of data in packet)
+        while(true) {
+            cur_line = lines.get(i);
+            i++;
+            if (cur_line.equals("end"))
+                break;
+            signalOrder.add(Integer.parseInt(cur_line));
+        }
 
         //Load these in eventually
         filters.add(new Filter(Filter.SignalType.PPG));
@@ -144,6 +137,103 @@ public class BLEPackageParser {
     public ArrayList<SignalSetting> getSignalSettings() {
         return signalSettings;
     }
+
+    public Biometrics getBiometricsSettings() {
+        return biometrics;
+    }
+
+    ////////////////////////Helper Methods to Parse Init file/////////////////////////////////////
+    private ArrayList<String> loadInitFile(String initFileName, Context context) {
+        BufferedReader reader = null;
+        ArrayList<String> lines = new ArrayList<String>();
+        try {
+            reader = new BufferedReader(
+                    new InputStreamReader(context.getAssets().open("inits/ppg_v2.init")));
+            //new InputStreamReader(context.getAssets().open("ppg_v2.init")));
+
+            String mLine;
+
+            //First, get information about the whole packet
+            while (!((mLine = reader.readLine()) == null)) {
+                lines.add(mLine);
+            }
+        } catch (IOException e) {
+            //log the exception
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    //log the exception
+                }
+            }
+        }
+        return lines;
+    }
+
+    private void parseSignalMainOptions(SignalSetting signalSetting, String mLine) {
+        //Cut out the initial period
+        mLine = mLine.substring(1);
+
+        switch (mLine) {
+            case "graphable":
+                signalSetting.graphable = true;
+                break;
+            case "digdisplay":
+                signalSetting.digitalDisplay = true;
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    private void parseSignalSecondaryOptions(SignalSetting signalSetting, String mLine) {
+        //Cut out the initial period
+        mLine = mLine.substring(2);
+        String[] options = mLine.split(": ");
+
+        switch (options[0]) {
+            case "color":
+                importColor(signalSetting, mLine);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void parseBiometricsOptions(Biometrics biometrics, String mLine) {
+        String[] settings = mLine.split(", ");
+
+        switch (settings[0]) {
+            case "heartrate":
+                biometrics.addHRSignals(Integer.parseInt(settings[1]));
+                break;
+            case "spo2":
+                biometrics.addSpO2Signals(Integer.parseInt(settings[1]), Integer.parseInt(settings[2]), Integer.parseInt(settings[3]), Integer.parseInt(settings[4]));
+                break;
+            case "pwv":
+                biometrics.addPWVSignals(Integer.parseInt(settings[1]), Integer.parseInt(settings[2]));
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    private void importColor(SignalSetting signalSetting, String mLine) {
+        int color[] = new int[4];
+        String[] color_s = mLine.substring(2, mLine.length()).split(" ");
+        for (int i = 0; i < color_s.length - 1; i++) {
+            color[i] = Integer.parseInt(color_s[i+1]);
+        }
+        signalSetting.color = color;
+    }
+
+    private void importDigitalDisplay(Context context) {
+
+    }
+
 }
 
 

@@ -18,14 +18,12 @@ public class BLEPackageParser {
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Integer> signalOrder;
-    ArrayList<Filter> filters;
     Biometrics biometrics = new Biometrics();
 
     //Use this to instantiate a new BLEPackageParser object
     public BLEPackageParser (Context context) {
         signalSettings = new ArrayList<>();
         signalOrder = new ArrayList<>();
-        filters = new ArrayList<>();
 
         //Eventually, load in data from some init file to tell how to parse the BT package.
         parseInitFile("", context);
@@ -87,13 +85,10 @@ public class BLEPackageParser {
                 break;
             if(cur_line.charAt(0) != '.') {
                 String[] signal_info = cur_line.split(", ");
-                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1], Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]));
+                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1], Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]), Integer.parseInt(signal_info[4]));
                 signalSettings.add(cur_setting);
-            } else if (cur_line.charAt(0) == '.') {
-                if (cur_line.substring(0, 2).equals("..")) {
-                    parseSignalSecondaryOptions(signalSettings.get(signalSettings.size() - 1), cur_line);
-                } else
-                    parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line);
+            } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
+                parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line, gatherSubHeadings(lines, i));
             }
 
 
@@ -114,10 +109,6 @@ public class BLEPackageParser {
                 break;
             signalOrder.add(Integer.parseInt(cur_line));
         }
-
-        //Load these in eventually
-        filters.add(new Filter(Filter.SignalType.PPG));
-        filters.add(new Filter(Filter.SignalType.PPG));
     }
 
     //Use this to filter a signal based on the filter in the init file
@@ -171,35 +162,24 @@ public class BLEPackageParser {
         return lines;
     }
 
-    private void parseSignalMainOptions(SignalSetting signalSetting, String mLine) {
+    private void parseSignalMainOptions(SignalSetting signalSetting, String mLine, ArrayList<String> subheadings) {
         //Cut out the initial period
         mLine = mLine.substring(1);
 
         switch (mLine) {
             case "graphable":
                 signalSetting.graphable = true;
+                importGraphableSubSettings(signalSetting, subheadings);
                 break;
             case "digdisplay":
                 signalSetting.digitalDisplay = true;
                 break;
+            case "filter":
+                importFilterSubSettings(signalSetting, subheadings);
             default:
                 break;
         }
 
-    }
-
-    private void parseSignalSecondaryOptions(SignalSetting signalSetting, String mLine) {
-        //Cut out the initial period
-        mLine = mLine.substring(2);
-        String[] options = mLine.split(": ");
-
-        switch (options[0]) {
-            case "color":
-                importColor(signalSetting, mLine);
-                break;
-            default:
-                break;
-        }
     }
 
     private void parseBiometricsOptions(Biometrics biometrics, String mLine) {
@@ -220,18 +200,72 @@ public class BLEPackageParser {
         }
 
     }
+    
+    private ArrayList<String> gatherSubHeadings(ArrayList<String> lines, int curLine) {
+        ArrayList<String> out = new ArrayList<String>();
+        for(int i = curLine; i < lines.size(); i ++) {
+            if(!lines.get(i).substring(0, 2).equals(".."))
+                break;
 
-    private void importColor(SignalSetting signalSetting, String mLine) {
-        int color[] = new int[4];
-        String[] color_s = mLine.substring(2, mLine.length()).split(" ");
-        for (int i = 0; i < color_s.length - 1; i++) {
-            color[i] = Integer.parseInt(color_s[i+1]);
+            out.add(lines.get(i));
         }
-        signalSetting.color = color;
+        
+        return out;
     }
 
-    private void importDigitalDisplay(Context context) {
+    private void importGraphableSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
+        for(String s: subsettings) {
+            s = s.substring(2);
+            String[] options = s.split(": ");
 
+            switch (options[0]) {
+                case "color":
+                    int color[] = new int[4];
+                    String[] color_s = options[1].split(" ");
+                    for (int i = 0; i < color_s.length; i++) {
+                        color[i] = Integer.parseInt(color_s[i]);
+                    }
+                    signalSetting.color = color;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void importFilterSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
+        float[] b = new float[0];
+        float[] a = new float[0];
+
+        for(String s: subsettings) {
+            s = s.substring(2);
+            String[] options = s.split(": ");
+
+            switch (options[0]) {
+                case "b":
+                    String[] b_s = options[1].split(", ");
+                    float[] b_f = new float[b_s.length];
+
+                    for (int i = 0; i < b_s.length - 1; i++) {
+                        b_f[i] = Float.parseFloat(b_s[i + 1]);
+                    }
+                    b = b_f;
+                    break;
+                case "a":
+                    String[] a_s = options[1].split(", ");
+                    float[] a_f = new float[a_s.length];
+
+                    for (int i = 0; i < a_s.length - 1; i++) {
+                        a_f[i] = Float.parseFloat(a_s[i + 1]);
+                    }
+                    a = a_f;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        signalSetting.filter = new Filter(b, a);
     }
 
 }

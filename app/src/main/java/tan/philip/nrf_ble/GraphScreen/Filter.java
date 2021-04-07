@@ -1,94 +1,47 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-public class Filter {
-    /*
-    https://www-users.cs.york.ac.uk/~fisher/mkfilter/
-    Holy shit this website is literally a lifesaver
-    But the guy died and now they took it down :(
-     */
+import java.io.Serializable;
 
-    public static final int N_ZEROS = 2;
-    public static final int N_POLES = 2;
-    public static final double GAIN =  2.031823796e+01;    //At 500 Hz
-    //public static final double GAIN =  6.800073801e+10;    //At 500 Hz, Cheby
+public class Filter implements Serializable {
 
-    //Small array for next y calculation
-    private float[] xv = new float[N_ZEROS+1];
-    private float[] yv = new float[N_POLES+1];
+    int len;
+    float[] b;
+    float[] a;
 
-    //Full array of input / outputs
-    //private float[] x;
-    //private float[] y;
+    float[] x;
+    float[] y;
 
-    //Array of filter coefficients
-    private double gain;
-    private double[] fx = new double[N_ZEROS +1];
-    private double[] fy = new double[N_POLES +1];
+    //Assumes equal number of holes and poles
+    public Filter (float[] b, float[] a) {
+        this.b = b;
+        this.a = a;
 
-    private int currentIndex = N_POLES;
-    private int numPoints = N_POLES;
-
-    private boolean aboveThreshold = false;
-    private float peak;
-    private float normalizationFactor = 1;
-    private int peakIndex;
-
-    private SignalType signalType;
-
-    public enum SignalType {
-        PPG,
-        ECG,
-        SCG
+        //Equal to num zeros or poles - 1
+        this.len = b.length - 1;
     }
 
-    //I recommend making the Filter object into some type of Signal object maybe...
-    public Filter(SignalType signal) {
-        signalType = signal;
-
-        //Eventually, make this loadable
-        switch(signalType) {
-            case PPG:
-                //fs = 500 Hz, fc1 = 1.5Hz, fc2 = 8Hz
-                gain = 2.410311073e+01;
-                fx[0] = -1; fx[1] = 0; fx[2] = 1;
-                fy[0] = -0.9214816746; fy[1] = 1.9196603801;
-                break;
-            case ECG:
-                //fs = 100 Hz, fc1 = 1.5Hz, fc2 = 40Hz
-                gain = 1.353880782e+00;
-                fx[0] = -1; fx[1] = 0; fx[2] = 1;
-                fy[0] = 0.4515173131; fy[1] = 0.4094486552;
-                break;
-            case SCG:
-                //fs = 100 Hz, fc1 = 12Hz, fc2 = 40Hz
-                gain = 1.826471689e+00;
-                fx[0] = -1; fx[1] = 0; fx[2] = 1;
-                fy[0] = 0.0945278312; fy[1] = -0.0891950551;
-                break;
-            default:
-                break;
+    public float findNextY(float newX) {
+        //Advance in time
+        for(int i = 0; i < len; i ++) {
+            x[i] = x[i+1];
+            y[i] = y[i+1];
         }
-    }
 
+        //Set the current input
+        x[len] = newX;
 
-    public float findNextY(float new_input) {
-        //Advance in time
-        xv[0] = xv[1]; xv[1] = xv[2];
+        //Start calculating the new output.
+        y[len] = b[0] * x[len];
 
-        //Set the next input
-        xv[2] = (float) (new_input / gain);
+        //Calculate the new output based on previous inputs and outputs
+        for(int i = 1; i < len + 1; i ++) {
+            y[len] += (b[i] * x[len - i] - a[i] * y[len - i]);
+        }
 
-        //Advance in time
-        yv[0] = yv[1]; yv[1] = yv[2];
+        //Adjust by initial coefficient
+        y[len] = y[len] / a[0];
 
-        //Calculate current output
-        yv[2] = (float) (xv[0] * fx[0] + xv[1] * fx[1] + xv[2] * fx[2]
-            + yv[0] * fy[0] + yv[1] * fy[1]);
-
-
-        numPoints ++;
-        //currentIndex = numPoints% MAX_POINTS_ARRAY;
-        return yv[2];
-        //y[currentIndex] = x[currentIndex];
+        //Return the current filtered output
+        return y[len];
     }
 }

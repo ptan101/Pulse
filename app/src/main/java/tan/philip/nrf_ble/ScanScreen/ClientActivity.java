@@ -234,11 +234,13 @@ public class ClientActivity extends AppCompatActivity {
 
     private void startScan() {
         sendMessageToService(BLEHandlerService.MSG_START_SCAN);
+        sendMessageToService(BLEHandlerService.MSG_REQUEST_SCAN_RESULTS);
+
         if (!hasPermissions() || mScanning) {
             return;
         }
 
-        mBinding.btnListDevices.setVisibility(View.GONE);
+        //mBinding.btnListDevices.setVisibility(View.GONE);
 
         //Display message
         Toast toast = Toast.makeText(getApplicationContext(), "Scanning for BLE devices...", Toast.LENGTH_SHORT);

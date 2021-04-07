@@ -31,6 +31,7 @@ public class ScanResultsActivity extends AppCompatActivity {
     public static final String EXTRA_BT_IDENTIFIER = "bt identifier";
     public static final String EXTRA_SIGNAL_SETTINGS_IDENTIFIER = "signal settings";
     public static final String EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER = "bio settings";
+    public static final String EXTRA_NOTIF_F_IDENTIFIER = "notif f";
 
     private RecyclerView mRecyclerView;
     private BluetoothItemAdapter mAdapter;
@@ -83,7 +84,9 @@ public class ScanResultsActivity extends AppCompatActivity {
                     resetConnectingText();
                     mConnected = true;
                     mConnecting = false;
-                    startPWVGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"), (Biometrics) msg.getData().getSerializable("bioSettings"));
+                    startPWVGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
+                            (Biometrics) msg.getData().getSerializable("bioSettings"),
+                            (int) msg.getData().getInt("notif f"));
                     break;
                 default:
                     super.handleMessage(msg);
@@ -259,13 +262,14 @@ public class ScanResultsActivity extends AppCompatActivity {
 
 
     //Bluetooth methods
-    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings, Biometrics bioSettings) {
+    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings, Biometrics bioSettings, int notif_f) {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
         Bundle extras = new Bundle();
         extras.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
         extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
         extras.putString(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex)); //Probably not necessary, graph activity can ask for it from the service
+        extras.putInt(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
         intent.putExtras(extras);
 
         startActivity(intent);

@@ -414,7 +414,7 @@ public class BLEHandlerService extends Service {
                 for (int i = 0; i < parcelUuids.size(); i++) {
                     UUID serviceUUID = parcelUuids.get(i).getUuid();
                     String uuidString = serviceUUID.toString();
-                    Log.d(TAG, deviceAddress + " " + uuidString);
+                    //Log.d(TAG, deviceAddress + " " + uuidString);
 
                     if (!serviceList.contains(serviceUUID))
                         serviceList.add(serviceUUID);
@@ -473,6 +473,7 @@ public class BLEHandlerService extends Service {
                 Bundle b = new Bundle();
                 b.putSerializable("sigSettings", bleparser.getSignalSettings());
                 b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
+                b.putInt("notif f", bleparser.notificationFrequency);
                 sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
 
 
@@ -538,9 +539,6 @@ public class BLEHandlerService extends Service {
         ArrayList<float[]> filtered_data = new ArrayList<>();
         for (int i = 0; i < packaged_data.size(); i ++)
             filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));
-
-        //filtered_data.add(new float[] {2});
-        //filtered_data.add(new float[] {6});
 
         Bundle b = new Bundle();
         b.putSerializable("btData", filtered_data);

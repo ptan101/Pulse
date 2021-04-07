@@ -56,9 +56,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     public static final String TAG = "PWVGraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
 
-    private static final int NOTIFICATION_FREQUENCY = 4;    //In Hz
-    private static final int NOTIFICATION_PERIOD = 1000 / NOTIFICATION_FREQUENCY;    //In ms
-
     private final float MIN_Y = 0;
     private final float MAX_Y = 12;
     private final float MARGINS = 1;
@@ -76,6 +73,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private DataPoint[] mask = new DataPoint[1];
 
     //Graphing, filtering, etc.
+    private int notification_frequency;
+    private int notification_period;
     private float proximal_gain = 10f;
     private float amplification = 5;
     private boolean ECGView = false;
@@ -230,6 +229,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         setupGraph((ArrayList<SignalSetting>)extras.getSerializable(ScanResultsActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
         biometrics = (Biometrics)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
         setupBiometricsDigitalDisplay();
+        notification_frequency = extras.getInt(ScanResultsActivity.EXTRA_NOTIF_F_IDENTIFIER);
+        notification_period = 1000 / notification_frequency;
 
 
         //Data setup
@@ -422,13 +423,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             float[] signal_packet = new_data.get(i);
 
             //Determine the time between each data point as the time between packages / number of data points per package
-            float deltaT = NOTIFICATION_PERIOD / signal_packet.length;  //In ms
+            float deltaT = notification_period / signal_packet.length;  //In ms
 
             if(signals.get(i).graphable()) {
                 //Plot every data point in the packet. We alter both series since we want them to both be updated when we switch between
                 for (int j = 0; j < signal_packet.length; j++) {
                     float x = (t + (j * deltaT)) / 1000;
-                    float y = signal_packet[j] + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
+                    float y = signal_packet[j]  / (float) Math.pow(2, signals.get(i).bitResolution) + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
 
                     //Add the data to the interactive series
                     signals.get(i).interactive_series.appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
@@ -442,7 +443,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 //Do something here
             }
         }
-        t += NOTIFICATION_PERIOD;
+        t += notification_period;
 
         //Draw mask over old monitor points
         mask[0] = new DataPoint((int)(t / 1000f ) % MAX_MONITOR_DISPLAY_LENGTH, -0.5);
@@ -692,6 +693,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         float offset;
         int num_points = 0;
         String name;
+        int bitResolution;
 
         //For graphable
         boolean graphable = false;
@@ -709,6 +711,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             this.offset = offset;
             this.graphable = settings.graphable;
             this.useDigitalDisplay = settings.digitalDisplay;
+            this.bitResolution = settings.bitResolution;
 
             sample_period = 1000 /  fs;
 

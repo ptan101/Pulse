@@ -1,13 +1,24 @@
-4, 8
+40, 12
 end
-0, Distal Signal, 2, 4
+0, Distal Signal, 2, 20, 12
 .graphable
 ..color: 125 125 125 255
-1, Proximal Signal, 2, 4
+.filter
+..a: 1, -5.76936142, 13.87689042, -17.81192546, 12.86809223, -4.96116214, 0.79746637
+..b: 0.000162, 0, -0.000486, 0, 0.000486, 0, -0.000162
+..gain: 1
+1, Proximal Signal, 2, 20, 12
 .graphable
+..gain: 1
 ..color: 255 0 0 255
-2, Temperature, 4, 4
-.digdisplay
+.filter
+..a: 1, -5.76936142, 13.87689042, -17.81192546, 12.86809223, -4.96116214, 0.79746637
+..b: 0.000162, 0, -0.000486, 0, 0.000486, 0, -0.000162
+..gain: 1
+2, LF Signal (IR), 2, 20, 12
+3, Distal Signal (red), 2, 20, 12
+4, Proximal Signal (red), 2, 20, 12
+5, LF Signal (red), 2, 20, 12
 end
 heartrate, 0
 spo2, 0, 0, 0, 0
@@ -16,4 +27,7 @@ end
 0
 1
 2
+3
+4
+5
 end

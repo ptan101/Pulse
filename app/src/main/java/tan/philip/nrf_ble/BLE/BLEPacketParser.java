@@ -12,7 +12,7 @@ import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.GraphScreen.Biometrics;
 import tan.philip.nrf_ble.GraphScreen.Filter;
 
-public class BLEPackageParser {
+public class BLEPacketParser {
     //int numSignals;
     int notificationFrequency;
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
@@ -21,7 +21,7 @@ public class BLEPackageParser {
     Biometrics biometrics = new Biometrics();
 
     //Use this to instantiate a new BLEPackageParser object
-    public BLEPackageParser (Context context) {
+    public BLEPacketParser(Context context) {
         signalSettings = new ArrayList<>();
         signalOrder = new ArrayList<>();
 

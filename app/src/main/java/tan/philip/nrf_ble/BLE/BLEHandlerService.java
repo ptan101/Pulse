@@ -89,7 +89,7 @@ public class BLEHandlerService extends Service {
     private boolean mConnected;
 
     //Transceiving
-    private BLEPackageParser bleparser;
+    private BLEPacketParser bleparser;
     private String fileName;
     private boolean mRecording = false;
 
@@ -488,14 +488,14 @@ public class BLEHandlerService extends Service {
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
     private void initializeBLEParser() {
-        bleparser = new BLEPackageParser(this);
+        bleparser = new BLEPacketParser(this);
 
     }
     private void processPackage(byte[] data) {
         //If save enabled, save raw data to phone memory
         if(mRecording) {
             for (int i = 0; i < data.length; i ++) {
-                //FileWriter.writeBIN(data[i], fileName);
+                FileWriter.writeBIN(data, fileName);
             }
         }
 

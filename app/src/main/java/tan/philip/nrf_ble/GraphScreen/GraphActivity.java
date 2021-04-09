@@ -128,6 +128,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
+                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
                     /*
                     if(numPoints % GRAPHING_FREQUENCY == 0) {
                         //displayData();

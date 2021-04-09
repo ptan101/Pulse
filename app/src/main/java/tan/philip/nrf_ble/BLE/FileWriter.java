@@ -117,11 +117,12 @@ public class FileWriter {
 
     public static void writeBIN(byte data[], String fileName) {
         String filePath = path + File.separator + fileName;
+        FileOutputStream fileOutputStream = null;
 
         try {
             new File(path).mkdir();
             File file = new File(filePath);
-            FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+            fileOutputStream = new FileOutputStream(file, true);
             if (!file.exists()) {
                 if (!file.createNewFile()) {
                     //Toast.makeText(getApplicationContext(), "Error creating file", Toast.LENGTH_SHORT).show();
@@ -135,6 +136,14 @@ public class FileWriter {
             Log.d(TAG, ex.getMessage());
         } catch (IOException ex) {
             Log.d(TAG, ex.getMessage());
+        } finally {
+            if (fileOutputStream != null) {
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

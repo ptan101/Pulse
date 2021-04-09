@@ -53,6 +53,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_CLEAR_SCAN = 5;
     public static final int MSG_REQUEST_SCAN_RESULTS = 6;
     public static final int MSG_CONNECT = 7;
+    public static final int MSG_DISCONNECT = 17;
     public static final int MSG_CHECK_BT_ENABLED = 16;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
@@ -166,6 +167,8 @@ public class BLEHandlerService extends Service {
 //                    String address = msg.getData().getString("deviceAddress");
                     String address = msg.obj.toString();
                     connectDevice(address);
+                case MSG_DISCONNECT:
+                    mBluetoothLeService.disconnect();
                 case MSG_CHECK_BT_ENABLED:
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                         //Request permission to enable BT
@@ -192,57 +195,6 @@ public class BLEHandlerService extends Service {
         }
     }
 
-    /*
-    private void sendScanResultsToUI() {
-        for (int i = mClients.size()-1; i >= 0; i--) {
-            try {
-                Bundle b = new Bundle();
-                b.putSerializable("btAddresses", bluetoothAddresses);
-                b.putSerializable("btDevices", bluetoothDevices);
-                Message msg = Message.obtain(null, MSG_BT_DEVICES);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            }
-            catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
-
-    private void sendBLEDataToUI(ArrayList<float[]> data) {
-        for (int i = mClients.size()-1; i >= 0; i--) {
-            try {
-                Bundle b = new Bundle();
-                b.putSerializable("btData", data);
-                Message msg = Message.obtain(null, MSG_GATT_ACTION_DATA_AVAILABLE);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            }
-            catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
-
-    private void sendSignalSettings(ArrayList<SignalSetting> data) {
-        for (int i = mClients.size() - 1; i >= 0; i--) {
-            try {
-                Bundle b = new Bundle();
-                b.putSerializable("sigSettings", data);
-                Message msg = Message.obtain(null, MSG_SEND_PACKAGE_INFORMATION);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            } catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
-
-
-     */
     private void sendMessageToUI(int msg_id) {
         for (int i = mClients.size()-1; i >= 0; i--) {
             try {
@@ -254,9 +206,6 @@ public class BLEHandlerService extends Service {
             }
         }
     }
-
-
-
 
     //////////////////////////Scanning//////////////////////////////////////////////////
     private void setupBLEScanner() {
@@ -338,8 +287,8 @@ public class BLEHandlerService extends Service {
     }
 
     private void clearScan() {
-        bluetoothDevices = new ArrayList<>();
-        bluetoothAddresses = new ArrayList<>();
+        bluetoothDevices.clear();
+        bluetoothAddresses.clear();
         mScanResults.clear();
         numDevicesFound = 0;
     }
@@ -453,20 +402,7 @@ public class BLEHandlerService extends Service {
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
                 sendMessageToUI(MSG_GATT_CONNECTED);
-                //invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-                sendMessageToUI(MSG_GATT_DISCONNECTED);
-                //resetConnectingText();
-                //invalidateOptionsMenu();
-            } else if (BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-                Toast.makeText(BLEHandlerService.this, "Connection failed", Toast.LENGTH_SHORT).show();
-                sendMessageToUI(MSG_GATT_FAILED);
-                //resetConnectingText();
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+
                 Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
                 initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
 
@@ -476,6 +412,18 @@ public class BLEHandlerService extends Service {
                 b.putInt("notif f", bleparser.notificationFrequency);
                 sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
 
+            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+                mConnected = false;
+                mConnecting = false;
+                sendMessageToUI(MSG_GATT_DISCONNECTED);
+
+            } else if (BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
+                mConnected = false;
+                mConnecting = false;
+
+                sendMessageToUI(MSG_GATT_FAILED);
+
+            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
 
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);

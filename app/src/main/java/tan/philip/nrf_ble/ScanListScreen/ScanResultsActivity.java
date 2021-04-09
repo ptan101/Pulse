@@ -12,6 +12,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -78,6 +79,7 @@ public class ScanResultsActivity extends AppCompatActivity {
                 case BLEHandlerService.MSG_GATT_FAILED:
                     mConnected = false;
                     mConnecting = false;
+                    Toast.makeText(ScanResultsActivity.this, "Connection failed", Toast.LENGTH_SHORT).show();
                     resetConnectingText();
                     break;
                 case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
@@ -198,8 +200,8 @@ public class ScanResultsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
 
         try {
             doUnbindService();

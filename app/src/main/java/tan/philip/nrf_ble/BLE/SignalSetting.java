@@ -15,6 +15,7 @@ public class SignalSetting implements Serializable {
     public int bytesPerPoint;
     public int fs;
     public int bitResolution;
+    public boolean signed;
 
     //Optional settings
     public boolean graphable = false;
@@ -22,12 +23,13 @@ public class SignalSetting implements Serializable {
     public boolean digitalDisplay = false;
     public Filter filter = null;
 
-    public SignalSetting(int index, String name, int bytesPerPoint, int fs, int resolution) {
+    public SignalSetting(int index, String name, int bytesPerPoint, int fs, int resolution, boolean signed) {
         this.index = index;
         this.name = name;
         this.bytesPerPoint = bytesPerPoint;
         this.fs = fs;
         this.bitResolution = resolution;
+        this.signed = signed;
     }
 
 //    private void writeObject(ObjectOutputStream oos)

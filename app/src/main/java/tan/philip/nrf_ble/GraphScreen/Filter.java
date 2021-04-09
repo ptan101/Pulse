@@ -7,17 +7,22 @@ public class Filter implements Serializable {
     int len;
     float[] b;
     float[] a;
+    float gain;
 
     float[] x;
     float[] y;
 
     //Assumes equal number of holes and poles
-    public Filter (float[] b, float[] a) {
+    public Filter (float[] b, float[] a, float gain) {
         this.b = b;
         this.a = a;
+        this.gain = gain;
 
         //Equal to num zeros or poles - 1
         this.len = b.length - 1;
+
+        x = new float[b.length];
+        y = new float[a.length];
     }
 
     public float findNextY(float newX) {
@@ -28,7 +33,7 @@ public class Filter implements Serializable {
         }
 
         //Set the current input
-        x[len] = newX;
+        x[len] = newX * gain;
 
         //Start calculating the new output.
         y[len] = b[0] * x[len];

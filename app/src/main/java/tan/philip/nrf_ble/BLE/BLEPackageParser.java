@@ -48,10 +48,13 @@ public class BLEPackageParser {
             //Determine size of data in bytes
             int size = signalSetting.bytesPerPoint;
 
-            int cur_data = 0;
+            int cur_data = data[i];
+            if(!signalSetting.signed)
+                cur_data &= 0xFF;
+
             //Load a certain number of bytes from data
-            for (int j = 0; j < size; j ++) {
-                cur_data = (cur_data << 8) | data[i + j];       //Shift old bytes by 8 bits to make space for new byte
+            for (int j = 1; j < size; j ++) {
+                cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);       //Shift old bytes by 8 bits to make space for new byte
             }
 
             //Store the parsed data into the correct ArrayList
@@ -63,6 +66,24 @@ public class BLEPackageParser {
 
         return parsedData;
     }
+
+    //Use this to filter a signal based on the filter in the init file
+    //index is the index in the ArrayList that the data was parsed
+    //Also converts the ArrayList to a normal array of floats
+    public float[] filterSignals(ArrayList<Integer> raw_data, int index) {
+        float [] filtered_data = new float[raw_data.size()];
+
+        for(int i = 0; i < raw_data.size(); i ++) {
+            if(signalSettings.get(index).filter != null)
+                filtered_data[i] = signalSettings.get(index).filter.findNextY((raw_data.get(i)));
+                //filtered_data[i] = raw_data.get(i);
+            else
+                filtered_data[i] = raw_data.get(i);
+        }
+
+        return filtered_data;
+    }
+
 
     private void parseInitFile(String initFileName, Context context) {
         ArrayList<String> lines = loadInitFile(initFileName, context);
@@ -85,7 +106,9 @@ public class BLEPackageParser {
                 break;
             if(cur_line.charAt(0) != '.') {
                 String[] signal_info = cur_line.split(", ");
-                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1], Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]), Integer.parseInt(signal_info[4]));
+                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1],
+                        Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]),
+                        Integer.parseInt(signal_info[4]), signal_info[5].equals("signed"));
                 signalSettings.add(cur_setting);
             } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
                 parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line, gatherSubHeadings(lines, i));
@@ -109,20 +132,6 @@ public class BLEPackageParser {
                 break;
             signalOrder.add(Integer.parseInt(cur_line));
         }
-    }
-
-    //Use this to filter a signal based on the filter in the init file
-    //index is the index in the ArrayList that the data was parsed
-    //Also converts the ArrayList to a normal array of floats
-    public float[] filterSignals(ArrayList<Integer> raw_data, int index) {
-        float [] filtered_data = new float[raw_data.size()];
-
-        for(int i = 0; i < raw_data.size(); i ++) {
-            //filtered_data[i] = filters.get(i).findNextY((raw_data.get(i)));
-            filtered_data[i] = raw_data.get(i);
-        }
-
-        return filtered_data;
     }
 
     public ArrayList<SignalSetting> getSignalSettings() {
@@ -236,6 +245,7 @@ public class BLEPackageParser {
     private void importFilterSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
         float[] b = new float[0];
         float[] a = new float[0];
+        float gain = 1;
 
         for(String s: subsettings) {
             s = s.substring(2);
@@ -246,8 +256,8 @@ public class BLEPackageParser {
                     String[] b_s = options[1].split(", ");
                     float[] b_f = new float[b_s.length];
 
-                    for (int i = 0; i < b_s.length - 1; i++) {
-                        b_f[i] = Float.parseFloat(b_s[i + 1]);
+                    for (int i = 0; i < b_s.length; i++) {
+                        b_f[i] = Float.parseFloat(b_s[i]);
                     }
                     b = b_f;
                     break;
@@ -255,17 +265,20 @@ public class BLEPackageParser {
                     String[] a_s = options[1].split(", ");
                     float[] a_f = new float[a_s.length];
 
-                    for (int i = 0; i < a_s.length - 1; i++) {
-                        a_f[i] = Float.parseFloat(a_s[i + 1]);
+                    for (int i = 0; i < a_s.length; i++) {
+                        a_f[i] = Float.parseFloat(a_s[i]);
                     }
                     a = a_f;
+                    break;
+                case "gain":
+                    gain = Float.parseFloat(options[1]);
                     break;
                 default:
                     break;
             }
         }
 
-        signalSetting.filter = new Filter(b, a);
+        signalSetting.filter = new Filter(b, a, gain);
     }
 
 }

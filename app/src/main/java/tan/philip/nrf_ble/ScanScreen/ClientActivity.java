@@ -68,8 +68,7 @@ public class ClientActivity extends AppCompatActivity {
                     }
                     break;
                 case BLEHandlerService.MSG_CHECK_PERMISSIONS:
-                    Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                    startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                    requestBluetoothEnable();
                     break;
                 default:
                     super.handleMessage(msg);
@@ -85,6 +84,7 @@ public class ClientActivity extends AppCompatActivity {
                 msg.replyTo = mMessenger;
                 mService.send(msg);
                 sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
+                numDevicesFound = 0;
             }
             catch (RemoteException e) {
                 // In this case the service has crashed before we could even do anything with it
@@ -151,7 +151,6 @@ public class ClientActivity extends AppCompatActivity {
         //Start the BLEHandlerService
         Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);
         startService(intent);
-        doBindService();
         //this.getSupportActionBar().hide();
 
         //Set up background color transition
@@ -186,7 +185,7 @@ public class ClientActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        //doBindService();
+        doBindService();
 
         mBinding.btnListDevices.setVisibility(View.GONE);
         //mBinding.layout1.setBackgroundColor(0xFF2c2a3a);
@@ -233,8 +232,9 @@ public class ClientActivity extends AppCompatActivity {
     }
 
     private void startScan() {
+        sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
+        numDevicesFound = 0;
         sendMessageToService(BLEHandlerService.MSG_START_SCAN);
-        sendMessageToService(BLEHandlerService.MSG_REQUEST_SCAN_RESULTS);
 
         if (!hasPermissions() || mScanning) {
             return;

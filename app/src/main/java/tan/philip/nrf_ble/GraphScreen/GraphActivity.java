@@ -1,8 +1,10 @@
 package tan.philip.nrf_ble.GraphScreen;
 
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Canvas;
@@ -106,6 +108,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     Messenger mService = null;
     boolean mIsBound;
     final Messenger mMessenger = new Messenger(new GraphActivity.IncomingHandler());
+    boolean mConnected = true;
 
     ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
 
@@ -119,6 +122,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     runOnUiThread(() -> Toast.makeText(GraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
                     mBinding.textView5.setText(deviceIdentifier + " disconnected");
                     mBinding.textView5.setTextColor(Color.rgb(255,0,0));
+                    mConnected = false;
                     invalidateOptionsMenu();
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
@@ -297,6 +301,28 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if(mConnected) {
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("Terminating connection")
+                    .setMessage("Are you sure you want to terminate the BLE connection?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+                            finish();
+                        }
+
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
+        } else {
+            finish();
+        }
+    }
+
     ////////////////////////////////////GRAPH STUFF////////////////////////////////////////////////
 
     private void setupGraph(ArrayList<SignalSetting> signalSettings) {
@@ -371,16 +397,24 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         });
 
         //Set up signals
+        int num_graphable = 0;
         for (int i = 0; i < signalSettings.size(); i ++) {
             SignalSetting cur_setting = signalSettings.get(i);
-            float offset = (signalSettings.size() - i) * (MAX_Y - MIN_Y) / (signalSettings.size() + 1);
-            signals.add(new GraphSignal(cur_setting, offset, MAX_MONITOR_DISPLAY_LENGTH));
-            signals.get(i).setupDisplay(this);
+            signals.add(new GraphSignal(cur_setting));
+
+            if (signalSettings.get(i).graphable) {
+                signals.get(i).setupDisplay(this);
+                num_graphable++;
+            }
+
         }
 
-        //Set up the textviews for the legend
-
-
+        for (int i = 0; i < signalSettings.size(); i ++) {
+            if (signalSettings.get(i).graphable) {
+                float offset = (num_graphable - i) * (MAX_Y - MIN_Y) / (num_graphable + 1);
+                signals.get(i).addGraphSettings(offset, MAX_MONITOR_DISPLAY_LENGTH);
+            }
+        }
 
         //resetViewport();
         resetAllSeries();
@@ -428,8 +462,9 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             if(signals.get(i).graphable()) {
                 //Plot every data point in the packet. We alter both series since we want them to both be updated when we switch between
                 for (int j = 0; j < signal_packet.length; j++) {
+                    //Log.d("", Float.toString(signal_packet[j]));
                     float x = (t + (j * deltaT)) / 1000;
-                    float y = signal_packet[j]  / (float) Math.pow(2, signals.get(i).bitResolution) + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
+                    float y = signal_packet[j]  / (float) Math.pow(2, signals.get(i).bitResolution) * amplification  + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
 
                     //Add the data to the interactive series
                     signals.get(i).interactive_series.appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
@@ -443,11 +478,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 //Do something here
             }
         }
-        t += notification_period;
 
         //Draw mask over old monitor points
-        mask[0] = new DataPoint((int)(t / 1000f ) % MAX_MONITOR_DISPLAY_LENGTH, -0.5);
+        mask[0] = new DataPoint((float)((int) t % (MAX_MONITOR_DISPLAY_LENGTH * 1000)) / 1000f, -0.5);
         monitor_mask.resetData(mask);
+
+        t += notification_period;
     }
 
     private void toggleView() {
@@ -477,7 +513,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
             //Add the correct series
             for(int i = 0; i < signals.size(); i++) {
-                graph.addSeries(signals.get(i).monitor_series);
+                if(signals.get(i).monitor_series != null)
+                    graph.addSeries(signals.get(i).monitor_series);
             }
             graph.addSeries(monitor_mask);
 
@@ -705,24 +742,26 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         //For Digital Dispaly
         boolean useDigitalDisplay = false;
 
-        public GraphSignal(SignalSetting settings, float offset, int monitor_length) {
+        public GraphSignal(SignalSetting settings) {
             this.fs = settings.fs;
             this.name = settings.name;
-            this.offset = offset;
+
             this.graphable = settings.graphable;
             this.useDigitalDisplay = settings.digitalDisplay;
             this.bitResolution = settings.bitResolution;
 
+            this.color = settings.color;
             sample_period = 1000 /  fs;
+        }
 
-            if(this.graphable) {
-                interactive_series = new LineGraphSeries<>();
-                monitor_series = new LineGraphSeries<>();
-                monitor_buffer = new DataPoint[fs * monitor_length];
-                this.color = settings.color;
+        public void addGraphSettings(float offset, int monitor_length) {
+            this.offset = offset;
 
-                resetSeries();
-            }
+            interactive_series = new LineGraphSeries<>();
+            monitor_series = new LineGraphSeries<>();
+            monitor_buffer = new DataPoint[fs * monitor_length];
+
+            resetSeries();
         }
 
         public void resetSeries() {

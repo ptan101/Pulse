@@ -10,11 +10,11 @@ import tan.philip.nrf_ble.GraphScreen.Filter;
 
 //Definitely rename this once I have a better idea of what it does lol
 public class SignalSetting implements Serializable {
-    public int index;          //This is used when putting data into the output ArrayList.
+    public byte index;          //This is used when putting data into the output ArrayList.
     public String name;
-    public int bytesPerPoint;
+    public byte bytesPerPoint;
     public int fs;
-    public int bitResolution;
+    public byte bitResolution;
     public boolean signed;
 
     //Optional settings
@@ -23,7 +23,7 @@ public class SignalSetting implements Serializable {
     public boolean digitalDisplay = false;
     public Filter filter = null;
 
-    public SignalSetting(int index, String name, int bytesPerPoint, int fs, int resolution, boolean signed) {
+    public SignalSetting(byte index, String name, byte bytesPerPoint, int fs, byte resolution, boolean signed) {
         this.index = index;
         this.name = name;
         this.bytesPerPoint = bytesPerPoint;

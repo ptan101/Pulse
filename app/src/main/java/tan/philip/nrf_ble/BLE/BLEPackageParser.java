@@ -17,7 +17,7 @@ public class BLEPackageParser {
     int notificationFrequency;
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
-    ArrayList<Integer> signalOrder;
+    ArrayList<Byte> signalOrder;
     Biometrics biometrics = new Biometrics();
 
     //Use this to instantiate a new BLEPackageParser object
@@ -106,9 +106,9 @@ public class BLEPackageParser {
                 break;
             if(cur_line.charAt(0) != '.') {
                 String[] signal_info = cur_line.split(", ");
-                SignalSetting cur_setting = new SignalSetting(Integer.parseInt(signal_info[0]), signal_info[1],
-                        Integer.parseInt(signal_info[2]), Integer.parseInt(signal_info[3]),
-                        Integer.parseInt(signal_info[4]), signal_info[5].equals("signed"));
+                SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
+                        Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
+                        Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
                 signalSettings.add(cur_setting);
             } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
                 parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line, gatherSubHeadings(lines, i));
@@ -130,7 +130,7 @@ public class BLEPackageParser {
             i++;
             if (cur_line.equals("end"))
                 break;
-            signalOrder.add(Integer.parseInt(cur_line));
+            signalOrder.add(Byte.parseByte(cur_line));
         }
     }
 

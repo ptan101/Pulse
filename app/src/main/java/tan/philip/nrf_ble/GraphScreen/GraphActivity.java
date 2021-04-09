@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
+import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.BLE.SignalSetting;
@@ -308,6 +309,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     .setIcon(android.R.drawable.ic_dialog_alert)
                     .setTitle("Terminating connection")
                     .setMessage("Are you sure you want to terminate the BLE connection?")
+                    .setNegativeButton("No", null)
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -316,7 +318,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         }
 
                     })
-                    .setNegativeButton("No", null)
                     .show();
         } else {
             finish();
@@ -628,12 +629,17 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
     private void toggleRecord() {
         if(!storeData) {
-            startRecordTime = System.currentTimeMillis();
-            mBinding.recordTimer.setVisibility(View.VISIBLE);
-            storeData = true;
+            if(FileWriter.isStoragePermissionGranted(this)) {
+                startRecordTime = System.currentTimeMillis();
+                mBinding.recordTimer.setVisibility(View.VISIBLE);
+                storeData = true;
+                sendMessageToService(BLEHandlerService.MSG_START_RECORD);
+            } else {
+                Toast.makeText(this, "Storage Permission is not granted", Toast.LENGTH_SHORT).show();
+            }
 
             //Set File Name to current time
-            fileName = Calendar.getInstance().getTime().toString() + ".bin";
+            //fileName = Calendar.getInstance().getTime().toString() + ".bin";
 
             //Check Permission
             //while(!isStoragePermissionGranted());
@@ -643,6 +649,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             //writeBIN((short)0xFFFF);
 
         } else {
+            sendMessageToService(BLEHandlerService.MSG_STOP_RECORD);
             mBinding.recordTimer.setVisibility(View.INVISIBLE);
             storeData = false;
         }

@@ -26,6 +26,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,8 @@ public class BLEHandlerService extends Service {
     public static final int MSG_CONNECT = 7;
     public static final int MSG_DISCONNECT = 17;
     public static final int MSG_CHECK_BT_ENABLED = 16;
+    public static final int MSG_START_RECORD = 18;
+    public static final int MSG_STOP_RECORD = 19;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
     public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
@@ -87,6 +90,9 @@ public class BLEHandlerService extends Service {
 
     //Transceiving
     private BLEPackageParser bleparser;
+    private String fileName;
+    private boolean mRecording = false;
+
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
     //@Nullable
@@ -174,6 +180,12 @@ public class BLEHandlerService extends Service {
                         //Request permission to enable BT
                         sendMessageToUI(MSG_CHECK_PERMISSIONS);
                     }
+                    break;
+                case MSG_START_RECORD:
+                    startRecord();
+                    break;
+                case MSG_STOP_RECORD:
+                    stopRecord();
                     break;
                 default:
                     super.handleMessage(msg);
@@ -480,6 +492,13 @@ public class BLEHandlerService extends Service {
 
     }
     private void processPackage(byte[] data) {
+        //If save enabled, save raw data to phone memory
+        if(mRecording) {
+            for (int i = 0; i < data.length; i ++) {
+                //FileWriter.writeBIN(data[i], fileName);
+            }
+        }
+
         //Convert byte array into arrays of signals and send over messenger
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePackage(data);
 
@@ -491,8 +510,18 @@ public class BLEHandlerService extends Service {
         Bundle b = new Bundle();
         b.putSerializable("btData", filtered_data);
         sendDataToUI(b, MSG_GATT_ACTION_DATA_AVAILABLE);
+    }
 
-        //If save enabled, save raw data to phone memory
+    private void startRecord() {
+        fileName = Calendar.getInstance().getTime().toString() + ".bin";
+
+        FileWriter.createFolder();
+        FileWriter.writeBINHeader(bleparser.signalSettings, bleparser.signalOrder, fileName);
+        mRecording = true;
+    }
+
+    private void stopRecord() {
+        mRecording = false;
     }
 }
 

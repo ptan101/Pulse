@@ -62,7 +62,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private final float MIN_Y = 0;
     private final float MAX_Y = 12;
     private final float MARGINS = 1;
-    private static final int INPUT_DELAY = 10;
     private static final int MAX_MONITOR_DISPLAY_LENGTH = 10; //seconds
 
     //Graphing Initializers
@@ -78,18 +77,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     //Graphing, filtering, etc.
     private int notification_frequency;
     private int notification_period;
-    private float proximal_gain = 10f;
     private float amplification = 5;
-    private boolean ECGView = false;
+    private boolean ECGView = true;
     private float t = 0;
 
-
-
     private Biometrics biometrics;
-    private HeartDataAnalysis hda;
-    private ValueAnimator heartRateAnimator;
-    private int heartRate = HeartDataAnalysis.NO_DATA;
-    DecimalFormat decimalFormat;
 
     private ActivityPwvgraphBinding mBinding;
     private String deviceIdentifier;
@@ -97,13 +89,10 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private final Handler mHandler = new Handler();
     private Runnable graphTimer;
 
-    private boolean sdGood = false;
-
     //Saving
-    private ToggleButton recordButton;
-    private String fileName;
     private boolean storeData = false;
     private long startRecordTime;
+    DecimalFormat decimalFormat;
 
     //Stuff for interacting with the service
     Messenger mService = null;
@@ -231,29 +220,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         //Graphing setup
         graph = mBinding.graph1;
         monitor_mask = new PointsGraphSeries<>();
+        decimalFormat = new DecimalFormat("#.####");
 
         setupGraph((ArrayList<SignalSetting>)extras.getSerializable(ScanResultsActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
         biometrics = (Biometrics)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
         setupBiometricsDigitalDisplay();
         notification_frequency = extras.getInt(ScanResultsActivity.EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
-
-
-        //Data setup
-        hda = new HeartDataAnalysis();
-        heartRateAnimator = ValueAnimator.ofInt(255, 0);
-        heartRateAnimator.setRepeatCount(1);
-        heartRateAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        heartRateAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                //mBinding.txtHeartRate.setTextColor((mBinding.txtHeartRate.getTextColors().withAlpha((int)heartRateAnimator.getAnimatedValue())));
-            }
-        });
-
-        decimalFormat = new DecimalFormat("#.####");
-
-        drawHrRanges();
 
         //Bind activity to service
         doBindService();
@@ -428,7 +401,9 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         for (GraphSignal signal: signals) {
             if(signal.graphable()) {
                 signal.resetSeries();
-                graph.addSeries(signal.interactive_series);
+                ECGView = true;
+                graph.addSeries(signal.monitor_series);
+                graph.addSeries((monitor_mask));
             }
         }
     }
@@ -499,8 +474,10 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
             //Add the correct series
             for(int i = 0; i < signals.size(); i++) {
-                //graph.addSeries(series_interactive.get(i));
-                graph.addSeries(signals.get(i).interactive_series);
+                if (signals.get(i).monitor_series != null){
+                    graph.addSeries(signals.get(i).interactive_series);
+                    signals.get(i).startMonitorView();
+                }
             }
         } else {
             ECGView = true;
@@ -525,76 +502,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     ////////////////////////////////////////////////GRAPHICAL UI//////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Draw the heart rate range bar on the bottom
-     */
-    private void drawHrRanges() {
-        /*
-        float positionPerHR = (float) mBinding.imgGreyBar.getLayoutParams().width/ (float) (MAX_POSSIBLE_HR - MIN_POSSIBLE_HR);
-
-        float lowPosition = 0;
-        float highPosition = 0;
-
-        //If both min and max do not have values and there are enough data points, make everything disappear.
-        if((hda.getMaxHR() == HeartDataAnalysis.NO_DATA && hda.getMinHR() == HeartDataAnalysis.NO_DATA)) {
-            mBinding.imgBlueBar.setVisibility(View.GONE);
-            mBinding.imgLeftBlueCircle.setVisibility(View.GONE);
-            mBinding.imgRightBlueCircle.setVisibility(View.GONE);
-            mBinding.txtLowHr.setVisibility(View.GONE);
-            mBinding.txtHighHr.setVisibility(View.GONE);
-            mBinding.txtSingleHr.setVisibility(View.GONE);
-            mBinding.txtWarning.setVisibility(View.GONE);
-            return;
-        }
-
-        //If there is a min value available, series1_Buffer
-        if(hda.getMinHR() != HeartDataAnalysis.NO_DATA) {
-            lowPosition = (hda.getMinHR() - MIN_POSSIBLE_HR) * positionPerHR;
-            mBinding.txtLowHr.setText(String.valueOf(hda.getMinHR()));
-        }
-        //If there is a max value available, series1_Buffer
-        if(hda.getMaxHR() != HeartDataAnalysis.NO_DATA) {
-            highPosition = (hda.getMaxHR() - MIN_POSSIBLE_HR) * positionPerHR;
-            mBinding.txtHighHr.setText(String.valueOf(hda.getMaxHR()));
-        }
-
-        //Assuming that there is data (not returned out), make bar visible
-        mBinding.imgBlueBar.setVisibility(View.VISIBLE);
-        mBinding.imgLeftBlueCircle.setVisibility(View.VISIBLE);
-        mBinding.imgRightBlueCircle.setVisibility(View.VISIBLE);
-
-        //If  the min value is different from the max value, make a bar
-        if(hda.getMaxHR() != hda.getMinHR()) {
-            mBinding.txtLowHr.setVisibility(View.VISIBLE);
-            mBinding.txtHighHr.setVisibility(View.VISIBLE);
-            mBinding.txtSingleHr.setVisibility(View.GONE);
-        } else {
-            //Don't make a bar, just put a single value
-            mBinding.txtLowHr.setVisibility(View.GONE);
-            mBinding.txtHighHr.setVisibility(View.GONE);
-            mBinding.txtSingleHr.setVisibility(View.VISIBLE);
-            mBinding.txtSingleHr.setText(String.valueOf(hda.getMinHR()));
-        }
-
-        //Adjust the bar length depending on the range of values
-        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) mBinding.imgBlueBar.getLayoutParams();
-        params.setMargins(Math.round(lowPosition), params.topMargin, params.rightMargin, params.bottomMargin);
-        mBinding.imgBlueBar.setLayoutParams(params);
-        mBinding.imgBlueBar.getLayoutParams().width = Math.max(Math.round(highPosition-lowPosition), 1);
-
-        //Set the UI text at the bottom
-        mBinding.txtWarning.setVisibility(View.VISIBLE);
-        if(hda.getRangeHR() <= 5) {
-            mBinding.txtWarning.setText("Regular heart rhythm");
-        } else if (hda.getRangeHR() <= 13) {
-            mBinding.txtWarning.setText("Slightly irregular heart rhythm");
-        } else {
-            mBinding.txtWarning.setText("Extremely irregular heart rhythm");
-        }
-
-         */
-    }
 
     private void setupBiometricsDigitalDisplay() {
         ArrayList<Integer> hr_list = biometrics.getHr_signals();
@@ -777,8 +684,9 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 interactive_series = new LineGraphSeries<>();
                 monitor_series = new LineGraphSeries<>();
 
+
                 for (int i = 0; i < monitor_buffer.length; i++) {
-                    monitor_buffer[i] = new DataPoint(i * sample_period, offset);
+                    monitor_buffer[i] = new DataPoint(i * (float) sample_period / 1000f, offset);
                 }
                 monitor_series.resetData(monitor_buffer);
                 setColor(color);
@@ -809,6 +717,10 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         public boolean isUseDigitalDisplay() {
             return useDigitalDisplay;
+        }
+
+        public void startMonitorView() {
+            monitor_series.resetData(monitor_buffer);
         }
 
         //Depending on if it is a graphable or digitial display, add the right UI

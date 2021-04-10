@@ -173,8 +173,10 @@ public class BLEHandlerService extends Service {
 //                    String address = msg.getData().getString("deviceAddress");
                     String address = msg.obj.toString();
                     connectDevice(address);
+                    break;
                 case MSG_DISCONNECT:
-                    mBluetoothLeService.disconnect();
+                    disconnectGattServer();
+                    break;
                 case MSG_CHECK_BT_ENABLED:
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                         //Request permission to enable BT
@@ -415,15 +417,6 @@ public class BLEHandlerService extends Service {
                 mConnected = true;
                 sendMessageToUI(MSG_GATT_CONNECTED);
 
-                Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
-
-                Bundle b = new Bundle();
-                b.putSerializable("sigSettings", bleparser.getSignalSettings());
-                b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
-                b.putInt("notif f", bleparser.notificationFrequency);
-                sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
-
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 mConnecting = false;
@@ -436,6 +429,15 @@ public class BLEHandlerService extends Service {
                 sendMessageToUI(MSG_GATT_FAILED);
 
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+
+                Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
+                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
+
+                Bundle b = new Bundle();
+                b.putSerializable("sigSettings", bleparser.getSignalSettings());
+                b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
+                b.putInt("notif f", bleparser.notificationFrequency);
+                sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
 
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);

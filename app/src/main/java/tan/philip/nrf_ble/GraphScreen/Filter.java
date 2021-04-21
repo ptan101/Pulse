@@ -27,6 +27,7 @@ public class Filter implements Serializable {
 
     public float findNextY(float newX) {
         //Advance in time
+        //Make this a circular FIFO for efficiency
         for(int i = 0; i < len; i ++) {
             x[i] = x[i+1];
             y[i] = y[i+1];

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import tan.philip.nrf_ble.GraphScreen.Filter;
 
 //Definitely rename this once I have a better idea of what it does lol
+//Should I combine this with GraphSignal?
 public class SignalSetting implements Serializable {
     public byte index;          //This is used when putting data into the output ArrayList.
     public String name;
@@ -18,10 +19,17 @@ public class SignalSetting implements Serializable {
     public boolean signed;
 
     //Optional settings
+    //Graph settings
     public boolean graphable = false;
     public int[] color = null;
-    public boolean digitalDisplay = false;
+    //Filter settings
     public Filter filter = null;
+    //Digital display settings
+    public boolean digitalDisplay = false;
+    public String decimalFormat = null;
+    public String conversion = null;
+    public String prefix = null;
+    public String suffix = null;
 
     public SignalSetting(byte index, String name, byte bytesPerPoint, int fs, byte resolution, boolean signed) {
         this.index = index;
@@ -31,16 +39,4 @@ public class SignalSetting implements Serializable {
         this.bitResolution = resolution;
         this.signed = signed;
     }
-
-//    private void writeObject(ObjectOutputStream oos)
-//            throws IOException {
-//        oos.defaultWriteObject();
-//        oos.writeObject(name);
-//    }
-//
-//    private void readObject(ObjectInputStream ois)
-//            throws ClassNotFoundException, IOException {
-//        ois.defaultReadObject();
-//        this.name = (String) ois.readObject();
-//    }
 }

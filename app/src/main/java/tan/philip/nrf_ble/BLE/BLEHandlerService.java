@@ -415,7 +415,6 @@ public class BLEHandlerService extends Service {
             final String action = intent.getAction();
             if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
                 mConnected = true;
-                sendMessageToUI(MSG_GATT_CONNECTED);
 
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
@@ -429,8 +428,9 @@ public class BLEHandlerService extends Service {
                 sendMessageToUI(MSG_GATT_FAILED);
 
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-
                 Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
+                sendMessageToUI(MSG_GATT_CONNECTED);
+
                 initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
 
                 Bundle b = new Bundle();
@@ -496,9 +496,7 @@ public class BLEHandlerService extends Service {
     private void processPackage(byte[] data) {
         //If save enabled, save raw data to phone memory
         if(mRecording) {
-            for (int i = 0; i < data.length; i ++) {
-                FileWriter.writeBIN(data, fileName);
-            }
+            FileWriter.writeBIN(data, fileName);
         }
 
         //Convert byte array into arrays of signals and send over messenger

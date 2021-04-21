@@ -6,13 +6,17 @@ import android.util.Log;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Properties;
 
 import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.GraphScreen.Biometrics;
 import tan.philip.nrf_ble.GraphScreen.Filter;
 
 public class BLEPacketParser {
+    private static final String TAG = "BLEPacketParser";
+
     //int numSignals;
     int notificationFrequency;
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
@@ -182,6 +186,7 @@ public class BLEPacketParser {
                 break;
             case "digdisplay":
                 signalSetting.digitalDisplay = true;
+                importDigitalDisplaySubSettings(signalSetting, subheadings);
                 break;
             case "filter":
                 importFilterSubSettings(signalSetting, subheadings);
@@ -279,6 +284,42 @@ public class BLEPacketParser {
         }
 
         signalSetting.filter = new Filter(b, a, gain);
+    }
+
+    private void importDigitalDisplaySubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
+        for(String s: subsettings) {
+            s = s.substring(2);
+            String[] options = s.split(": ");
+
+            switch (options[0]) {
+                case "DecimalFormat":
+                    signalSetting.decimalFormat = options[1];
+                    break;
+                case "conversion":
+                    signalSetting.conversion = options[1];
+                    break;
+                case "prefix":
+                    Properties p = new Properties();
+                    try {
+                        p.load(new StringReader("key="+options[1]));
+                    } catch (IOException e) {
+                        Log.e(TAG, "Unable to convert escape sequence" + options[1]);
+                    }
+                    signalSetting.prefix = p.getProperty("key");
+                    break;
+                case "suffix":
+                    p = new Properties();
+                    try {
+                        p.load(new StringReader("key="+options[1]));
+                    } catch (IOException e) {
+                        Log.e(TAG, "Unable to convert escape sequence" + options[1]);
+                    }
+                    signalSetting.suffix = p.getProperty("key");
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
 }

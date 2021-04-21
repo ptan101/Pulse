@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.text.Html;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -56,6 +57,10 @@ import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDE
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
 
+    //To Do:
+    //1 Menu remove old deprecated stuff
+    //2 Menu add marker for file
+    //3 Menu disconnect/reconnect
     public static final String TAG = "PWVGraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
 
@@ -124,6 +129,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         drawHrRanges();
                     }
                     */
+                    break;
 
                 default:
                     super.handleMessage(msg);
@@ -377,13 +383,22 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             SignalSetting cur_setting = signalSettings.get(i);
             signals.add(new GraphSignal(cur_setting));
 
-            if (signalSettings.get(i).graphable) {
-                signals.get(i).setupDisplay(this);
+            //This is getting hairy. Should lump setting loading together
+            if (cur_setting.graphable)
                 num_graphable++;
-            }
+            if(cur_setting.decimalFormat != null)
+                signals.get(i).decimalFormat = new DecimalFormat(cur_setting.decimalFormat);
+            if(cur_setting.conversion != null)
+                signals.get(i).conversion = cur_setting.conversion;
+            if(cur_setting.prefix != null)
+                signals.get(i).prefix = cur_setting.prefix;
+            if(cur_setting.suffix != null)
+                signals.get(i).suffix = cur_setting.suffix;
 
+            signals.get(i).setupDisplay(this);
         }
 
+        //For graphable signals, set the y offset
         for (int i = 0; i < signalSettings.size(); i ++) {
             if (signalSettings.get(i).graphable) {
                 float offset = (num_graphable - i) * (MAX_Y - MIN_Y) / (num_graphable + 1);
@@ -436,9 +451,9 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             //Determine the time between each data point as the time between packages / number of data points per package
             float deltaT = notification_period / signal_packet.length;  //In ms
 
-            if(signals.get(i).graphable()) {
+            for (int j = 0; j < signal_packet.length; j++) {
                 //Plot every data point in the packet. We alter both series since we want them to both be updated when we switch between
-                for (int j = 0; j < signal_packet.length; j++) {
+                if(signals.get(i).graphable()) {
                     //Log.d("", Float.toString(signal_packet[j]));
                     float x = (t + (j * deltaT)) / 1000;
                     float y = signal_packet[j]  / (float) Math.pow(2, signals.get(i).bitResolution) * amplification  + signals.get(i).offset;// * proximal_gain * amplification + offsets[j];
@@ -449,10 +464,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     //Add the data to the monitor series;
                     signals.get(i).addDataToMonitorBuffer(y);
                 }
-            }
 
-            if(signals.get(i).useDigitalDisplay) {
-                //Do something here
+                if(signals.get(i).useDigitalDisplay) {
+                    //Do something here
+                    signals.get(i).setDigitalDisplayText(signal_packet[j]);
+                }
             }
         }
 
@@ -521,8 +537,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "PWV", "pwv"),
                     mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
         }
-
-
     }
 
 
@@ -545,17 +559,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             } else {
                 Toast.makeText(this, "Storage Permission is not granted", Toast.LENGTH_SHORT).show();
             }
-
-            //Set File Name to current time
-            //fileName = Calendar.getInstance().getTime().toString() + ".bin";
-
-            //Check Permission
-            //while(!isStoragePermissionGranted());
-
-            //Create Folder
-            //createFolder();
-            //writeBIN((short)0xFFFF);
-
         } else {
             sendMessageToService(BLEHandlerService.MSG_STOP_RECORD);
             mBinding.recordTimer.setVisibility(View.INVISIBLE);
@@ -564,6 +567,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     //////////////////////////////////////////User Interface//////////////////////////////////////////
+    //To do: fix this
     public void showOptions(View v) {
         PopupMenu popup = new PopupMenu(this, v);
         popup.setOnMenuItemClickListener(this);
@@ -585,7 +589,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         popup.show();
     }
-
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
@@ -622,7 +625,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 //amplification = i / 10; //(float) (Math.pow(2, (float) i / 9) / 30);
-                amplification = (float)Math.pow(10, i/30) / 10;
+                amplification = (float)Math.pow(10f, (float)i / 30f) / 10f;
 
                 //resetAllSeries();
             }
@@ -655,7 +658,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         int[] color;
 
         //For Digital Dispaly
-        boolean useDigitalDisplay = false;
+        boolean useDigitalDisplay = false;          //Probably could remove this and just check if DD is null
+        DigitalDisplay digitalDisplay = null;
+        DecimalFormat decimalFormat = new DecimalFormat("###.#");   //Default format in case user doesn't define one
+        String conversion = "x";                                            //Default conversion (output exactly what is given)
+        String prefix = "";
+        String suffix = "";
 
         public GraphSignal(SignalSetting settings) {
             this.fs = settings.fs;
@@ -715,10 +723,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             return graphable;
         }
 
-        public boolean isUseDigitalDisplay() {
-            return useDigitalDisplay;
-        }
-
         public void startMonitorView() {
             monitor_series.resetData(monitor_buffer);
         }
@@ -750,9 +754,22 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             //Try making constraint layout for each
             if(this.useDigitalDisplay) {
                 //Add a new TextView to the legend with the signal name
-                DigitalDisplay newDD = new DigitalDisplay(context, this.name, "temperature");
-                DigitalDisplay.addToDigitalDisplay(newDD, mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+                digitalDisplay = new DigitalDisplay(context, this.name, "temperature");
+                DigitalDisplay.addToDigitalDisplay(digitalDisplay, mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
             }
+        }
+
+        public void setDigitalDisplayText(Float data) {
+            //Convert the signal packet into the desired format
+
+            //First, replace 'x' in the string with actual data
+            String func = conversion.replace("x", Float.toString(data));
+
+            //Now, evaluate the function
+            Double evaluation = DigitalDisplay.eval(func);
+
+            //Format text and display
+            this.digitalDisplay.label.setText(Html.fromHtml(prefix + decimalFormat.format(evaluation) + suffix));
         }
     }
 }

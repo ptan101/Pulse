@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -59,7 +60,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
     //To Do:
     //1 Menu remove old deprecated stuff
-    //2 Menu add marker for file
     //3 Menu disconnect/reconnect
     public static final String TAG = "PWVGraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
@@ -90,6 +90,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
     private ActivityPwvgraphBinding mBinding;
     private String deviceIdentifier;
+    private ColorStateList defaultTextColor;
 
     private final Handler mHandler = new Handler();
     private Runnable graphTimer;
@@ -121,18 +122,20 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     mBinding.textView5.setTextColor(Color.rgb(255,0,0));
                     mConnected = false;
                     invalidateOptionsMenu();
+                    writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected"}, fileName);
+                    stopRecord();
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
                     mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
-                    /*
-                    if(numPoints % GRAPHING_FREQUENCY == 0) {
-                        //displayData();
-                        drawHrRanges();
-                    }
-                    */
-                    break;
 
+                    break;
+                case BLEHandlerService.MSG_GATT_CONNECTED:
+                    mConnected = true;
+                    mBinding.textView5.setText("Reading from " + deviceIdentifier);
+                    mBinding.textView5.setTextColor(defaultTextColor);
+                    invalidateOptionsMenu();
+                    break;
                 default:
                     super.handleMessage(msg);
             }
@@ -209,22 +212,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
     }
 
-    //Rewrite this to make it possible to reconnect the device on GraphActivity
-    //Actually, just combine with sendStringToService lol
-    private void connectDevice(String deviceAddress) {
-        if (mIsBound) {
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null, BLEHandlerService.MSG_CONNECT, deviceAddress);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                }
-                catch (RemoteException e) {
-                }
-            }
-        }
-    }
-
     ////////////////////////////////////////Life cycle methods///////////////////////////////////////////////
 
     @Override
@@ -239,6 +226,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         //UI Setup
         setupButtons();
+
 
         //Graphing setup
         graph = mBinding.graph1;
@@ -613,6 +601,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     //////////////////////////////////////////User Interface//////////////////////////////////////////
     //To do: fix this
     private static final int MENU_MARK_EVENT = 0;
+    private static final int MENU_DISCONNECT_BLE = 1;
+    private static final int MENU_RECONNECT_BLE = 2;
 
     public void showOptions(View v) {
         PopupMenu popup = new PopupMenu(this, v);
@@ -627,6 +617,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             popup.getMenu().add(0, MENU_MARK_EVENT, Menu.NONE, "Mark Event");
         } else
             recordMenuItem.setTitle("Record");
+
+        if(mConnected)
+            popup.getMenu().add(0, MENU_DISCONNECT_BLE, Menu.NONE, "Disconnect");
+        else
+            popup.getMenu().add(0, MENU_RECONNECT_BLE, Menu.NONE, "Reconnect");
 
         //View Text
         MenuItem switchViewMenuItem = popup.getMenu().findItem(R.id.switchView);
@@ -665,6 +660,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         .setView(input)
                         .show();
                 return true;
+            case MENU_DISCONNECT_BLE:
+                sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+                return true;
+            case MENU_RECONNECT_BLE:
+                sendStringToService(BLEHandlerService.MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
+                return true;
             default:
                 return false;
         }
@@ -677,6 +678,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_pwvgraph);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
         mBinding.textView5.setText("Reading from device " + deviceIdentifier);
+        defaultTextColor = mBinding.textView5.getTextColors();
         mBinding.btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

@@ -475,6 +475,8 @@ public class BLEHandlerService extends Service {
 
             mBluetoothLeService.disconnect();
             mBluetoothLeService.close();
+
+            sendMessageToUI(MSG_GATT_DISCONNECTED);
         }
         mConnected = false;
     }

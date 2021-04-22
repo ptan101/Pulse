@@ -43,8 +43,8 @@ public class FileWriter {
         }
     }
 
-    public static void createFolder() {
-        File folder = new File(path);
+    public static void createFolder(String folderName) {
+        File folder = new File(path + File.separator + folderName);
         boolean success = true;
         if (!folder.exists()) {
             success = folder.mkdirs();
@@ -116,7 +116,7 @@ public class FileWriter {
     }
 
     public static void writeBIN(byte data[], String fileName) {
-        String filePath = path + File.separator + fileName;
+        String filePath = path + File.separator + fileName + File.separator + fileName + ".bin";
         FileOutputStream fileOutputStream = null;
 
         try {
@@ -147,10 +147,10 @@ public class FileWriter {
         }
     }
 
-    //No longer used
-    private static void writeCSV(String data[], int lenData, String fileName) {
+    //Writes to a CSV file. Used for event markers.
+    public static void writeCSV(String data[], String fileName) {
         Log.d(TAG, "Writing to CSV");
-        String filePath = path + File.separator + fileName;
+        String filePath = path + File.separator + fileName + File.separator + fileName + ".csv";
         File f = new File(filePath);
         CSVWriter writer;
         java.io.FileWriter mFileWriter;

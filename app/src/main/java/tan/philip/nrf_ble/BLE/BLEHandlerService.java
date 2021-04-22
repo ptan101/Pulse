@@ -184,6 +184,7 @@ public class BLEHandlerService extends Service {
                     }
                     break;
                 case MSG_START_RECORD:
+                    fileName = msg.obj.toString();
                     startRecord();
                     break;
                 case MSG_STOP_RECORD:
@@ -513,9 +514,7 @@ public class BLEHandlerService extends Service {
     }
 
     private void startRecord() {
-        fileName = Calendar.getInstance().getTime().toString() + ".bin";
-
-        FileWriter.createFolder();
+        FileWriter.createFolder(fileName);
         FileWriter.writeBINHeader(bleparser.signalSettings, bleparser.signalOrder, fileName);
         mRecording = true;
     }

@@ -20,17 +20,16 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.text.Html;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.databinding.DataBindingUtil;
 
@@ -53,6 +52,7 @@ import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
+import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
 import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDENTIFIER;
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
@@ -83,7 +83,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private int notification_frequency;
     private int notification_period;
     private float amplification = 5;
-    private boolean ECGView = true;
+    private boolean monitorView = true;
     private float t = 0;
 
     private Biometrics biometrics;
@@ -98,6 +98,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private boolean storeData = false;
     private long startRecordTime;
     DecimalFormat decimalFormat;
+    private String fileName;    //This is for event marking.
+    private float startRecordTimeEventMarker;  //Time based on notifications for event marking.
 
     //Stuff for interacting with the service
     Messenger mService = null;
@@ -193,7 +195,22 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
     }
 
+    private void sendStringToService(int msgID, String s) {
+        if (mIsBound) {
+            if (mService != null) {
+                try {
+                    Message msg = Message.obtain(null, msgID, s);
+                    msg.replyTo = mMessenger;
+                    mService.send(msg);
+                }
+                catch (RemoteException e) {
+                }
+            }
+        }
+    }
+
     //Rewrite this to make it possible to reconnect the device on GraphActivity
+    //Actually, just combine with sendStringToService lol
     private void connectDevice(String deviceAddress) {
         if (mIsBound) {
             if (mService != null) {
@@ -250,7 +267,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             @Override
             public void run() {
                 //Reached end of data, scroll automatically
-                if(!ECGView && graph1Scrollable && graph.getViewport().getMinX(false) < graph.getViewport().getMinX(true)) {
+                if(!monitorView && graph1Scrollable && graph.getViewport().getMinX(false) < graph.getViewport().getMinX(true)) {
                     double viewportWidth = graph.getViewport().getMaxX(false) - graph.getViewport().getMinX(false);
                     graph.getViewport().setMinX(graph.getViewport().getMinX(true));
                     graph.getViewport().setMaxX(graph.getViewport().getMinX(true) + viewportWidth);
@@ -342,7 +359,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         graph.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!graph1Scrollable && !ECGView) {
+                if(!graph1Scrollable && !monitorView) {
                     graph1Scrollable = true;
                     graph.getViewport().setScrollable(true);
                     graph.getViewport().setScalable(true);
@@ -416,7 +433,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         for (GraphSignal signal: signals) {
             if(signal.graphable()) {
                 signal.resetSeries();
-                ECGView = true;
+                monitorView = true;
                 graph.addSeries(signal.monitor_series);
                 graph.addSeries((monitor_mask));
             }
@@ -431,7 +448,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     private void resetViewport() {
-        if(!ECGView) {
+        if(!monitorView) {
             graph1Scrollable = false;
             graph.getViewport().setScrollable(false);
             graph.getViewport().setScalable(false);
@@ -480,8 +497,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     private void toggleView() {
-        if(ECGView) {
-            ECGView = false;
+        if(monitorView) {
+            monitorView = false;
 
             resetViewport();
 
@@ -496,7 +513,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 }
             }
         } else {
-            ECGView = true;
+            monitorView = true;
 
             //Set viewport to 10 seconds
             //graph.getViewport().setXAxisBoundsManual(true);
@@ -549,40 +566,71 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     */
 
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
+    private void startRecord() {
+        if(FileWriter.isStoragePermissionGranted(this)) {
+            final EditText input = new EditText(this);
+            input.setText(Calendar.getInstance().getTime().toString());
+
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("Please give the file a name.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Start Record", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startRecordTime = System.currentTimeMillis();
+                            startRecordTimeEventMarker = t;
+                            mBinding.recordTimer.setVisibility(View.VISIBLE);
+                            storeData = true;
+                            fileName = input.getText().toString();
+                            fileName = fileName.replace(":", "");
+                            sendStringToService(BLEHandlerService.MSG_START_RECORD, fileName);
+                        }
+
+                    })
+                    .setView(input)
+                    .show();
+
+        } else {
+            Toast.makeText(this, "Storage Permission is not granted", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void stopRecord() {
+        sendMessageToService(BLEHandlerService.MSG_STOP_RECORD);
+        mBinding.recordTimer.setVisibility(View.INVISIBLE);
+        storeData = false;
+    }
+
     private void toggleRecord() {
         if(!storeData) {
-            if(FileWriter.isStoragePermissionGranted(this)) {
-                startRecordTime = System.currentTimeMillis();
-                mBinding.recordTimer.setVisibility(View.VISIBLE);
-                storeData = true;
-                sendMessageToService(BLEHandlerService.MSG_START_RECORD);
-            } else {
-                Toast.makeText(this, "Storage Permission is not granted", Toast.LENGTH_SHORT).show();
-            }
+            startRecord();
         } else {
-            sendMessageToService(BLEHandlerService.MSG_STOP_RECORD);
-            mBinding.recordTimer.setVisibility(View.INVISIBLE);
-            storeData = false;
+            stopRecord();
         }
     }
 
     //////////////////////////////////////////User Interface//////////////////////////////////////////
     //To do: fix this
+    private static final int MENU_MARK_EVENT = 0;
+
     public void showOptions(View v) {
         PopupMenu popup = new PopupMenu(this, v);
         popup.setOnMenuItemClickListener(this);
-        popup.inflate(R.menu.popup_menu_xcg);
+
+        popup.inflate(R.menu.popup_menu_graph);
 
         //Record Text
         MenuItem recordMenuItem = popup.getMenu().findItem(R.id.record);
-        if(storeData)
+        if(storeData) {
             recordMenuItem.setTitle("Stop recording");
-        else
+            popup.getMenu().add(0, MENU_MARK_EVENT, Menu.NONE, "Mark Event");
+        } else
             recordMenuItem.setTitle("Record");
 
         //View Text
         MenuItem switchViewMenuItem = popup.getMenu().findItem(R.id.switchView);
-        if(ECGView)
+        if(monitorView)
             switchViewMenuItem.setTitle("Interactive View");
         else
             switchViewMenuItem.setTitle("Patient Monitor View");
@@ -590,25 +638,39 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         popup.show();
     }
 
+
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
         switch(menuItem.getItemId()) {
-            case R.id.invertProximal:
-                //proximal_gain *= -1;
-                return true;
-            case R.id.invertDistal:
-                //distal_gain *= -1;
-                return true;
             case R.id.record:
                 toggleRecord();
                 return true;
             case R.id.switchView:
                 toggleView();
                 return true;
+            case MENU_MARK_EVENT:
+                final EditText input = new EditText(this);
+
+                new AlertDialog.Builder(this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("Label this event?")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Mark Event", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Log.d("", "Event marked! t = " + Float.toString(t - startRecordTimeEventMarker));
+                                writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), input.getText().toString()}, fileName);
+                            }
+                        })
+                        .setView(input)
+                        .show();
+                return true;
             default:
                 return false;
         }
     }
+
+
 
     //////////////////Setup//////////////////////////////////////////////////////////////
     private void setupButtons() {

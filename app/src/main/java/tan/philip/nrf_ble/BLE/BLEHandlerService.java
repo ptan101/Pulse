@@ -428,6 +428,10 @@ public class BLEHandlerService extends Service {
 
                 sendMessageToUI(MSG_GATT_FAILED);
 
+                mBluetoothLeService.disconnect();
+                mBluetoothLeService.close();
+                //mBluetoothLeService = null;
+
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
                 sendMessageToUI(MSG_GATT_CONNECTED);
@@ -514,6 +518,7 @@ public class BLEHandlerService extends Service {
     }
 
     private void startRecord() {
+        FileWriter.createFolder(fileName);
         FileWriter.createFolder(fileName);
         FileWriter.writeBINHeader(bleparser.signalSettings, bleparser.signalOrder, fileName);
         mRecording = true;

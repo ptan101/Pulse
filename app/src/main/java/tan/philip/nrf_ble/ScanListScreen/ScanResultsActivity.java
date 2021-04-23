@@ -1,5 +1,6 @@
 package tan.philip.nrf_ble.ScanListScreen;
 
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
@@ -72,10 +73,6 @@ public class ScanResultsActivity extends AppCompatActivity {
                     invalidateOptionsMenu();
                     break;
                 case BLEHandlerService.MSG_GATT_DISCONNECTED:
-                    mConnected = false;
-                    mConnecting = false;
-                    invalidateOptionsMenu();
-                    break;
                 case BLEHandlerService.MSG_GATT_FAILED:
                     mConnected = false;
                     mConnecting = false;
@@ -90,6 +87,14 @@ public class ScanResultsActivity extends AppCompatActivity {
                             (Biometrics) msg.getData().getSerializable("bioSettings"),
                             (int) msg.getData().getInt("notif f"));
                     break;
+                    case BLEHandlerService.MSG_UNRECOGNIZED_NUS_DEVICE:
+                        new AlertDialog.Builder(ScanResultsActivity.this)
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setTitle("Unable to connect")
+                                .setMessage("This BLE device is not recognized as an e-tattoo! Please select a different device.")
+                                .setPositiveButton("Proceed", null)
+                                .show();
+                        break;
                 default:
                     super.handleMessage(msg);
             }

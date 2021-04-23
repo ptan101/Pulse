@@ -25,12 +25,18 @@ public class BLEPacketParser {
     Biometrics biometrics = new Biometrics();
 
     //Use this to instantiate a new BLEPackageParser object
-    public BLEPacketParser(Context context) {
+    public BLEPacketParser(Context context, String deviceName) throws Exception  {
         signalSettings = new ArrayList<>();
         signalOrder = new ArrayList<>();
 
-        //Eventually, load in data from some init file to tell how to parse the BT package.
-        parseInitFile("", context);
+        //First, use the deviceName to lookup the right init file
+        String initFileName = lookupInitFile(deviceName, context);
+
+        if (initFileName == null)
+            throw new Exception();
+
+        //Load in the init file
+        parseInitFile(initFileName, context);
     }
 
     //To do: make this arraylist of arrays
@@ -152,8 +158,7 @@ public class BLEPacketParser {
         ArrayList<String> lines = new ArrayList<String>();
         try {
             reader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("inits/ppg_v2.init")));
-            //new InputStreamReader(context.getAssets().open("ppg_v2.init")));
+                    new InputStreamReader(context.getAssets().open("inits/" + initFileName)));
 
             String mLine;
 
@@ -320,6 +325,34 @@ public class BLEPacketParser {
                     break;
             }
         }
+    }
+
+    //////////////////Helper Method for loading in init file lookup table
+    private String lookupInitFile(String deviceName, Context context) {
+        BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(
+                    new InputStreamReader(context.getAssets().open("inits/init_file_lookup.txt")));
+
+            String mLine;
+
+            while (!((mLine = reader.readLine()) == null))
+                if (mLine.startsWith(deviceName.split(" \\(")[0]))
+                    return mLine.split(", ")[1];
+
+        } catch (IOException e) {
+            //log the exception
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    //log the exception
+                }
+            }
+        }
+        return null;
     }
 
 }

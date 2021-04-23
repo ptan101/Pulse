@@ -1,5 +1,6 @@
 package tan.philip.nrf_ble.BLE;
 
+import android.app.AlertDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -12,6 +13,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -67,6 +69,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_GATT_SERVICES_DISCOVERED = 13;
     public static final int MSG_GATT_ACTION_DATA_AVAILABLE = 14;
     public static final int MSG_CHECK_PERMISSIONS = 15;
+    public static final int MSG_UNRECOGNIZED_NUS_DEVICE = 20;
 
     //final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
 
@@ -433,17 +436,21 @@ public class BLEHandlerService extends Service {
                 //mBluetoothLeService = null;
 
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-                sendMessageToUI(MSG_GATT_CONNECTED);
+                try {
+                    initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
 
-                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic?
+                    Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
+                    sendMessageToUI(MSG_GATT_CONNECTED);
 
-                Bundle b = new Bundle();
-                b.putSerializable("sigSettings", bleparser.getSignalSettings());
-                b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
-                b.putInt("notif f", bleparser.notificationFrequency);
-                sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
-
+                    Bundle b = new Bundle();
+                    b.putSerializable("sigSettings", bleparser.getSignalSettings());
+                    b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
+                    b.putInt("notif f", bleparser.notificationFrequency);
+                    sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+                } catch (Exception e) {
+                    disconnectGattServer();
+                    sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
+                }
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
                 processPackage(data);
@@ -496,15 +503,19 @@ public class BLEHandlerService extends Service {
     }
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
-    private void initializeBLEParser() {
-        bleparser = new BLEPacketParser(this);
-
+    private void initializeBLEParser() throws Exception{
+        bleparser = new BLEPacketParser(this, deviceNameToConnect);
     }
+
     private void processPackage(byte[] data) {
         //If save enabled, save raw data to phone memory
         if(mRecording) {
             FileWriter.writeBIN(data, fileName);
         }
+
+        //Sometimes a packet arrives before app can disconnect when BLE device not recognized.
+        if (bleparser == null)
+            return;
 
         //Convert byte array into arrays of signals and send over messenger
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePackage(data);

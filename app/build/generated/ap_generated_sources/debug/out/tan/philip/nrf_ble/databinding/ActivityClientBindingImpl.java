@@ -14,14 +14,15 @@ public class ActivityClientBindingImpl extends ActivityClientBinding  {
     static {
         sIncludes = null;
         sViewsWithIds = new android.util.SparseIntArray();
-        sViewsWithIds.put(R.id.pulse_1, 1);
-        sViewsWithIds.put(R.id.pulse_2, 2);
-        sViewsWithIds.put(R.id.pulse_3, 3);
-        sViewsWithIds.put(R.id.pulse_4, 4);
-        sViewsWithIds.put(R.id.textView, 5);
-        sViewsWithIds.put(R.id.btn_Scan, 6);
-        sViewsWithIds.put(R.id.img_BT, 7);
-        sViewsWithIds.put(R.id.btn_list_devices, 8);
+        sViewsWithIds.put(R.id.layout1, 1);
+        sViewsWithIds.put(R.id.pulse_1, 2);
+        sViewsWithIds.put(R.id.pulse_2, 3);
+        sViewsWithIds.put(R.id.pulse_3, 4);
+        sViewsWithIds.put(R.id.pulse_4, 5);
+        sViewsWithIds.put(R.id.textView, 6);
+        sViewsWithIds.put(R.id.btn_Scan, 7);
+        sViewsWithIds.put(R.id.img_BT, 8);
+        sViewsWithIds.put(R.id.btn_list_devices, 9);
     }
     // views
     // variables
@@ -30,21 +31,22 @@ public class ActivityClientBindingImpl extends ActivityClientBinding  {
     // Inverse Binding Event Handlers
 
     public ActivityClientBindingImpl(@Nullable androidx.databinding.DataBindingComponent bindingComponent, @NonNull View root) {
-        this(bindingComponent, root, mapBindings(bindingComponent, root, 9, sIncludes, sViewsWithIds));
+        this(bindingComponent, root, mapBindings(bindingComponent, root, 10, sIncludes, sViewsWithIds));
     }
     private ActivityClientBindingImpl(androidx.databinding.DataBindingComponent bindingComponent, View root, Object[] bindings) {
         super(bindingComponent, root, 0
-            , (android.widget.Button) bindings[8]
-            , (android.widget.ImageButton) bindings[6]
-            , (android.widget.ImageView) bindings[7]
+            , (android.widget.Button) bindings[9]
+            , (android.widget.ImageButton) bindings[7]
             , (androidx.constraintlayout.widget.ConstraintLayout) bindings[0]
-            , (android.widget.ImageView) bindings[1]
+            , (android.widget.ImageView) bindings[8]
+            , (androidx.constraintlayout.widget.ConstraintLayout) bindings[1]
             , (android.widget.ImageView) bindings[2]
             , (android.widget.ImageView) bindings[3]
             , (android.widget.ImageView) bindings[4]
-            , (android.widget.TextView) bindings[5]
+            , (android.widget.ImageView) bindings[5]
+            , (android.widget.TextView) bindings[6]
             );
-        this.layout1.setTag(null);
+        this.gradientBackground.setTag(null);
         setRootTag(root);
         // listeners
         invalidateAll();

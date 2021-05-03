@@ -1,6 +1,5 @@
 package tan.philip.nrf_ble.BLE;
 
-import android.app.AlertDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -13,7 +12,6 @@ import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -28,7 +26,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,6 +82,7 @@ public class BLEHandlerService extends Service {
     private ArrayList<String> bluetoothAddresses = new ArrayList<>();
     private ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
     private String deviceNameToConnect = "";
+    private String deviceAddress = "";
 
     private BluetoothLeService mBluetoothLeService;
     private boolean mConnecting;
@@ -95,6 +93,7 @@ public class BLEHandlerService extends Service {
     private BLEPacketParser bleparser;
     private String fileName;
     private boolean mRecording = false;
+
 
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
@@ -174,8 +173,8 @@ public class BLEHandlerService extends Service {
                     break;
                 case MSG_CONNECT:
 //                    String address = msg.getData().getString("deviceAddress");
-                    String address = msg.obj.toString();
-                    connectDevice(address);
+                    deviceAddress = msg.obj.toString();
+                    connectDevice(deviceAddress);
                     break;
                 case MSG_DISCONNECT:
                     disconnectGattServer();
@@ -423,6 +422,7 @@ public class BLEHandlerService extends Service {
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 mConnecting = false;
+
                 sendMessageToUI(MSG_GATT_DISCONNECTED);
 
             } else if (BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
@@ -431,8 +431,12 @@ public class BLEHandlerService extends Service {
 
                 sendMessageToUI(MSG_GATT_FAILED);
 
-                mBluetoothLeService.disconnect();
-                mBluetoothLeService.close();
+                Toast.makeText(BLEHandlerService.this, "Connection failed." , Toast.LENGTH_SHORT).show();
+
+                //mBluetoothLeService.disconnect();
+
+                //Warning: this was commented out for autoconnect. May be incorrect.
+                //mBluetoothLeService.close();
                 //mBluetoothLeService = null;
 
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
@@ -447,13 +451,14 @@ public class BLEHandlerService extends Service {
                     b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
                     b.putInt("notif f", bleparser.notificationFrequency);
                     sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+
                 } catch (Exception e) {
                     disconnectGattServer();
                     sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
                 }
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-                processPackage(data);
+                processPacket(data);
                 //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
         }
@@ -468,16 +473,16 @@ public class BLEHandlerService extends Service {
 
     private void connectDevice(String deviceAddress) {
         deviceNameToConnect = getBluetoothIdentifier(deviceAddress);
-        Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + deviceNameToConnect, Toast.LENGTH_SHORT);
-        toast.show();
+        //Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + deviceNameToConnect, Toast.LENGTH_SHORT);
+        //toast.show();
         mBluetoothLeService.connect(deviceAddress);
     }
 
     public void disconnectGattServer() {
         if (mBluetoothLeService != null) {
             if(mConnected){
-                String toast = "Device disconnected";
-                Toast.makeText(BLEHandlerService.this, toast, Toast.LENGTH_SHORT).show();
+                //String toast = "Device disconnected";
+                //Toast.makeText(BLEHandlerService.this, toast, Toast.LENGTH_SHORT).show();
             }
 
             mBluetoothLeService.disconnect();
@@ -507,7 +512,7 @@ public class BLEHandlerService extends Service {
         bleparser = new BLEPacketParser(this, deviceNameToConnect);
     }
 
-    private void processPackage(byte[] data) {
+    private void processPacket(byte[] data) {
         //If save enabled, save raw data to phone memory
         if(mRecording) {
             FileWriter.writeBIN(data, fileName);

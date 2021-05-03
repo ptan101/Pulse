@@ -58,13 +58,18 @@ public class BLEPacketParser {
             //Determine size of data in bytes
             int size = signalSetting.bytesPerPoint;
 
-            int cur_data = data[i];
-            if(!signalSetting.signed)
-                cur_data &= 0xFF;
+            int cur_data = data[i] & 0xFF;
+            //if(!signalSetting.signed)
+            //    cur_data &= 0xFF;
 
             //Load a certain number of bytes from data
             for (int j = 1; j < size; j ++) {
-                cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);       //Shift old bytes by 8 bits to make space for new byte
+                //cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);          //Shift old bytes by 8 bits to make space for new byte. This is for Big Endian
+                byte cur_byte = data[i + j];
+                if(j != size - 1 || !signalSetting.signed)
+                    cur_byte &= 0xFF;   //If it's not signed or the MSB, no need to sign extend
+
+                cur_data = (cur_data | (cur_byte) << (8 * j));        //Shift new bytes by however many bytes there are already in cur_data.. This is for little Endian
             }
 
             //Store the parsed data into the correct ArrayList

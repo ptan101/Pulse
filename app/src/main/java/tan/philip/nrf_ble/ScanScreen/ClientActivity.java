@@ -49,7 +49,6 @@ public class ClientActivity extends AppCompatActivity {
 
     //Color scan background
     private final int GREY = 0xFF2C2C2C;
-    private ValueAnimator valueAnimator;
     private ArrayList<Pulse> pulses;
 
     ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
@@ -154,9 +153,10 @@ public class ClientActivity extends AppCompatActivity {
         //this.getSupportActionBar().hide();
 
         //Set up background color transition
-        setupBackgroundTransition();
         setupPulses();
         setupButtons();
+
+
 
         //setupBLE();
 
@@ -188,8 +188,9 @@ public class ClientActivity extends AppCompatActivity {
         doBindService();
 
         mBinding.btnListDevices.setVisibility(View.GONE);
+        mBinding.layout1.getBackground().setAlpha(0);
         //mBinding.layout1.setBackgroundColor(0xFF2c2a3a);
-        mBinding.layout1.setBackgroundColor(GREY);
+        //mBinding.layout1.setBackgroundColor(GREY);
         //mHandler = new Handler();
 
         if (!hasPermissions()) {
@@ -232,6 +233,8 @@ public class ClientActivity extends AppCompatActivity {
     }
 
     private void startScan() {
+        mBinding.layout1.getBackground().setAlpha(0);
+
         sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
         numDevicesFound = 0;
         sendMessageToService(BLEHandlerService.MSG_START_SCAN);
@@ -246,11 +249,11 @@ public class ClientActivity extends AppCompatActivity {
         Toast toast = Toast.makeText(getApplicationContext(), "Scanning for BLE devices...", Toast.LENGTH_SHORT);
         toast.show();
 
-        //Change background color
-        valueAnimator.start();
         for(Pulse currentPulse: pulses) {
             currentPulse.restart();
         }
+
+
 
         mScanning = true;
     }
@@ -268,6 +271,10 @@ public class ClientActivity extends AppCompatActivity {
         if(numDevicesFound == 0) {
             //Animate button
             mBinding.btnListDevices.setVisibility(View.VISIBLE);
+
+            //Change background color
+            startBackgroundTransition();
+
 
             ValueAnimator newButton = ValueAnimator.ofInt(0, 255);
             newButton.setDuration(1000);
@@ -318,13 +325,24 @@ public class ClientActivity extends AppCompatActivity {
         requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
     }
 
-    private void setupBackgroundTransition() {
+    private void startBackgroundTransition() {
+        ValueAnimator backgroundTransition = ValueAnimator.ofInt(0, 255);
+        backgroundTransition.setDuration(4000);
+        backgroundTransition.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                mBinding.layout1.getBackground().setAlpha((int) backgroundTransition.getAnimatedValue());
+            }
+        });
+        backgroundTransition.start();
+
+        /*
         final float[] from = new float[3],
                 to =   new float[3];
 
         //Color.colorToHSV(Color.parseColor("#FF2c2a3a"), from);   // from blue
-        Color.colorToHSV(Color.parseColor("#FF2C2C2C"), from);
-        Color.colorToHSV(Color.parseColor("#FFFFFFFF"), to);     // to white
+        Color.colorToHSV(Color.parseColor("#00FFFFFF"), from);      //Transparent
+        Color.colorToHSV(Color.parseColor("#FFFFFFFF"), to);     // to opaque
 
         valueAnimator = ValueAnimator.ofFloat(0, 1);                  // animate from 0 to 1
         valueAnimator.setDuration(4000);
@@ -340,6 +358,8 @@ public class ClientActivity extends AppCompatActivity {
                 mBinding.layout1.setBackgroundColor(Color.HSVToColor(hsv));
             }
         });
+
+         */
     }
 
     private void setupPulses() {

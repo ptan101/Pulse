@@ -107,6 +107,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     boolean mIsBound;
     final Messenger mMessenger = new Messenger(new GraphActivity.IncomingHandler());
     boolean mConnected = true;
+    boolean autoconnect = true;
 
     ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
 
@@ -117,13 +118,21 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             switch (msg.what) {
                 case BLEHandlerService.MSG_GATT_FAILED:
                 case BLEHandlerService.MSG_GATT_DISCONNECTED:
-                    runOnUiThread(() -> Toast.makeText(GraphActivity.this, "Device disconnected", Toast.LENGTH_SHORT).show());
-                    mBinding.textView5.setText(deviceIdentifier + " disconnected");
+                    if(autoconnect) {
+                        Toast.makeText(GraphActivity.this, "Connection failed.", Toast.LENGTH_SHORT).show();
+                        mBinding.textView5.setText(deviceIdentifier + " disconnected/n(attempting auto-reconnect)");
+                    } else {
+                        mBinding.textView5.setText(deviceIdentifier + " disconnected");
+                    }
                     mBinding.textView5.setTextColor(Color.rgb(255,0,0));
                     mConnected = false;
                     invalidateOptionsMenu();
-                    writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected"}, fileName);
-                    stopRecord();
+
+                    if(storeData) {
+                        String curTime = Calendar.getInstance().getTime().toString();
+                        writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected at " + curTime}, fileName);
+                    }
+
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
@@ -135,6 +144,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     mBinding.textView5.setText("Reading from " + deviceIdentifier);
                     mBinding.textView5.setTextColor(defaultTextColor);
                     invalidateOptionsMenu();
+
+                    if(storeData) {
+                        String curTime = Calendar.getInstance().getTime().toString();
+                        writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device reconnected at " + curTime}, fileName);
+                    }
+
                     break;
                 default:
                     super.handleMessage(msg);
@@ -223,7 +238,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         //Setup from prior activity
         Bundle extras = getIntent().getExtras();
         deviceIdentifier = extras.getString(EXTRA_BT_IDENTIFIER);
-
+        //Bind activity to service
+        doBindService();
         //UI Setup
         setupButtons();
 
@@ -238,10 +254,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         setupBiometricsDigitalDisplay();
         notification_frequency = extras.getInt(ScanResultsActivity.EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
-
-        //Bind activity to service
-        doBindService();
-
     }
 
     @Override
@@ -278,6 +290,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     protected void onDestroy() {
         super.onDestroy();
 
+        sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+
         //Unbind the service
         try {
             doUnbindService();
@@ -298,7 +312,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
                             finish();
                         }
 
@@ -369,15 +382,16 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         });
 
         int color = Color.WHITE;
-        Drawable background = mBinding.backgroundCL.getBackground();
-        if (background instanceof ColorDrawable)
-            color = ((ColorDrawable) background).getColor();
+
+        //Drawable background = mBinding.backgroundCL.getBackground();
+        //if (background instanceof ColorDrawable)
+        //    color = ((ColorDrawable) background).getColor();
 
         monitor_mask.setColor(color);
         monitor_mask.setCustomShape(new PointsGraphSeries.CustomShape() {
             @Override
             public void draw(Canvas canvas, Paint paint, float x, float y, DataPointInterface dataPoint) {
-                paint.setStrokeWidth(50);
+                paint.setStrokeWidth(30);
                 canvas.drawLine(x, y, x, y-2000, paint);
             }
         });
@@ -478,7 +492,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
 
         //Draw mask over old monitor points
-        mask[0] = new DataPoint((float)((int) t % (MAX_MONITOR_DISPLAY_LENGTH * 1000)) / 1000f, -0.5);
+        mask[0] = new DataPoint((float)((int) t % (MAX_MONITOR_DISPLAY_LENGTH * 1000)) / 1000f, MIN_Y - MARGINS);
         monitor_mask.resetData(mask);
 
         t += notification_period;
@@ -557,7 +571,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private void startRecord() {
         if(FileWriter.isStoragePermissionGranted(this)) {
             final EditText input = new EditText(this);
-            input.setText(Calendar.getInstance().getTime().toString());
+            String curTime = Calendar.getInstance().getTime().toString();
+            input.setText(curTime);
 
             new AlertDialog.Builder(this)
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -573,6 +588,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                             fileName = input.getText().toString();
                             fileName = fileName.replace(":", "");
                             sendStringToService(BLEHandlerService.MSG_START_RECORD, fileName);
+                            writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), "Recording started at " + curTime}, fileName);
                         }
 
                     })
@@ -620,7 +636,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         if(mConnected)
             popup.getMenu().add(0, MENU_DISCONNECT_BLE, Menu.NONE, "Disconnect");
-        else
+        else if (!autoconnect)
             popup.getMenu().add(0, MENU_RECONNECT_BLE, Menu.NONE, "Reconnect");
 
         //View Text
@@ -643,6 +659,19 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             case R.id.switchView:
                 toggleView();
                 return true;
+            case R.id.help:
+                new AlertDialog.Builder(this)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setTitle("Help")
+                        .setMessage(Html.fromHtml("<b>"+"Record:"+"</b>"+" Starts saving waveform data into internal storage (/Pulse_Data)." + "<br>" +
+                                "<b>"+"Mark Event:"+"</b>"+" User can place a named marker when recording. This will be written in internal storage (/Pulse_Data)." + "<br>" +
+                                "<b>"+"Interactive View: "+"</b>"+" Waveforms scroll across the screen, and the user can pinch/ pan to view different parts of the waveform." + "<br>" +
+                                "<b>"+"Monitor View: "+"</b>"+" Waveforms are displayed like a medical patient monitor." + "<br>" +
+                                "<b>"+"Disconnect:"+"</b>"+" Manually terminate the Bluetooth connection. The device will not attempt to automatically reconnect, and saving is ended." + "<br>" + "<br>" +
+                                "Please feel free to email Philip Tan (Lu Research Group) at philip.tan@utexas.edu if any issues are observed.", Html.FROM_HTML_MODE_LEGACY))
+                        .setPositiveButton("Close", null)
+                        .show();
+                return true;
             case MENU_MARK_EVENT:
                 final EditText input = new EditText(this);
 
@@ -662,9 +691,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 return true;
             case MENU_DISCONNECT_BLE:
                 sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+                //Manually disconnect, do not want to autoconnect
+                autoconnect = false;
                 return true;
             case MENU_RECONNECT_BLE:
                 sendStringToService(BLEHandlerService.MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
+                //Manual reconnect, want following disconnects to be automatically reconnected.
+                autoconnect = true;
                 return true;
             default:
                 return false;
@@ -721,7 +754,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         DataPoint[] monitor_buffer;
         int[] color;
 
-        //For Digital Dispaly
+        //For Digital Display
         boolean useDigitalDisplay = false;          //Probably could remove this and just check if DD is null
         DigitalDisplay digitalDisplay = null;
         DecimalFormat decimalFormat = new DecimalFormat("###.#");   //Default format in case user doesn't define one

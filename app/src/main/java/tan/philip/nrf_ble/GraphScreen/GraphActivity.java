@@ -693,6 +693,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
                 //Manually disconnect, do not want to autoconnect
                 autoconnect = false;
+                stopRecord();
                 return true;
             case MENU_RECONNECT_BLE:
                 sendStringToService(BLEHandlerService.MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));

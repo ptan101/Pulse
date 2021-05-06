@@ -32,6 +32,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.jjoe64.graphview.DefaultLabelFormatter;
@@ -54,6 +55,8 @@ import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
 import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
+import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
+import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDENTIFIER;
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
@@ -118,21 +121,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             switch (msg.what) {
                 case BLEHandlerService.MSG_GATT_FAILED:
                 case BLEHandlerService.MSG_GATT_DISCONNECTED:
-                    if(autoconnect) {
-                        Toast.makeText(GraphActivity.this, "Connection failed.", Toast.LENGTH_SHORT).show();
-                        mBinding.textView5.setText(deviceIdentifier + " disconnected/n(attempting auto-reconnect)");
-                    } else {
-                        mBinding.textView5.setText(deviceIdentifier + " disconnected");
-                    }
-                    mBinding.textView5.setTextColor(Color.rgb(255,0,0));
-                    mConnected = false;
-                    invalidateOptionsMenu();
-
-                    if(storeData) {
-                        String curTime = Calendar.getInstance().getTime().toString();
-                        writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected at " + curTime}, fileName);
-                    }
-
+                    onDisconnect();
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
@@ -140,15 +129,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
                     break;
                 case BLEHandlerService.MSG_GATT_CONNECTED:
-                    mConnected = true;
-                    mBinding.textView5.setText("Reading from " + deviceIdentifier);
-                    mBinding.textView5.setTextColor(defaultTextColor);
-                    invalidateOptionsMenu();
-
-                    if(storeData) {
-                        String curTime = Calendar.getInstance().getTime().toString();
-                        writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device reconnected at " + curTime}, fileName);
-                    }
+                    onReconnect();
 
                     break;
                 default:
@@ -292,6 +273,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
 
+        makeNotification("APP FAILURE", "GraphActivity destroyed", this);
+
         //Unbind the service
         try {
             doUnbindService();
@@ -312,6 +295,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            autoconnect = false;
                             finish();
                         }
 
@@ -320,6 +304,42 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         } else {
             finish();
         }
+    }
+
+    private void onDisconnect() {
+        String curTime = Calendar.getInstance().getTime().toString();
+
+        if(autoconnect) {
+            Toast.makeText(GraphActivity.this, "Connection failed.", Toast.LENGTH_SHORT).show();
+            mBinding.textView5.setText(deviceIdentifier + " disconnected (attempting auto-reconnect)");
+            makeNotification("Device disconnected", "Device " + deviceIdentifier + " lost connection on " + curTime, GraphActivity.this);
+        } else {
+            mBinding.textView5.setText(deviceIdentifier + " disconnected");
+        }
+        mBinding.textView5.setTextColor(Color.rgb(255,0,0));
+        mConnected = false;
+        invalidateOptionsMenu();
+
+        if(storeData) {
+            writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected at " + curTime}, fileName);
+        }
+
+
+    }
+
+    private void onReconnect() {
+        String curTime = Calendar.getInstance().getTime().toString();
+
+        mConnected = true;
+        mBinding.textView5.setText("Reading from " + deviceIdentifier);
+        mBinding.textView5.setTextColor(defaultTextColor);
+        invalidateOptionsMenu();
+
+        if(storeData) {
+            writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device reconnected at " + curTime}, fileName);
+        }
+
+        makeNotification("Device reconnected", "Device " + deviceIdentifier + " regained connection on " + curTime, GraphActivity.this);
     }
 
     ////////////////////////////////////GRAPH STUFF////////////////////////////////////////////////
@@ -869,5 +889,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             //Format text and display
             this.digitalDisplay.label.setText(Html.fromHtml(prefix + decimalFormat.format(evaluation) + suffix));
         }
+
+
     }
 }

@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.BLE;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -25,13 +27,21 @@ import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import tan.philip.nrf_ble.R;
+
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
+import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
+import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
+import static tan.philip.nrf_ble.NotificationHandler.NOTIFICATION_DEFAULT_IMPORTANCE;
+import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
 public class BLEHandlerService extends Service {
@@ -94,6 +104,7 @@ public class BLEHandlerService extends Service {
     private String fileName;
     private boolean mRecording = false;
 
+    NotificationCompat.Builder notificationBuilder;
 
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
@@ -126,6 +137,15 @@ public class BLEHandlerService extends Service {
 
         //Transcieving
 
+        //Foreground Service - keep it running. Just set up here, need to call startForeground to actually make it run in foreground
+        Intent notificationIntent = new Intent(this, BLEHandlerService.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+
+        notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Attempting BLE connection...")
+                .setContentText("")
+                .setSmallIcon(R.drawable.heartrate)
+                .setContentIntent(pendingIntent);
     }
 
     @Override
@@ -175,9 +195,15 @@ public class BLEHandlerService extends Service {
 //                    String address = msg.getData().getString("deviceAddress");
                     deviceAddress = msg.obj.toString();
                     connectDevice(deviceAddress);
+
+                    notificationBuilder.setContentTitle("Attempting BLE connection...");
+                    startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+                    makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+
                     break;
                 case MSG_DISCONNECT:
                     disconnectGattServer();
+                    stopForeground(true);
                     break;
                 case MSG_CHECK_BT_ENABLED:
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
@@ -451,6 +477,9 @@ public class BLEHandlerService extends Service {
                     b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
                     b.putInt("notif f", bleparser.notificationFrequency);
                     sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+
+                    notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
+                    makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
                 } catch (Exception e) {
                     disconnectGattServer();

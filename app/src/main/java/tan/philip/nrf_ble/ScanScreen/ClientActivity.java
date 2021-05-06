@@ -26,9 +26,13 @@ import androidx.databinding.DataBindingUtil;
 import java.util.ArrayList;
 
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
+import tan.philip.nrf_ble.NotificationHandler;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
+
+import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
+import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
 public class ClientActivity extends AppCompatActivity {
     //private ImageButton btnScan;
@@ -146,6 +150,8 @@ public class ClientActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_client);
+
+        createNotificationChannel(this);
 
         //Start the BLEHandlerService
         Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);

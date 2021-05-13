@@ -15,7 +15,7 @@ end
 ..a: 1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 ..gain: 10
 2, LF Signal (IR), 2, 20, 12, signed
-3, Temperature [C], 2, 7, 14, signed
+3, Temperature [C], 2, 20, 14, signed
 .digdisplay
 ..DecimalFormat: ###.#
 ..conversion: (x*175.72/65536)-46.85

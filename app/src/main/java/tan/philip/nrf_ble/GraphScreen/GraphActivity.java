@@ -273,8 +273,6 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
 
-        makeNotification("APP FAILURE", "GraphActivity destroyed", this);
-
         //Unbind the service
         try {
             doUnbindService();

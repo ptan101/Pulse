@@ -20,7 +20,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
@@ -39,7 +42,7 @@ public class ClientActivity extends AppCompatActivity {
 
     private static final String TAG = "ClientActivity";
     private static final int REQUEST_ENABLE_BT = 1;
-    private static final int REQUEST_FINE_LOCATION = 2;
+    private static final int REQUEST_PERMISSION_CODE = 2;
     public static final String EXTRA_BT_SCAN_RESULTS = "scan results";
 
     Messenger mService = null;
@@ -200,9 +203,9 @@ public class ClientActivity extends AppCompatActivity {
         //mHandler = new Handler();
 
         if (!hasPermissions()) {
-            finish();
-            return;
+            getPermissions();
         }
+
 
         //Check if device supports BLE
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -298,6 +301,23 @@ public class ClientActivity extends AppCompatActivity {
         mBinding.btnListDevices.setText("List Devices (" + numDevicesFound + ")");
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d("Permission", "onRequestPermissionsResult: "+ grantResults[0] + grantResults[1]);
+        switch(requestCode) {
+            case REQUEST_ENABLE_BT:
+                if(grantResults.length==2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
+                    Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+                else {
+                    Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    System.exit(0);
+                }
+                break;
+            default:
+                Toast.makeText(this, "????????", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private boolean hasPermissions() {
 
 //        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
@@ -309,26 +329,36 @@ public class ClientActivity extends AppCompatActivity {
 //        } else
         sendMessageToService(BLEHandlerService.MSG_CHECK_BT_ENABLED);
 
-        if (!hasLocationPermissions()) {
-            requestLocationPermission();
-            Toast toast = Toast.makeText(getApplicationContext(), "Please enable location permissions", Toast.LENGTH_LONG);
-            toast.show();
-            return false;
-        }
+//        if (!hasLocationPermissions()) {
+//            requestLocationPermission();
+//            Toast toast = Toast.makeText(getApplicationContext(), "Please enable location permissions", Toast.LENGTH_LONG);
+//            toast.show();
+//            return false;
+//        }
+//        return true;
 
-        return true;
+        int write_external_storage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int location_access = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        return (write_external_storage == PackageManager.PERMISSION_GRANTED) && (location_access == PackageManager.PERMISSION_GRANTED);
     }
 
     private void requestBluetoothEnable() {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        Log.d(TAG, "Requested user enables Bluetooth. Try starting the scan again.");
+        Log.d(TAG, "Requested user enabled Bluetooth. Try starting the scan again.");
     }
-    private boolean hasLocationPermissions() {
-        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-    private void requestLocationPermission() {
-        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+//    private boolean hasLocationPermissions() {
+//        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+//    }
+//    private void requestLocationPermission() {
+//        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+//    }
+
+    private void getPermissions() {
+        ActivityCompat.requestPermissions(this, new String[]{
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION
+        }, REQUEST_PERMISSION_CODE);
     }
 
     private void startBackgroundTransition() {

@@ -1,0 +1,65 @@
+10, 108
+end
+0, X, 3, 125, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, Y, 3, 125, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+2, Z, 3, 125, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+heartrate, 0
+spo2, 0, 0, 0, 0
+pwv, 1, 0
+end
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+end

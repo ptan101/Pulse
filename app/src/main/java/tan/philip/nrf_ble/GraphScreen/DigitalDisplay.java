@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import tan.philip.nrf_ble.R;
 
 public class DigitalDisplay {
-    public float value;
+    //public float value;
     public String name;
     public TextView label;
     public ImageView icon;
@@ -53,6 +53,16 @@ public class DigitalDisplay {
         float factor = context.getResources().getDisplayMetrics().density;
         icon.setLayoutParams(new ViewGroup.LayoutParams((int) (30 * factor), (int) (30 * factor)));
     }
+
+    public void changeValue(float newValue) {
+        label.setText(Float.toString(newValue));
+    }
+
+    public void changeValue(String newValue) {
+        label.setText(newValue);
+    }
+
+    ////////////////////////////////////////////////////STATIC METHODS/////////////////////////////////////////////
 
     //Should this be static? Might make more sense to make it act as an object?
     public static void addToDigitalDisplay(DigitalDisplay newDisplay, ConstraintLayout layout_left, ConstraintLayout layout_center, ConstraintLayout layout_right, ArrayList<DigitalDisplay> digitalDisplays) {

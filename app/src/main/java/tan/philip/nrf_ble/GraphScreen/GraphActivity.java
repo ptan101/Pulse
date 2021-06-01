@@ -11,8 +11,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -32,7 +30,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintSet;
-import androidx.core.app.NotificationCompat;
 import androidx.databinding.DataBindingUtil;
 
 import com.jjoe64.graphview.DefaultLabelFormatter;
@@ -47,6 +44,10 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
+import tan.philip.nrf_ble.Algorithms.PWVAlgorithm;
+import tan.philip.nrf_ble.Algorithms.SpO2Algorithm;
+import tan.philip.nrf_ble.Algorithms.ZeroCrossingAlgorithm;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.R;
@@ -55,7 +56,6 @@ import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
 
 import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
-import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDENTIFIER;
 
@@ -89,7 +89,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private boolean monitorView = true;
     private float t = 0;
 
-    private Biometrics biometrics;
+    private BiometricsSet biometrics;
 
     private ActivityPwvgraphBinding mBinding;
     private String deviceIdentifier;
@@ -231,7 +231,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         decimalFormat = new DecimalFormat("#.####");
 
         setupGraph((ArrayList<SignalSetting>)extras.getSerializable(ScanResultsActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
-        biometrics = (Biometrics)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
+        biometrics = (BiometricsSet)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
         setupBiometricsDigitalDisplay();
         notification_frequency = extras.getInt(ScanResultsActivity.EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
@@ -400,6 +400,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         });
 
         int color = Color.WHITE;
+        //int color = Color.BLUE;
 
         //Drawable background = mBinding.backgroundCL.getBackground();
         //if (background instanceof ColorDrawable)
@@ -481,6 +482,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     private void displayData(ArrayList<float[]> new_data) {
+        float maxX = 0;
+
         for (int i = 0; i < new_data.size(); i ++) {
             //Each signal_packet is one signal that was parsed from the whole BLE packet
             float[] signal_packet = new_data.get(i);
@@ -499,7 +502,19 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     signals.get(i).interactive_series.appendData(new DataPoint(x, y), !graph1Scrollable, MAX_POINTS_PLOT);
 
                     //Add the data to the monitor series;
-                    signals.get(i).addDataToMonitorBuffer(y);
+                    float curX = signals.get(i).addDataToMonitorBuffer(y);
+
+                    if (maxX < MAX_MONITOR_DISPLAY_LENGTH / 2) {
+                        //We are on the first half of the patient monitor. The next patient monitor x point will not roll over
+                        maxX = Math.max(curX, maxX);
+                    } else {
+                        //We are on the second half of the patient monitor. If the next point is in the first half, it is the next point.
+                        if (curX < MAX_MONITOR_DISPLAY_LENGTH / 2)
+                            maxX = curX;
+                        else
+                            maxX = Math.max(curX, maxX);
+                    }
+
                 }
 
                 if(signals.get(i).useDigitalDisplay) {
@@ -508,10 +523,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                 }
             }
         }
-
         //Draw mask over old monitor points
-        mask[0] = new DataPoint((float)((int) t % (MAX_MONITOR_DISPLAY_LENGTH * 1000)) / 1000f, MIN_Y - MARGINS);
+        //mask[0] = new DataPoint((float)((int) t % (MAX_MONITOR_DISPLAY_LENGTH * 1000)) / 1000f, MIN_Y - MARGINS);
+        mask[0] = new DataPoint(maxX, MIN_Y - MARGINS);
         monitor_mask.resetData(mask);
+
+        //Update DigitalDisplays from biometrics
+        biometrics.computeAndDisplay(new_data);
 
         t += notification_period;
     }
@@ -557,20 +575,25 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     ////////////////////////////////////////////////GRAPHICAL UI//////////////////////////////////////////////////////////////////////////////////
 
     private void setupBiometricsDigitalDisplay() {
-        ArrayList<Integer> hr_list = biometrics.getHr_signals();
-        for (Integer i : hr_list) {
-            DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "Heart rate", "heartrate"),
-                    mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+        //Eventually this should not be hardcoded if we get enough algorithms.
+        //I.e., read from script or make generalized
+        //Yeah this is really bad, make it better
+
+        ArrayList<ZeroCrossingAlgorithm> hr_list = biometrics.getHr_signals();
+        for (ZeroCrossingAlgorithm zcr : hr_list) {
+            DigitalDisplay newDD = new DigitalDisplay(this, "Heart rate", "heartrate");
+            DigitalDisplay.addToDigitalDisplay(newDD, mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
+            zcr.setDigitalDisplay(newDD);
         }
 
-        ArrayList<int[]> spo2_list = biometrics.getSpo2_signals();
-        for (int[] i : spo2_list) {
+        ArrayList<SpO2Algorithm> spo2_list = biometrics.getSpo2_signals();
+        for (SpO2Algorithm spo2a : spo2_list) {
             DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "SpO2", "spo2"),
                     mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
         }
 
-        ArrayList<int[]> pwv_list = biometrics.getPwv_signals();
-        for (int[] i : pwv_list) {
+        ArrayList<PWVAlgorithm> pwv_list = biometrics.getPwv_signals();
+        for (PWVAlgorithm pwva : pwv_list) {
             DigitalDisplay.addToDigitalDisplay(new DigitalDisplay(this, "PWV", "pwv"),
                     mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
         }
@@ -817,12 +840,19 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             }
         }
 
-        public void addDataToMonitorBuffer(float data) {
+        /**
+         * Plots the data on the patient monitor
+         * @param data Y value of new data to plot
+         * @return The x value where it was plotted
+         */
+        public float addDataToMonitorBuffer(float data) {
             int cur_index = num_points % monitor_buffer.length;
             monitor_buffer[cur_index] = new DataPoint(((float) (cur_index * sample_period)) / 1000f, data);
             num_points ++;
 
             monitor_series.resetData(monitor_buffer);
+
+            return (float) (cur_index * sample_period) / 1000f;
         }
 
         public void setColor(int[] color) {

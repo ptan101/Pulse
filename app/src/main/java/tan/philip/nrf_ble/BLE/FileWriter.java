@@ -65,7 +65,7 @@ public class FileWriter {
         //Just calculate how many bytes per signal setting
         for (SignalSetting setting: signalSettings) {
             byte name_length = (byte) setting.name.length();
-            bytes_in_header += (9 + name_length);
+            bytes_in_header += (10 + name_length);
         }
 
         byte[] out = new byte[bytes_in_header + 4];
@@ -78,8 +78,8 @@ public class FileWriter {
 
         //Actually append data for writing.
         for (SignalSetting setting: signalSettings) {
-            //Index, name length, name, bytes per point, fs, bit resolution, signed/unsigned
-            //1,    1,            name_length, 1,        4,  1,             1
+            //Index, name length, name, bytes per point, fs, bit resolution, signed/unsigned, big/little
+            //1,    1,            name_length, 1,        4,  1,             1                 1
             byte name_length = (byte) setting.name.length();
 
             out[0 + cur_index] = setting.index;
@@ -94,8 +94,9 @@ public class FileWriter {
             out[6 + name_length + cur_index] = (byte) (setting.fs & 0xFF);
             out[7 + name_length + cur_index] = setting.bitResolution;
             out[8 + name_length + cur_index] = boolToByte(setting.signed);
+            out[9 + name_length + cur_index] = boolToByte(setting.littleEndian);
 
-            cur_index += (name_length + 9);
+            cur_index += (name_length + 10);
         }
         writeBIN(out, fileName);
 

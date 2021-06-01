@@ -22,7 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
-import tan.philip.nrf_ble.GraphScreen.Biometrics;
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.BLE.SignalSetting;
@@ -84,7 +84,7 @@ public class ScanResultsActivity extends AppCompatActivity {
                     mConnected = true;
                     mConnecting = false;
                     startPWVGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
-                            (Biometrics) msg.getData().getSerializable("bioSettings"),
+                            (BiometricsSet) msg.getData().getSerializable("bioSettings"),
                             (int) msg.getData().getInt("notif f"));
                     break;
                     case BLEHandlerService.MSG_UNRECOGNIZED_NUS_DEVICE:
@@ -269,7 +269,7 @@ public class ScanResultsActivity extends AppCompatActivity {
 
 
     //Bluetooth methods
-    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings, Biometrics bioSettings, int notif_f) {
+    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, int notif_f) {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
         Bundle extras = new Bundle();

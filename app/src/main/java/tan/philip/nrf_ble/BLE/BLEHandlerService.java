@@ -1,6 +1,5 @@
 package tan.philip.nrf_ble.BLE;
 
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -29,6 +28,7 @@ import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +40,6 @@ import tan.philip.nrf_ble.R;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
 import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
-import static tan.philip.nrf_ble.NotificationHandler.NOTIFICATION_DEFAULT_IMPORTANCE;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
@@ -481,7 +480,7 @@ public class BLEHandlerService extends Service {
                     notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
                     makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
-                } catch (Exception e) {
+                } catch (FileNotFoundException e) {
                     disconnectGattServer();
                     sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
                 }
@@ -537,7 +536,7 @@ public class BLEHandlerService extends Service {
     }
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
-    private void initializeBLEParser() throws Exception{
+    private void initializeBLEParser() throws FileNotFoundException {
         bleparser = new BLEPacketParser(this, deviceNameToConnect);
     }
 
@@ -552,7 +551,7 @@ public class BLEHandlerService extends Service {
             return;
 
         //Convert byte array into arrays of signals and send over messenger
-        ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePackage(data);
+        ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
 
         //For each signal, filter in the right way
         ArrayList<float[]> filtered_data = new ArrayList<>();

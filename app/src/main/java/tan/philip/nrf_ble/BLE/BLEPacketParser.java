@@ -4,14 +4,14 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import tan.philip.nrf_ble.BLE.SignalSetting;
-import tan.philip.nrf_ble.GraphScreen.Biometrics;
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.GraphScreen.Filter;
 
 public class BLEPacketParser {
@@ -22,29 +22,35 @@ public class BLEPacketParser {
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Byte> signalOrder;
-    Biometrics biometrics = new Biometrics();
+    BiometricsSet biometrics = new BiometricsSet();
 
     //Use this to instantiate a new BLEPackageParser object
-    public BLEPacketParser(Context context, String deviceName) throws Exception  {
+    public BLEPacketParser(Context context, String deviceName) throws FileNotFoundException {
         signalSettings = new ArrayList<>();
         signalOrder = new ArrayList<>();
 
         //First, use the deviceName to lookup the right init file
         String initFileName = lookupInitFile(deviceName, context);
 
-        if (initFileName == null)
-            throw new Exception();
+        if (initFileName == null) {
+            Log.e(TAG, "initFileName is null.");
+            throw new FileNotFoundException();
+        }
 
         //Load in the init file
         parseInitFile(initFileName, context);
     }
 
     //To do: make this arraylist of arrays
-    public ArrayList<ArrayList<Integer>> parsePackage(byte data[]) {
+    public ArrayList<ArrayList<Integer>> parsePacket(byte data[]) {
+        /*
         if (data.length != packageSizeBytes) {
+            //Should send alert dialog in client
             Log.e("Data parser", "The package is not the same size as expected");
             return null;
         }
+
+         */
 
         ArrayList<ArrayList<Integer>> parsedData = new ArrayList();
         for (int i = 0; i < signalSettings.size(); i ++) {
@@ -58,18 +64,25 @@ public class BLEPacketParser {
             //Determine size of data in bytes
             int size = signalSetting.bytesPerPoint;
 
-            int cur_data = data[i] & 0xFF;
-            //if(!signalSetting.signed)
-            //    cur_data &= 0xFF;
+            int cur_data = data[i];
+
+            //If the data is big endian and signed, we want to extend the MSB to maintain sign.
+            //Otherwise, we want to remove those bits.
+            if(signalSetting.littleEndian || !signalSetting.signed)
+                cur_data &= 0xFF;
 
             //Load a certain number of bytes from data
             for (int j = 1; j < size; j ++) {
-                //cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);          //Shift old bytes by 8 bits to make space for new byte. This is for Big Endian
-                byte cur_byte = data[i + j];
-                if(j != size - 1 || !signalSetting.signed)
-                    cur_byte &= 0xFF;   //If it's not signed or the MSB, no need to sign extend
+                if(!signalSetting.littleEndian)
+                    cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);          //Shift old bytes by 8 bits to make space for new byte. This is for Big Endian
+                else {
+                    byte cur_byte = data[i + j];
+                    if(j != size - 1 || !signalSetting.signed)
+                        cur_byte &= 0xFF;   //If it's not signed or the MSB, no need to sign extend
 
-                cur_data = (cur_data | (cur_byte) << (8 * j));        //Shift new bytes by however many bytes there are already in cur_data.. This is for little Endian
+                    cur_data = (cur_data | (cur_byte) << (8 * j));        //Shift new bytes by however many bytes there are already in cur_data.. This is for little Endian
+                }
+
             }
 
             //Store the parsed data into the correct ArrayList
@@ -153,7 +166,7 @@ public class BLEPacketParser {
         return signalSettings;
     }
 
-    public Biometrics getBiometricsSettings() {
+    public BiometricsSet getBiometricsSettings() {
         return biometrics;
     }
 
@@ -200,13 +213,17 @@ public class BLEPacketParser {
                 break;
             case "filter":
                 importFilterSubSettings(signalSetting, subheadings);
+                break;
+            case "big":
+                signalSetting.littleEndian = false;
+                break;
             default:
                 break;
         }
 
     }
 
-    private void parseBiometricsOptions(Biometrics biometrics, String mLine) {
+    private void parseBiometricsOptions(BiometricsSet biometrics, String mLine) {
         String[] settings = mLine.split(", ");
 
         switch (settings[0]) {
@@ -347,12 +364,14 @@ public class BLEPacketParser {
                     return mLine.split(", ")[1];
 
         } catch (IOException e) {
+            Log.e(TAG, "Unable to open init file lookup table.");
             //log the exception
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
+                    Log.e(TAG, "Unable tp close buffered reader");
                     //log the exception
                 }
             }

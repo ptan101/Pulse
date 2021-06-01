@@ -35,8 +35,8 @@ public class NotificationHandler {
             channel.setDescription(CHANNEL_DESCRIPTION);
             channel.enableLights(true);
             channel.setLightColor(Color.RED);
-            channel.enableVibration(true);
-            channel.setVibrationPattern(new long[]{100, 200});  //Yeah idk how this works
+            //channel.enableVibration(true);
+            //channel.setVibrationPattern(new long[]{100, 200});  //Yeah idk how this works
 
             // Register the channel with the system; you can't change the importance
             // or other notification behaviors after this

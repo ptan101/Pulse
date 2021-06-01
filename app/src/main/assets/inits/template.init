@@ -1,6 +1,7 @@
 notification frequency, bytes per package
 end
 0, signal name, bytes per data point, signal sample rate, resolution, signed/unsigned
+.big
 .graphable
 ..gain: float
 ..color: r g b a

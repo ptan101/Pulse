@@ -26,6 +26,7 @@ import androidx.databinding.DataBindingUtil;
 import java.util.ArrayList;
 
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
+import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.NotificationHandler;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
@@ -72,6 +73,7 @@ public class ClientActivity extends AppCompatActivity {
                     break;
                 case BLEHandlerService.MSG_CHECK_PERMISSIONS:
                     requestBluetoothEnable();
+                    FileWriter.isStoragePermissionGranted(ClientActivity.this);
                     break;
                 default:
                     super.handleMessage(msg);

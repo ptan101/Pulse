@@ -35,3 +35,4 @@ output.json
 #NDK
 obj/
 .externalNativeBuild
+src/main/res/drawable-v24/

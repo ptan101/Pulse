@@ -275,8 +275,8 @@ public class BLEPacketParser {
     }
 
     private void importFilterSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
-        float[] b = new float[0];
-        float[] a = new float[0];
+        double[] b = new double[0];
+        double[] a = new double[0];
         float gain = 1;
 
         for(String s: subsettings) {
@@ -286,19 +286,19 @@ public class BLEPacketParser {
             switch (options[0]) {
                 case "b":
                     String[] b_s = options[1].split(", ");
-                    float[] b_f = new float[b_s.length];
+                    double[] b_f = new double[b_s.length];
 
                     for (int i = 0; i < b_s.length; i++) {
-                        b_f[i] = Float.parseFloat(b_s[i]);
+                        b_f[i] = Double.parseDouble(b_s[i]);
                     }
                     b = b_f;
                     break;
                 case "a":
                     String[] a_s = options[1].split(", ");
-                    float[] a_f = new float[a_s.length];
+                    double[] a_f = new double[a_s.length];
 
                     for (int i = 0; i < a_s.length; i++) {
-                        a_f[i] = Float.parseFloat(a_s[i]);
+                        a_f[i] = Double.parseDouble(a_s[i]);
                     }
                     a = a_f;
                     break;

@@ -66,6 +66,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_CHECK_BT_ENABLED = 16;
     public static final int MSG_START_RECORD = 18;
     public static final int MSG_STOP_RECORD = 19;
+    public static final int MSG_STOP_FOREGROUND = 21;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
     public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
@@ -217,6 +218,9 @@ public class BLEHandlerService extends Service {
                 case MSG_STOP_RECORD:
                     stopRecord();
                     break;
+                case MSG_STOP_FOREGROUND:
+                    stopForeground(true);
+                    break;
                 default:
                     super.handleMessage(msg);
             }
@@ -261,11 +265,16 @@ public class BLEHandlerService extends Service {
         //Return all broadcasting Bluetooth devices
         List<ScanFilter> filters = new ArrayList<>();
 
-
         ScanFilter scanFilter = new ScanFilter.Builder()
                 .setServiceUuid(new ParcelUuid(NUS_UUID))
                 .build();
 
+        filters.add(scanFilter);
+
+        //For some reason, the dongle is not recognized... This is just temp.
+        scanFilter = new ScanFilter.Builder()
+                .setDeviceName("PPG Dongle")
+                .build();
         filters.add(scanFilter);
 
         ScanSettings settings = new ScanSettings.Builder()

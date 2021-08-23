@@ -5,15 +5,15 @@ import java.io.Serializable;
 public class Filter implements Serializable {
 
     int len;
-    float[] b;
-    float[] a;
-    float gain;
+    double[] b;
+    double[] a;
+    double gain;
 
-    float[] x;
-    float[] y;
+    double[] x;
+    double[] y;
 
     //Assumes equal number of holes and poles
-    public Filter (float[] b, float[] a, float gain) {
+    public Filter (double[] b, double[] a, double gain) {
         this.b = b;
         this.a = a;
         this.gain = gain;
@@ -21,8 +21,8 @@ public class Filter implements Serializable {
         //Equal to num zeros or poles - 1
         this.len = b.length - 1;
 
-        x = new float[b.length];
-        y = new float[a.length];
+        x = new double[b.length];
+        y = new double[a.length];
     }
 
     public float findNextY(float newX) {
@@ -48,6 +48,6 @@ public class Filter implements Serializable {
         y[len] = y[len] / a[0];
 
         //Return the current filtered output
-        return y[len];
+        return (float) y[len];
     }
 }

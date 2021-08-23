@@ -1,4 +1,0 @@
-PPG Tattoo, ppg_v2.init
-E-TATTOO, ecg_scg_v1.init
-PPG Dev Board, ppg_v2.init
-ADXL355, adxl355_test.init

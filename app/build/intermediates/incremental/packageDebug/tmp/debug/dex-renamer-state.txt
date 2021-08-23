@@ -1,7 +1,0 @@
-#Wed May 19 17:29:52 CDT 2021
-base.0=E\:\\Pulse\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\out\\classes.dex
-path.1=classes.dex
-renamed.1=classes2.dex
-path.0=classes.dex
-renamed.0=classes.dex
-base.1=E\:\\Pulse\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\out\\classes.dex

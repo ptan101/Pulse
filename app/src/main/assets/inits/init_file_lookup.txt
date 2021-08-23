@@ -1,6 +1,7 @@
 PPG Tattoo, ppg_v2.init
 PPG Tattoo v3.0, ppg_v3.init
 PPG Tattoo v3.0 test, ppg_v3_test.init
+PPG Tattoo v3.2, ppg max86141
 E-TATTOO, ecg_scg_v1.init
 PPG Dev Board, ppg_v2.init
 ADXL355, adxl355_test.init

@@ -7,3 +7,4 @@ PPG Dev Board, ppg_v2.init
 ADXL355, adxl355_test.init
 MAX30100, max30100.init
 PPG Dongle, ppg_dongle.init
+Debug Mode, debug.init

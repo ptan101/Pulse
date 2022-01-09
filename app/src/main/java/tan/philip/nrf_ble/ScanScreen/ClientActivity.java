@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,7 +16,9 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.os.Vibrator;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -28,17 +29,23 @@ import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
 
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.FileWriter;
-import tan.philip.nrf_ble.NotificationHandler;
+import tan.philip.nrf_ble.BLE.SignalSetting;
+import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
 
+import static tan.philip.nrf_ble.BLE.BLEHandlerService.MSG_START_DEBUG_MODE;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
-public class ClientActivity extends AppCompatActivity {
+public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     //private ImageButton btnScan;
 
     private static final String TAG = "ClientActivity";
@@ -77,6 +84,11 @@ public class ClientActivity extends AppCompatActivity {
                 case BLEHandlerService.MSG_CHECK_PERMISSIONS:
                     requestBluetoothEnable();
                     FileWriter.isStoragePermissionGranted(ClientActivity.this);
+                    break;
+                case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
+                    startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
+                            (BiometricsSet) msg.getData().getSerializable("bioSettings"),
+                            (int) msg.getData().getInt("notif f"));
                     break;
                 default:
                     super.handleMessage(msg);
@@ -238,6 +250,38 @@ public class ClientActivity extends AppCompatActivity {
     }
 
     /////////////////////////////////////UI///////////////////////////////////////////////////////
+    public void showOptions(View v) {
+        PopupMenu popup = new PopupMenu(this, v);
+        popup.setOnMenuItemClickListener(this);
+
+        popup.inflate(R.menu.popup_menu_client);
+        popup.show();
+    }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        switch(menuItem.getItemId()) {
+            case R.id.enterDebugMode:
+                sendMessageToService(MSG_START_DEBUG_MODE);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, int notif_f) {
+        Log.d(TAG, "Starting Graph Activity");
+        Intent intent = new Intent(this, GraphActivity.class);
+        Bundle extras = new Bundle();
+        extras.putSerializable(GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
+        extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
+        extras.putString(EXTRA_BT_IDENTIFIER, "Debug Mode"); //Probably not necessary, graph activity can ask for it from the service
+        extras.putInt(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
+        intent.putExtras(extras);
+
+        startActivity(intent);
+    }
+
     public void viewScanList(View view) {
         Intent intent = new Intent(this, ScanResultsActivity.class);
         //intent.putExtra(EXTRA_BT_SCAN_RESULTS, (HashMap)mScanResults);
@@ -375,25 +419,6 @@ public class ClientActivity extends AppCompatActivity {
         });
         backgroundTransition.start();
 
-        /*
-        final float[] from = new float[3],
-                to =   new float[3];
-        //Color.colorToHSV(Color.parseColor("#FF2c2a3a"), from);   // from blue
-        Color.colorToHSV(Color.parseColor("#00FFFFFF"), from);      //Transparent
-        Color.colorToHSV(Color.parseColor("#FFFFFFFF"), to);     // to opaque
-        valueAnimator = ValueAnimator.ofFloat(0, 1);                  // animate from 0 to 1
-        valueAnimator.setDuration(4000);
-        final float[] hsv  = new float[3];                  // transition color
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener(){
-            @Override public void onAnimationUpdate(ValueAnimator animation) {
-                // Transition along each axis of HSV (hue, saturation, value)
-                hsv[0] = from[0] + (to[0] - from[0])*animation.getAnimatedFraction();
-                hsv[1] = from[1] + (to[1] - from[1])*animation.getAnimatedFraction();
-                hsv[2] = from[2] + (to[2] - from[2])*animation.getAnimatedFraction();
-                mBinding.layout1.setBackgroundColor(Color.HSVToColor(hsv));
-            }
-        });
-         */
     }
 
     private void setupPulses() {

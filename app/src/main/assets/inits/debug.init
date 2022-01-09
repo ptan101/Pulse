@@ -1,0 +1,77 @@
+1, 60
+end
+0, Sine, 1, 20, 8, signed
+.graphable
+..gain: 1
+..color: 255 0 0 255
+1, Square, 1, 20, 8, signed
+.graphable
+..gain: 1
+..color: 0 0 0 255
+2, Sawtooth, 1, 20, 8, signed
+.graphable
+..gain: 1
+..color: 150 150 150 255
+end
+end
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+end

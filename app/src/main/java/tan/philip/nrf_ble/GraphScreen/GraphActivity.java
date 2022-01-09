@@ -53,19 +53,22 @@ import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.BLE.SignalSetting;
-import tan.philip.nrf_ble.databinding.ActivityPwvgraphBinding;
+import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 
 import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
-import static tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity.EXTRA_BT_IDENTIFIER;
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
 
     //To Do:
     //1 Menu remove old deprecated stuff
     //3 Menu disconnect/reconnect
-    public static final String TAG = "PWVGraphActivity";
+    public static final String TAG = "GraphActivity";
     public static final int MAX_POINTS_PLOT = 10000;
+    public static final String EXTRA_SIGNAL_SETTINGS_IDENTIFIER = "signal settings";
+    public static final String EXTRA_BT_IDENTIFIER = "bt identifier";
+    public static final String EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER = "bio settings";
+    public static final String EXTRA_NOTIF_F_IDENTIFIER = "notif f";
 
     private final float MIN_Y = 0;
     private final float MAX_Y = 12;
@@ -91,7 +94,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
     private BiometricsSet biometrics;
 
-    private ActivityPwvgraphBinding mBinding;
+    protected ActivityGraphBinding mBinding;
     private String deviceIdentifier;
     private ColorStateList defaultTextColor;
 
@@ -213,7 +216,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_pwvgraph);
+        setContentView(R.layout.activity_graph);
         invalidateOptionsMenu();
 
         //Setup from prior activity
@@ -230,10 +233,10 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         monitor_mask = new PointsGraphSeries<>();
         decimalFormat = new DecimalFormat("#.####");
 
-        setupGraph((ArrayList<SignalSetting>)extras.getSerializable(ScanResultsActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
-        biometrics = (BiometricsSet)extras.getSerializable(ScanResultsActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
+        setupGraph((ArrayList<SignalSetting>)extras.getSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
+        biometrics = (BiometricsSet)extras.getSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
         setupBiometricsDigitalDisplay();
-        notification_frequency = extras.getInt(ScanResultsActivity.EXTRA_NOTIF_F_IDENTIFIER);
+        notification_frequency = extras.getInt(EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
     }
 
@@ -309,12 +312,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         if(autoconnect) {
             Toast.makeText(GraphActivity.this, "Connection failed.", Toast.LENGTH_SHORT).show();
-            mBinding.textView5.setText(deviceIdentifier + " disconnected (attempting auto-reconnect)");
+            mBinding.deviceIDText.setText(deviceIdentifier + " disconnected (attempting auto-reconnect)");
             makeNotification("Device disconnected", "Device " + deviceIdentifier + " lost connection on " + curTime, GraphActivity.this);
         } else {
-            mBinding.textView5.setText(deviceIdentifier + " disconnected");
+            mBinding.deviceIDText.setText(deviceIdentifier + " disconnected");
         }
-        mBinding.textView5.setTextColor(Color.rgb(255,0,0));
+        mBinding.deviceIDText.setTextColor(Color.rgb(255,0,0));
         mConnected = false;
         invalidateOptionsMenu();
 
@@ -329,8 +332,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         String curTime = Calendar.getInstance().getTime().toString();
 
         mConnected = true;
-        mBinding.textView5.setText("Reading from " + deviceIdentifier);
-        mBinding.textView5.setTextColor(defaultTextColor);
+        mBinding.deviceIDText.setText("Reading from " + deviceIdentifier);
+        mBinding.deviceIDText.setTextColor(defaultTextColor);
         invalidateOptionsMenu();
 
         if(storeData) {
@@ -750,10 +753,10 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
     //////////////////Setup//////////////////////////////////////////////////////////////
     private void setupButtons() {
-        mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_pwvgraph);
+        mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_graph);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
-        mBinding.textView5.setText("Reading from device " + deviceIdentifier);
-        defaultTextColor = mBinding.textView5.getTextColors();
+        mBinding.deviceIDText.setText("Reading from device " + deviceIdentifier);
+        defaultTextColor = mBinding.deviceIDText.getTextColors();
         mBinding.btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

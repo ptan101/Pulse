@@ -33,7 +33,7 @@
 
 
             <TextView
-                android:id="@+id/textView4"
+                android:id="@+id/mainBannerText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Measuring pulse wave velocity..."
@@ -45,7 +45,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/textView5"
+                android:id="@+id/deviceIDText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
@@ -54,7 +54,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView4" />
+                app:layout_constraintTop_toBottomOf="@+id/mainBannerText" />
 
 
             <ImageButton
@@ -64,9 +64,9 @@
                 android:layout_marginEnd="15dp"
                 android:background="@android:color/transparent"
                 android:onClick="showOptions"
-                app:layout_constraintBottom_toBottomOf="@+id/textView4"
+                app:layout_constraintBottom_toBottomOf="@+id/mainBannerText"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/textView4"
+                app:layout_constraintTop_toTopOf="@+id/mainBannerText"
                 app:srcCompat="@drawable/options" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>

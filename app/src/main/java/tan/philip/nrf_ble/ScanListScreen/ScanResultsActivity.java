@@ -1,5 +1,9 @@
 package tan.philip.nrf_ble.ScanListScreen;
 
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
+
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
@@ -30,10 +34,6 @@ import tan.philip.nrf_ble.BLE.SignalSetting;
 public class ScanResultsActivity extends AppCompatActivity {
 
     public static final String TAG = "ScanResultsActivity";
-    public static final String EXTRA_BT_IDENTIFIER = "bt identifier";
-    public static final String EXTRA_SIGNAL_SETTINGS_IDENTIFIER = "signal settings";
-    public static final String EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER = "bio settings";
-    public static final String EXTRA_NOTIF_F_IDENTIFIER = "notif f";
 
     private RecyclerView mRecyclerView;
     private BluetoothItemAdapter mAdapter;
@@ -83,18 +83,18 @@ public class ScanResultsActivity extends AppCompatActivity {
                     resetConnectingText();
                     mConnected = true;
                     mConnecting = false;
-                    startPWVGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
+                    startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
                             (BiometricsSet) msg.getData().getSerializable("bioSettings"),
                             (int) msg.getData().getInt("notif f"));
                     break;
-                    case BLEHandlerService.MSG_UNRECOGNIZED_NUS_DEVICE:
-                        new AlertDialog.Builder(ScanResultsActivity.this)
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .setTitle("Unable to connect")
-                                .setMessage("This BLE device is not recognized as an e-tattoo! Please select a different device.")
-                                .setPositiveButton("Proceed", null)
-                                .show();
-                        break;
+                case BLEHandlerService.MSG_UNRECOGNIZED_NUS_DEVICE:
+                    new AlertDialog.Builder(ScanResultsActivity.this)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setTitle("Unable to connect")
+                            .setMessage("This BLE device is not recognized as an e-tattoo! Please select a different device.")
+                            .setPositiveButton("Proceed", null)
+                            .show();
+                    break;
                 default:
                     super.handleMessage(msg);
             }
@@ -269,11 +269,11 @@ public class ScanResultsActivity extends AppCompatActivity {
 
 
     //Bluetooth methods
-    private void startPWVGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, int notif_f) {
+    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, int notif_f) {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
         Bundle extras = new Bundle();
-        extras.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
+        extras.putSerializable(GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
         extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
         extras.putString(EXTRA_BT_IDENTIFIER, getBluetoothIdentifier(mConnectingIndex)); //Probably not necessary, graph activity can ask for it from the service
         extras.putInt(EXTRA_NOTIF_F_IDENTIFIER, notif_f);

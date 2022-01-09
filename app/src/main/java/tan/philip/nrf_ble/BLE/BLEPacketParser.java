@@ -67,8 +67,9 @@ public class BLEPacketParser {
             int cur_data = data[i];
 
             //If the data is big endian and signed, we want to extend the MSB to maintain sign.
+            //Also, if the data is only one byte and signed, regardless of endian, we want to keep the sign.
             //Otherwise, we want to remove those bits.
-            if(signalSetting.littleEndian || !signalSetting.signed)
+            if((signalSetting.littleEndian || !signalSetting.signed) && !(size == 1 && signalSetting.signed))
                 cur_data &= 0xFF;
 
             //Load a certain number of bytes from data
@@ -168,6 +169,10 @@ public class BLEPacketParser {
 
     public BiometricsSet getBiometricsSettings() {
         return biometrics;
+    }
+
+    public ArrayList<Byte> getSignalOrder() {
+        return signalOrder;
     }
 
     ////////////////////////Helper Methods to Parse Init file/////////////////////////////////////

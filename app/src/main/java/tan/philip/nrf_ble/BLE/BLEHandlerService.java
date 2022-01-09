@@ -30,6 +30,7 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,7 @@ public class BLEHandlerService extends Service {
     public static final int MSG_START_RECORD = 18;
     public static final int MSG_STOP_RECORD = 19;
     public static final int MSG_STOP_FOREGROUND = 21;
+    public static final int MSG_START_DEBUG_MODE = 22;
     //Service -> Client
     public static final int MSG_BT_DEVICES = 8;
     public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
@@ -86,7 +88,7 @@ public class BLEHandlerService extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
     private ScanCallback mScanCallback;
-    private Handler mHandler;
+    private Handler scanHandler;
 
     //Connecting
     private ArrayList<String> bluetoothAddresses = new ArrayList<>();
@@ -103,6 +105,13 @@ public class BLEHandlerService extends Service {
     private BLEPacketParser bleparser;
     private String fileName;
     private boolean mRecording = false;
+
+    //Debug mode
+    public static final String DEBUG_MODE_BT_ID = "Debug Mode";
+    private Handler debugNotificationHandler;
+    private boolean inDebugMode = false;
+    private int debugNotificationFrequency;
+    private int debugModeTime = 0;
 
     NotificationCompat.Builder notificationBuilder;
 
@@ -161,6 +170,10 @@ public class BLEHandlerService extends Service {
         mBluetoothLeService.close();
         mBluetoothLeService = null;
 
+        if(inDebugMode) {
+            endDebugMode();
+            inDebugMode = false;
+        }
         isRunning = false;
     }
 
@@ -220,6 +233,9 @@ public class BLEHandlerService extends Service {
                     break;
                 case MSG_STOP_FOREGROUND:
                     stopForeground(true);
+                    break;
+                case MSG_START_DEBUG_MODE:
+                    startDebugMode();
                     break;
                 default:
                     super.handleMessage(msg);
@@ -302,16 +318,16 @@ public class BLEHandlerService extends Service {
 
 
         //Limit the scan duration to a specified time
-        mHandler = new Handler();
+        scanHandler = new Handler();
         //mHandler.postDelayed(this::stopScan, SCAN_PERIOD);
-        mHandler.postDelayed(new Runnable() {
+        scanHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if(numDevicesFound != mScanResults.size()) {
                     foundDevice();
                     numDevicesFound = mScanResults.size();
                 }
-                mHandler.postDelayed(this, 200);
+                scanHandler.postDelayed(this, 200);
             }
         }, 200);
     }
@@ -320,8 +336,8 @@ public class BLEHandlerService extends Service {
         //valueAnimator.cancel();
         mScanning = false;
 
-        if(mHandler != null)
-            mHandler.removeCallbacksAndMessages(null);
+        if(scanHandler != null)
+            scanHandler.removeCallbacksAndMessages(null);
 
         if (mScanning && mBluetoothAdapter != null && mBluetoothAdapter.isEnabled() && mBluetoothLeScanner != null) {
             mBluetoothLeScanner.stopScan(mScanCallback);
@@ -334,7 +350,7 @@ public class BLEHandlerService extends Service {
         }
 
         mScanCallback = null;
-        mHandler = null;
+        scanHandler = null;
     }
 
     private void clearScan() {
@@ -345,8 +361,8 @@ public class BLEHandlerService extends Service {
     }
 
     private void viewScanList() {
-        mHandler = new Handler();
-        mHandler.removeCallbacksAndMessages(null);
+        scanHandler = new Handler();
+        scanHandler.removeCallbacksAndMessages(null);
     }
 
     private void foundDevice() {
@@ -476,18 +492,7 @@ public class BLEHandlerService extends Service {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 try {
                     initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
-
                     Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-                    sendMessageToUI(MSG_GATT_CONNECTED);
-
-                    Bundle b = new Bundle();
-                    b.putSerializable("sigSettings", bleparser.getSignalSettings());
-                    b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
-                    b.putInt("notif f", bleparser.notificationFrequency);
-                    sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
-
-                    notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
-                    makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
                 } catch (FileNotFoundException e) {
                     disconnectGattServer();
@@ -547,6 +552,17 @@ public class BLEHandlerService extends Service {
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
     private void initializeBLEParser() throws FileNotFoundException {
         bleparser = new BLEPacketParser(this, deviceNameToConnect);
+
+        Bundle b = new Bundle();
+        b.putSerializable("sigSettings", bleparser.getSignalSettings());
+        b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
+        b.putInt("notif f", bleparser.notificationFrequency);
+        sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+
+        notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
+        makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+
+        sendMessageToUI(MSG_GATT_CONNECTED);
     }
 
     private void processPacket(byte[] data) {
@@ -582,5 +598,70 @@ public class BLEHandlerService extends Service {
     private void stopRecord() {
         mRecording = false;
     }
+
+    /////////////////////Debug mode code//////////////////////////////////
+
+    private void startDebugMode() {
+        inDebugMode = true;
+        deviceNameToConnect = DEBUG_MODE_BT_ID;
+
+        try {
+            initializeBLEParser();
+        } catch (FileNotFoundException e) {
+            //debug.init file was not set up.
+        }
+
+        debugNotificationFrequency = bleparser.notificationFrequency;
+
+        debugNotificationHandler = new Handler();
+        debugNotifier.run();
+    }
+
+    private void endDebugMode() {
+        debugNotificationHandler.removeCallbacks(debugNotifier);
+    }
+
+    Runnable debugNotifier = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                byte data[] = new byte[bleparser.packageSizeBytes];
+                int numSamples[] = new int[bleparser.getSignalSettings().size()];
+                int bytesWritten = 0;
+                //Process fake data
+                for (int i: bleparser.getSignalOrder()) {
+                    int new_data;
+                    SignalSetting curSignal = bleparser.getSignalSettings().get(i);
+                    float t = debugModeTime + (float)numSamples[i] / curSignal.fs; //Time in seconds
+                    switch(curSignal.name) {
+                        case "Sine":
+                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * Math.sin(Math.PI * 2 * t));
+                            break;
+                        case "Square":
+                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * Math.signum(Math.sin(Math.PI * 2 * t)));
+                            break;
+                        case "Sawtooth":
+                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * t) % (1 << (curSignal.bitResolution - 1) - 1);
+                            break;
+                        default:
+                            new_data = 0;
+                            break;
+                    }
+                    for(int j = 0; j < curSignal.bytesPerPoint; j++) {
+                        data[bytesWritten] = (byte) ((new_data >> (j*8)) & 0xFF);
+                        bytesWritten ++;
+                    }
+                    numSamples[i] ++;
+                }
+                debugModeTime += bleparser.notificationFrequency;
+
+                //In the future, if we care about optimization of debug mode, this can be made into
+                //a lookup table as long as one period is fit in the table
+                processPacket(data);
+            } finally {
+                debugNotificationHandler.postDelayed(debugNotifier, debugNotificationFrequency * 1000);
+            }
+        }
+    };
 }
 

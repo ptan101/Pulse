@@ -20,6 +20,18 @@
             android:background="#FFFFFF">
 
 
+            <ImageButton
+                android:id="@+id/imageButton2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:layout_marginEnd="15dp"
+                android:onClick="showOptions"
+                android:background="@android:color/transparent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/options" />
+
             <ImageView
                 android:id="@+id/pulse_1"
                 android:layout_width="108dp"

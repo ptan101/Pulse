@@ -15,28 +15,15 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly.">
-      <change afterPath="$PROJECT_DIR$/app/src/main/assets/inits/debug.init" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_client.xml" afterDir="false" />
+    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/app/src/main/assets/inits/ppg_max86141.init" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/src/main/assets/inits/ppg_max86141_8channel.init" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/inits/ppg max86141.init" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphDebugActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/PWVGraphActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/XCGGraphActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_pwvgraph.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_graph.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_xcggraph.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_pwv.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_xcg.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -130,41 +117,6 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
-  <component name="IdeDocumentHistory">
-    <option name="CHANGED_PATHS">
-      <list>
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/Pulse.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/content_client.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/TestUI.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/Constants.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BluetoothLeService.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/activity_scan_results.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/BluetoothItemAdapter.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/BluetoothItem.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/LineDivider.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/bluetooth_item.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/HeartDataAnalysis.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/content_graph.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/res/values/colors.xml" />
-        <option value="$PROJECT_DIR$/app/src/androidTest/java/tan/philip/nrf_ble/ExampleInstrumentedTest.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/res/values/styles.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphDebugActivity.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" />
-        <option value="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" />
-        <option value="$PROJECT_DIR$/app/build.gradle" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/Vibration.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/menu/popup_menu.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/res/values/strings.xml" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/Filter.java" />
-        <option value="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" />
-        <option value="$PROJECT_DIR$/app/src/main/res/layout/activity_graph.xml" />
-      </list>
-    </option>
-  </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-10" />
     <option name="width" value="980" />
@@ -172,17 +124,6 @@
   </component>
   <component name="ProjectId" id="23M3I7f0NJzJyXw1COJD35tinpw" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
-  <component name="ProjectView">
-    <navigator proportions="" version="1">
-      <foldersAlwaysOnTop value="true" />
-    </navigator>
-    <panes>
-      <pane id="PackagesPane" />
-      <pane id="ProjectPane" />
-      <pane id="Scope" />
-      <pane id="AndroidView" />
-    </panes>
-  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -230,7 +171,6 @@
       <option name="ARTIFACT_NAME" value="" />
       <option name="PM_INSTALL_OPTIONS" value="" />
       <option name="ALL_USERS" value="false" />
-      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
       <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
       <option name="ACTIVITY_EXTRA_FLAGS" value="" />
       <option name="MODE" value="default_activity" />
@@ -281,7 +221,7 @@
       </method>
     </configuration>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SpellCheckerSettings" BundledDictionaries="0" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" Dictionaries="0" CorrectionsLimit="5" DefaultDictionary="application-level" UseSingleDictionary="true" />
   <component name="SvnConfiguration">
     <configuration />
   </component>
@@ -326,37 +266,6 @@
       <is-autoscroll-to-source value="true" />
     </todo-panel>
   </component>
-  <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
-    <layout>
-      <window_info id="Structure" order="0" side_tool="true" />
-      <window_info id="Image Layers" order="1" />
-      <window_info id="Favorites" order="2" sideWeight="0.5021097" side_tool="true" weight="0.3295302" />
-      <window_info id="Designer" order="3" />
-      <window_info id="Build Variants" order="4" sideWeight="0.5021097" side_tool="true" weight="0.3295302" />
-      <window_info id="Capture Tool" order="5" />
-      <window_info id="Resources Explorer" order="6" sideWeight="0.4978903" weight="0.3295302" />
-      <window_info active="true" content_ui="combo" id="Project" order="7" sideWeight="0.4957806" visible="true" weight="0.18456376" />
-      <window_info id="Captures" order="8" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Version Control" order="0" weight="0.3286119" />
-      <window_info anchor="bottom" id="TODO" order="1" weight="0.3286119" />
-      <window_info anchor="bottom" id="Terminal" order="2" weight="0.3286119" />
-      <window_info anchor="bottom" id="Event Log" order="3" side_tool="true" />
-      <window_info anchor="bottom" id="Build" order="4" visible="true" weight="0.3286119" />
-      <window_info anchor="bottom" id="Messages" order="5" weight="0.32577905" />
-      <window_info anchor="bottom" id="Android Profiler" order="6" show_stripe_button="false" weight="0.3286119" />
-      <window_info anchor="bottom" id="Logcat" order="7" weight="0.3286119" />
-      <window_info anchor="bottom" id="Run" order="8" weight="0.33569404" />
-      <window_info anchor="bottom" id="Debug" order="9" weight="0.3286119" />
-      <window_info anchor="bottom" id="Find" order="10" weight="0.3286119" />
-      <window_info anchor="right" id="Capture Analysis" order="0" />
-      <window_info anchor="right" id="Gradle" order="1" />
-      <window_info anchor="right" id="Theme Preview" order="2" />
-      <window_info anchor="right" id="Preview" order="3" />
-      <window_info anchor="right" id="Palette&#9;" order="4" />
-      <window_info anchor="right" id="Device File Explorer" order="5" side_tool="true" />
-    </layout>
-  </component>
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -376,325 +285,39 @@
     <MESSAGE value="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly." />
     <option name="LAST_COMMIT_MESSAGE" value="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly." />
   </component>
-  <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">
-      <provider selected="true" editor-type-id="android-designer2" />
-      <provider editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/MainActivity.java" />
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/Pulse.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1511">
-          <caret line="136" column="1" selection-start-line="136" selection-start-column="1" selection-end-line="136" selection-end-column="1" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#3492#3493#0" expanded="true" />
-            <element signature="e#3527#3528#0" expanded="true" />
-            <element signature="e#3555#3556#0" expanded="true" />
-            <element signature="e#3591#3592#0" expanded="true" />
-            <element signature="e#4079#4080#0" expanded="true" />
-            <element signature="e#4110#4111#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/content_client.xml" />
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml">
-      <provider editor-type-id="android-designer2" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="364">
-          <caret line="143" column="9" selection-start-line="143" selection-start-column="9" selection-end-line="143" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/Constants.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="680">
-          <caret line="40" column="1" selection-start-line="40" selection-start-column="1" selection-end-line="40" selection-end-column="1" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BluetoothLeService.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="177">
-          <caret line="21" selection-start-line="21" selection-end-line="21" />
-          <folding>
-            <element signature="e#2061#2062#0" expanded="true" />
-            <element signature="e#2115#2116#0" expanded="true" />
-            <element signature="e#2179#2180#0" expanded="true" />
-            <element signature="e#2209#2210#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/TestUI.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2210">
-          <caret line="145" column="1" selection-start-line="145" selection-start-column="1" selection-end-line="145" selection-end-column="1" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#2906#2907#0" expanded="true" />
-            <element signature="e#2956#2957#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/content_scan_results.xml" />
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_scan_results.xml">
-      <provider editor-type-id="android-designer2" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="44" column="52" selection-start-line="44" selection-start-column="52" selection-end-line="44" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/BluetoothItem.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="22" column="1" selection-start-line="22" selection-start-column="1" selection-end-line="22" selection-end-column="1" />
-          <folding>
-            <element signature="e#305#306#0" expanded="true" />
-            <element signature="e#334#335#0" expanded="true" />
-            <element signature="e#371#372#0" expanded="true" />
-            <element signature="e#408#409#0" expanded="true" />
-            <element signature="e#440#441#0" expanded="true" />
-            <element signature="e#469#470#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/LineDivider.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-87">
-          <caret line="14" selection-start-line="14" selection-end-line="14" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/BluetoothItemAdapter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="721">
-          <caret line="65" column="16" selection-start-line="65" selection-start-column="16" selection-end-line="65" selection-end-column="16" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#721#722#0" expanded="true" />
-            <element signature="e#757#758#0" expanded="true" />
-            <element signature="e#2477#2478#0" expanded="true" />
-            <element signature="e#2525#2526#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/bluetoothitem.xml">
-      <provider editor-type-id="android-designer2" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="578">
-          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/HeartDataAnalysis.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="389">
-          <caret line="102" column="1" selection-start-line="102" selection-start-column="1" selection-end-line="102" selection-end-column="1" />
-          <folding>
-            <element signature="e#578#579#0" expanded="true" />
-            <element signature="e#623#624#0" expanded="true" />
-            <element signature="e#2153#2154#0" expanded="true" />
-            <element signature="e#2192#2193#0" expanded="true" />
-            <element signature="e#2222#2223#0" expanded="true" />
-            <element signature="e#2250#2251#0" expanded="true" />
-            <element signature="e#2279#2280#0" expanded="true" />
-            <element signature="e#2307#2308#0" expanded="true" />
-            <element signature="e#2486#2487#0" expanded="true" />
-            <element signature="e#2519#2520#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/content_graph.xml" />
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_graph_debug.xml" />
-    <entry file="file://$PROJECT_DIR$/app/src/androidTest/java/tan/philip/nrf_ble/ExampleInstrumentedTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="26" column="1" selection-start-line="26" selection-start-column="1" selection-end-line="26" selection-end-column="1" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/blue_bar.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/ic_brightness_1_black_24dp.xml">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/ic_bug_report_black_24dp.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="1" column="4" selection-start-line="1" selection-start-column="4" selection-end-line="1" selection-end-column="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/ic_launcher_background.xml">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" />
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="68">
-          <caret line="4" column="16" selection-start-line="4" selection-start-column="16" selection-end-line="4" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/values/dimens.xml">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/values/colors.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="12" selection-start-line="5" selection-start-column="12" selection-end-line="5" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="51">
-          <caret line="3" column="34" selection-start-line="3" selection-start-column="34" selection-end-line="3" selection-end-column="34" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/drawable/ic_bluetooth_black_24dp.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" selection-start-line="5" selection-end-line="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/values/styles.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" column="12" selection-start-line="15" selection-start-column="12" selection-end-line="15" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1037">
-          <caret line="100" column="19" selection-start-line="100" selection-start-column="19" selection-end-line="100" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphDebugActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="131">
-          <caret line="67" column="18" selection-start-line="67" selection-start-column="18" selection-end-line="67" selection-end-column="18" />
-          <folding>
-            <element signature="e#6336#6337#0" expanded="true" />
-            <element signature="e#6369#6370#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="193" column="42" selection-start-line="193" selection-start-column="42" selection-end-line="193" selection-end-column="42" />
-          <folding>
-            <element signature="e#11127#11128#0" expanded="true" />
-            <element signature="e#11177#11178#0" expanded="true" />
-            <element signature="e#11267#11268#0" expanded="true" />
-            <element signature="e#11312#11313#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/menu/popup_menu.xml">
-      <provider editor-type-id="android-designer2" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="170">
-          <caret line="10" column="29" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4301">
-          <caret line="349" column="105" selection-start-line="349" selection-start-column="105" selection-end-line="349" selection-end-column="105" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/Vibration.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="13" column="119" selection-start-line="13" selection-start-column="119" selection-end-line="13" selection-end-column="119" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/AndroidManifest.xml">
-      <provider editor-type-id="android-manifest" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="80" selection-start-line="9" selection-start-column="80" selection-end-line="9" selection-end-column="80" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/Filter.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1003">
-          <caret line="62" column="8" selection-start-line="62" selection-start-column="8" selection-end-line="62" selection-end-column="8" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#3435#3436#0" expanded="true" />
-            <element signature="e#3474#3475#0" expanded="true" />
-            <element signature="e#3614#3615#0" expanded="true" />
-            <element signature="e#3655#3656#0" expanded="true" />
-            <element signature="e#4793#4794#0" expanded="true" />
-            <element signature="e#4840#4841#0" expanded="true" />
-            <element signature="e#4887#4888#0" expanded="true" />
-            <element signature="e#4933#4934#0" expanded="true" />
-            <element signature="e#4972#4973#0" expanded="true" />
-            <element signature="e#4999#5000#0" expanded="true" />
-            <element signature="e#5036#5037#0" expanded="true" />
-            <element signature="e#5068#5069#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/build.gradle">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/build.gradle">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="260">
-          <caret line="39" column="48" selection-start-line="39" selection-start-column="48" selection-end-line="39" selection-end-column="48" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_graph.xml">
-      <provider editor-type-id="android-designer2" />
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1258">
-          <caret line="74" column="62" selection-start-line="74" selection-start-column="62" selection-end-line="74" selection-end-column="62" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/src/main/res/values/strings.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="11" selection-start-line="11" selection-end-line="11" />
-        </state>
-      </provider>
-    </entry>
+  <component name="WindowStateProjectService">
+    <state width="1491" height="193" key="GridCell.Tab.0.bottom" timestamp="1642038997798">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1642038997798" />
+    <state width="1491" height="193" key="GridCell.Tab.0.center" timestamp="1642038997798">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1642038997798" />
+    <state width="1491" height="193" key="GridCell.Tab.0.left" timestamp="1642038997798">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1642038997798" />
+    <state width="1491" height="193" key="GridCell.Tab.0.right" timestamp="1642038997798">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1642038997798" />
+    <state width="1491" height="193" key="GridCell.Tab.1.bottom" timestamp="1642038994978">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1642038994978" />
+    <state width="1491" height="193" key="GridCell.Tab.1.center" timestamp="1642038994978">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1642038994978" />
+    <state width="1491" height="193" key="GridCell.Tab.1.left" timestamp="1642038994978">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1642038994978" />
+    <state width="1491" height="193" key="GridCell.Tab.1.right" timestamp="1642038994978">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1491" height="193" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1642038994978" />
   </component>
   <component name="masterDetails">
     <states>

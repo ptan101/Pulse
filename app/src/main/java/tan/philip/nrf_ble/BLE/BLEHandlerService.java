@@ -110,7 +110,7 @@ public class BLEHandlerService extends Service {
     public static final String DEBUG_MODE_BT_ID = "Debug Mode";
     private Handler debugNotificationHandler;
     private boolean inDebugMode = false;
-    private int debugNotificationFrequency;
+    private float debugNotificationFrequency;
     private int debugModeTime = 0;
 
     NotificationCompat.Builder notificationBuilder;
@@ -217,6 +217,10 @@ public class BLEHandlerService extends Service {
                 case MSG_DISCONNECT:
                     disconnectGattServer();
                     stopForeground(true);
+
+                    if(inDebugMode)
+                        endDebugMode();
+
                     break;
                 case MSG_CHECK_BT_ENABLED:
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
@@ -556,7 +560,7 @@ public class BLEHandlerService extends Service {
         Bundle b = new Bundle();
         b.putSerializable("sigSettings", bleparser.getSignalSettings());
         b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
-        b.putInt("notif f", bleparser.notificationFrequency);
+        b.putFloat("notif f", bleparser.notificationFrequency);
         sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
 
         notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
@@ -618,6 +622,7 @@ public class BLEHandlerService extends Service {
     }
 
     private void endDebugMode() {
+        inDebugMode = false;
         debugNotificationHandler.removeCallbacks(debugNotifier);
     }
 
@@ -659,7 +664,7 @@ public class BLEHandlerService extends Service {
                 //a lookup table as long as one period is fit in the table
                 processPacket(data);
             } finally {
-                debugNotificationHandler.postDelayed(debugNotifier, debugNotificationFrequency * 1000);
+                debugNotificationHandler.postDelayed(debugNotifier, (long) (debugNotificationFrequency * 1000));
             }
         }
     };

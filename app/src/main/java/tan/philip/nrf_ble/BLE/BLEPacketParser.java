@@ -18,7 +18,7 @@ public class BLEPacketParser {
     private static final String TAG = "BLEPacketParser";
 
     //int numSignals;
-    int notificationFrequency;
+    float notificationFrequency;
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Byte> signalOrder;
@@ -122,7 +122,7 @@ public class BLEPacketParser {
         //First section (information about the packet as a whole)
         cur_line = lines.get(i);
         String[] packet_data = cur_line.split(", ");
-        notificationFrequency = Integer.parseInt(packet_data[0]);
+        notificationFrequency = Float.parseFloat(packet_data[0]);
         packageSizeBytes = Integer.parseInt(packet_data[1]);
         i+=2;
 

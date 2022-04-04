@@ -86,8 +86,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private DataPoint[] mask = new DataPoint[1];
 
     //Graphing, filtering, etc.
-    private int notification_frequency;
-    private int notification_period;
+    private float notification_frequency;
+    private float notification_period;
     private float amplification = 5;
     private boolean monitorView = true;
     private float t = 0;
@@ -239,7 +239,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         setupGraph((ArrayList<SignalSetting>)extras.getSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER));
         biometrics = (BiometricsSet)extras.getSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
         setupBiometricsDigitalDisplay();
-        notification_frequency = extras.getInt(EXTRA_NOTIF_F_IDENTIFIER);
+        notification_frequency = extras.getFloat(EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
     }
 
@@ -444,10 +444,12 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
 
         //For graphable signals, set the y offset
+        int j = 0;  //Counter for graphable signals that have been initialized.
         for (int i = 0; i < signalSettings.size(); i ++) {
             if (signalSettings.get(i).graphable) {
-                float offset = (num_graphable - i) * (MAX_Y - MIN_Y) / (num_graphable + 1);
+                float offset = (num_graphable - j) * (MAX_Y - MIN_Y) / (num_graphable + 1);
                 signals.get(i).addGraphSettings(offset, MAX_MONITOR_DISPLAY_LENGTH);
+                j++;
             }
         }
 

@@ -15,35 +15,13 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly.">
-      <change afterPath="$PROJECT_DIR$/app/src/main/assets/inits/debug.init" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_client.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphDebugActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/PWVGraphActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/XCGGraphActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_pwvgraph.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_graph.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_xcggraph.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_pwv.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_xcg.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
-    </list>
+    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[RF8M74C77PN]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
@@ -165,6 +143,9 @@
       </list>
     </option>
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedIndex" value="1" />
+  </component>
   <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="-10" />
     <option name="width" value="980" />
@@ -188,10 +169,11 @@
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="AnalyzeApkAction.lastApkPath" value="$PROJECT_DIR$/app/build/outputs/apk/debug/app-debug.apk" />
     <property name="DeviceAndSnapshotComboBoxAction.selectedDevice" value="RF8M74C77PN" />
     <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2020-03-18T19:56:22.483Z" />
     <property name="android.sdk.path" value="$USER_HOME$/AppData/Local/Android/Sdk" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/build/outputs/apk/debug/app-debug.apk" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.17" />
     <property name="project.structure.side.proportion" value="0.2" />
@@ -314,7 +296,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584509263942</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly.">
+      <created>1641708372769</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1641708372769</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TodoView">

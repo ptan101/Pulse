@@ -15,28 +15,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly.">
-      <change afterPath="$PROJECT_DIR$/app/src/main/assets/inits/debug.init" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_client.xml" afterDir="false" />
+    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="When the device disconnects and reconnects, the time interval (calculated with the phone's system clock) will be saved as an event marker.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/inits/init_file_lookup.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEHandlerService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/BLE/BLEPacketParser.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphDebugActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/PWVGraphActivity.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/XCGGraphActivity.java" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanScreen/ClientActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_client.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_pwvgraph.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/layout/activity_graph.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_xcggraph.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_pwv.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/popup_menu_xcg.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" afterPath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/local.properties" beforeDir="false" afterPath="$PROJECT_DIR$/local.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -374,7 +356,29 @@
     <MESSAGE value="Crash fixes" />
     <MESSAGE value="3 channels of data, record waveforms into memory" />
     <MESSAGE value="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly." />
-    <option name="LAST_COMMIT_MESSAGE" value="Implemented debug mode.&#10;Fixed a small bug where single byte signed data would be displayed incorrectly." />
+    <MESSAGE value="When the device disconnects and reconnects, the time interval (calculated with the phone's system clock) will be saved as an event marker." />
+    <option name="LAST_COMMIT_MESSAGE" value="When the device disconnects and reconnects, the time interval (calculated with the phone's system clock) will be saved as an event marker." />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java</url>
+          <line>751</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java</url>
+          <line>278</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/ScanListScreen/ScanResultsActivity.java</url>
+          <line>85</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml">

@@ -748,7 +748,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         .setPositiveButton("Mark Event", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Log.d("", "Event marked! t = " + Float.toString(t - startRecordTimeEventMarker));
+                                Log.d("", "Event marked! t = " + Float.toString((t - startRecordTimeEventMarker)/1000));
                                 writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), input.getText().toString()}, fileName);
                             }
                         })

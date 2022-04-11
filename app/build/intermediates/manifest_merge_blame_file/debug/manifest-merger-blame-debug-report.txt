@@ -1,0 +1,127 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="tan.philip.nrf_ble"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+8-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml
+9        android:targetSdkVersion="29" />
+9-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.BLUETOOTH" />
+11-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:5:5-68
+11-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:5:22-65
+12    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+12-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:6:5-74
+12-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:6:22-71
+13    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+13-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:7:5-79
+13-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.VIBRATE" />
+14-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:8:5-66
+14-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:8:22-63
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:9:5-81
+15-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:9:22-78
+16    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+16-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:10:5-81
+16-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:10:22-78
+17    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+17-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:11:5-78
+17-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:11:22-75
+18    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+18-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:12:5-76
+18-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:12:22-74
+19
+20    <uses-feature
+20-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:15:5-17:35
+21        android:name="android.hardware.bluetooth_le"
+21-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:16:9-53
+22        android:required="true" />
+22-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:17:9-32
+23    <uses-feature
+23-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:15:5-17:35
+24        android:name="android.hardware.bluetooth_le"
+24-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:16:9-53
+25        android:required="true" />
+25-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:17:9-32
+26
+27    <application
+27-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:22:5-56:19
+28        android:allowBackup="true"
+28-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:23:9-35
+29        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+29-->[androidx.core:core:1.0.1] C:\Users\Sarnab\.gradle\caches\transforms-3\617b967992618d14d6be6001b1c1a438\transformed\core-1.0.1\AndroidManifest.xml:22:18-86
+30        android:debuggable="true"
+31        android:extractNativeLibs="false"
+32        android:icon="@drawable/heartrate"
+32-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:24:9-43
+33        android:label="@string/app_name"
+33-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:25:9-41
+34        android:requestLegacyExternalStorage="true"
+34-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:29:9-52
+35        android:roundIcon="@mipmap/ic_launcher_round"
+35-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:26:9-54
+36        android:supportsRtl="true"
+36-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:27:9-35
+37        android:testOnly="true"
+38        android:theme="@style/AppTheme" >
+38-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:28:9-40
+39        <activity
+39-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:30:9-35:59
+40            android:name="tan.philip.nrf_ble.GraphScreen.GraphActivity"
+40-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:31:13-54
+41            android:configChanges="keyboardHidden|orientation|screenSize"
+41-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:32:13-74
+42            android:label="GraphActivity"
+42-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:33:13-42
+43            android:screenOrientation="portrait"
+43-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:34:13-49
+44            android:theme="@style/AppTheme.NoActionBar" />
+44-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:35:13-56
+45        <activity
+45-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:36:9-40:59
+46            android:name="tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity"
+46-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:37:13-63
+47            android:label="@string/title_activity_scan_results"
+47-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:38:13-64
+48            android:screenOrientation="portrait"
+48-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:39:13-49
+49            android:theme="@style/AppTheme.NoActionBar" />
+49-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:40:13-56
+50        <activity
+50-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:41:9-51:20
+51            android:name="tan.philip.nrf_ble.ScanScreen.ClientActivity"
+51-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:42:13-54
+52            android:configChanges="keyboardHidden|orientation|screenSize"
+52-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:43:13-74
+53            android:screenOrientation="portrait"
+53-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:44:13-49
+54            android:theme="@style/AppTheme.NoActionBar" >
+54-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:45:13-56
+55            <intent-filter>
+55-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:46:13-50:29
+56                <action android:name="android.intent.action.MAIN" />
+56-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:47:17-69
+56-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:47:25-66
+57
+58                <category android:name="android.intent.category.LAUNCHER" />
+58-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:49:17-77
+58-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:49:27-74
+59            </intent-filter>
+60        </activity>
+61        <activity android:name="tan.philip.nrf_ble.ScanScreen.TestUI" />
+61-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:52:9-55
+61-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:52:19-52
+62
+63        <service android:name="tan.philip.nrf_ble.BLE.BluetoothLeService" />
+63-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:54:9-67
+63-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:54:18-56
+64        <service android:name="tan.philip.nrf_ble.BLE.BLEHandlerService" />
+64-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:55:9-66
+64-->C:\Users\Sarnab\Documents\Pulse\app\src\main\AndroidManifest.xml:55:18-55
+65    </application>
+66
+67</manifest>

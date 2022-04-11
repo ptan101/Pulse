@@ -1,0 +1,33 @@
+10, 60
+end
+0, ECG, 3, 200, 18, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+heartrate, 0
+end
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+end

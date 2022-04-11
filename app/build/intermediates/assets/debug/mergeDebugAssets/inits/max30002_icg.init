@@ -1,0 +1,20 @@
+8, 24
+end
+0, RES, 3, 64, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+end
+0
+0
+0
+0
+0
+0
+0
+0
+end

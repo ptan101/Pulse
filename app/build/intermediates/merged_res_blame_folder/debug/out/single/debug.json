@@ -1,0 +1,154 @@
+[
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_pwv.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\pwv.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_pulse.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\pulse.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_brightness_1_black_24dp.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_brightness_1_black_24dp.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_heartrate.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\heartrate.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_temp.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\temp.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_blue_circle.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\blue_circle.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_options.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\options.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\menu_popup_menu_graph.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\menu\\popup_menu_graph.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_trending_flat_black_24dp.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_trending_flat_black_24dp.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_spo2.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\spo2.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-mdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_bug_report_black_24dp.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_bug_report_black_24dp.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\layout_activity_graph.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_graph.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_gradient_drawable.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\gradient_drawable.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_bt_button.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\bt_button.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\layout_activity_scan_results.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_scan_results.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\layout_bluetoothitem.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\bluetoothitem.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_bluetooth_black_24dp.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_bluetooth_black_24dp.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_grey_bar.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\grey_bar.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-hdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_line_divider.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\line_divider.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_blue_bar.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\blue_bar.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\menu_popup_menu_client.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\menu\\popup_menu_client.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\drawable_grey_half_circle.png.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\drawable\\grey_half_circle.png"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\merged_res\\debug\\layout_activity_client.xml.flat",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_client.xml"
+    }
+]

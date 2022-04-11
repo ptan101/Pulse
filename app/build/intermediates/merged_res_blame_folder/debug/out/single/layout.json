@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_graph.xml",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_graph.xml"
+    },
+    {
+        "merged": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\build\\intermediates\\incremental\\mergeDebugResources\\stripped.dir\\layout\\activity_client.xml",
+        "source": "C:\\Users\\Sarnab\\Documents\\Pulse\\app\\src\\main\\res\\layout\\activity_client.xml"
+    }
+]

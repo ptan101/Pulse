@@ -1,20 +1,20 @@
-10, 117
+10, 18
 end
-0, X, 3, 125, 20, signed
+0, X, 2, 20, 16, signed
 .graphable
 ..color: 250 0 0 255
 .filter
 ..b: 1.0
 ..a: 1.0
 ..gain: 1
-1, Y, 3, 125, 20, signed
+1, Y, 2, 20, 16, signed
 .graphable
 ..color: 0 250 0 255
 .filter
 ..b: 1.0
 ..a: 1.0
 ..gain: 1
-2, Z, 3, 125, 20, signed
+2, Z, 2, 20, 16, signed
 .graphable
 ..color: 0 0 250 255
 .filter
@@ -23,39 +23,6 @@ end
 ..gain: 1
 end
 end
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
 0
 1
 2

@@ -1,10 +1,17 @@
 PPG Tattoo, ppg_v2.init
-PPG Tattoo v3.0, ppg_v3.init
-PPG Tattoo v3.0 test, ppg_v3_test.init
-PPG Tattoo v3.2, ppg_max86141.init
 E-TATTOO, ecg_scg_v1.init
 PPG Dev Board, ppg_v2.init
 ADXL355, adxl355_test.init
+ADXL355_1KHz, adxl355_test_1khz.init
 MAX30100, max30100.init
-PPG Dongle, ppg_dongle.init
-Debug Mode, debug.init
+MAX30003, max30003_test.init
+MAX86150, max86150_test.init
+MAX30002, max30002_test.init
+MAX30002_ICG, max30002_icg.init
+Digital-ECG+SCG, ecg_scg_test.init
+Dig-ECG+SCG+TMP, ecg_scg_v2.init
+Chest_v3.1, ecg_scg_v2_5.init
+ECG+SCG@500Hz, ecg_scg_v3.init
+Radu_b1, ecg_scg_v2.init
+Chest_FPC_v1, ecg_scg_fpc.init
+LIS2DW12_dev, lis2dw12_test.init

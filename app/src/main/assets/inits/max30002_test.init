@@ -1,0 +1,29 @@
+5, 8
+end
+0, RES, 4, 5, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, TEMP1, 2, 5, 16, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+2, TEMP2, 2, 5, 16, signed
+.graphable
+..color: 0 250 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+end
+0
+1
+2
+end

@@ -583,6 +583,7 @@ public class BLEHandlerService extends Service {
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
 
         //For each signal, filter in the right way
+
         ArrayList<float[]> filtered_data = new ArrayList<>();
         for (int i = 0; i < packaged_data.size(); i ++)
             filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));

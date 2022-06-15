@@ -88,7 +88,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
                 case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
                     startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
                             (BiometricsSet) msg.getData().getSerializable("bioSettings"),
-                            (int) msg.getData().getInt("notif f"));
+                            (float) msg.getData().getFloat("notif f"));
                     break;
                 default:
                     super.handleMessage(msg);
@@ -269,14 +269,14 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         }
     }
 
-    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, int notif_f) {
+    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, float notif_f) {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
         Bundle extras = new Bundle();
         extras.putSerializable(GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
         extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
         extras.putString(EXTRA_BT_IDENTIFIER, "Debug Mode"); //Probably not necessary, graph activity can ask for it from the service
-        extras.putInt(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
+        extras.putFloat(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
         intent.putExtras(extras);
 
         startActivity(intent);

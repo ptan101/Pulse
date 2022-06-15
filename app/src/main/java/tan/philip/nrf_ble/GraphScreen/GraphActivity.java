@@ -107,6 +107,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     DecimalFormat decimalFormat;
     private String fileName;    //This is for event marking.
     private float startRecordTimeEventMarker;  //Time based on notifications for event marking.
+    private boolean savePacketInterval = false; //If the device disconnects, measure the time between packets.
+    private long packetTimeMilli = 0;
 
     //Stuff for interacting with the service
     Messenger mService = null;
@@ -128,7 +130,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     break;
                 case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
-                    mBinding.recordTimer.setText(decimalFormat.format((System.currentTimeMillis() - startRecordTime) / 1000f));
+
+                    timestampPacket();
 
                     break;
                 case BLEHandlerService.MSG_GATT_CONNECTED:
@@ -323,6 +326,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         if(storeData) {
             writeCSV(new String[]{Float.toString((t - startRecordTimeEventMarker) / 1000), "Device disconnected at " + curTime}, fileName);
+            savePacketInterval = true;
         }
 
 
@@ -660,6 +664,22 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
     }
 
+    private void timestampPacket() {
+        long lastPacketTime = packetTimeMilli;
+        packetTimeMilli = System.currentTimeMillis();
+        mBinding.recordTimer.setText(decimalFormat.format((packetTimeMilli - startRecordTime) / 1000f));
+
+        if(savePacketInterval == true) {
+            long packetInterval = packetTimeMilli - lastPacketTime;
+            writeCSV(new String[]{
+                        Float.toString((t - startRecordTimeEventMarker) / 1000),
+                        "Packet interval: " + packetInterval},
+                    fileName);
+            savePacketInterval = false;
+        }
+    }
+
+
     //////////////////////////////////////////User Interface//////////////////////////////////////////
     //To do: fix this
     private static final int MENU_MARK_EVENT = 0;
@@ -728,7 +748,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         .setPositiveButton("Mark Event", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Log.d("", "Event marked! t = " + Float.toString(t - startRecordTimeEventMarker));
+                                Log.d("", "Event marked! t = " + Float.toString((t - startRecordTimeEventMarker)/1000));
                                 writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), input.getText().toString()}, fileName);
                             }
                         })

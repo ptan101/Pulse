@@ -4,7 +4,13 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -30,14 +36,17 @@ import androidx.core.app.NotificationCompat;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import tan.philip.nrf_ble.R;
+import tan.philip.nrf_ble.SickbayPush.SickbayPushService;
 
+import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_RX_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
 import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
@@ -49,6 +58,7 @@ public class BLEHandlerService extends Service {
     public static final String TAG = "BLEHandlerService";
     private Map<String, BluetoothDevice> mScanResults = new HashMap();
     private static boolean isRunning = false;
+    private BluetoothGatt mBluetoothGatt;
 
     //Messenger to communicate with client threads
     //final Messenger mMessenger = new Messenger(new ServiceHandler()); // Target we publish for clients to send messages to IncomingHandler.
@@ -85,6 +95,7 @@ public class BLEHandlerService extends Service {
     //Scanning
     private int numDevicesFound = 0;
     private boolean mScanning = false;
+    private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeScanner mBluetoothLeScanner;
     private ScanCallback mScanCallback;
@@ -96,7 +107,6 @@ public class BLEHandlerService extends Service {
     private String deviceNameToConnect = "";
     private String deviceAddress = "";
 
-    private BluetoothLeService mBluetoothLeService;
     private boolean mConnecting;
     private int mConnectingIndex;
     private boolean mConnected;
@@ -114,6 +124,8 @@ public class BLEHandlerService extends Service {
     private int debugModeTime = 0;
 
     NotificationCompat.Builder notificationBuilder;
+
+
 
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
@@ -137,11 +149,11 @@ public class BLEHandlerService extends Service {
         //Connecting
         mConnecting = false;
         mConnectingIndex = -1;
-        registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-        disconnectGattServer();
+        disconnect();
 
-        Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        Intent sickbayPushServiceIntent = new Intent(this, SickbayPushService.class);
+        //bindService(sickbayPushServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
         isRunning = true;
 
         //Transcieving
@@ -162,13 +174,7 @@ public class BLEHandlerService extends Service {
         //Connecting
         mConnecting = false;
         mConnectingIndex = -1;
-        unregisterReceiver(mGattUpdateReceiver);
-        disconnectGattServer();
-        unbindService(mServiceConnection);
-
-        mBluetoothLeService.disconnect();
-        mBluetoothLeService.close();
-        mBluetoothLeService = null;
+        disconnect();
 
         if(inDebugMode) {
             endDebugMode();
@@ -206,8 +212,7 @@ public class BLEHandlerService extends Service {
                     break;
                 case MSG_CONNECT:
 //                    String address = msg.getData().getString("deviceAddress");
-                    deviceAddress = msg.obj.toString();
-                    connectDevice(deviceAddress);
+                    connectDevice(msg.obj.toString());
 
                     notificationBuilder.setContentTitle("Attempting BLE connection...");
                     startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
@@ -215,7 +220,7 @@ public class BLEHandlerService extends Service {
 
                     break;
                 case MSG_DISCONNECT:
-                    disconnectGattServer();
+                    disconnect();
                     stopForeground(true);
 
                     if(inDebugMode)
@@ -272,6 +277,119 @@ public class BLEHandlerService extends Service {
             }
         }
     }
+
+    /////////////////////////
+    /**
+     * Initializes a reference to the local Bluetooth adapter.
+     *
+     * @return Return true if the initialization is successful.
+     */
+    public boolean initializeAdapter() {
+        // For API level 18 and above, get a reference to BluetoothAdapter through
+        // BluetoothManager.
+        if (mBluetoothManager == null) {
+            mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            if (mBluetoothManager == null) {
+                Log.e(TAG, "Unable to initialize BluetoothManager.");
+                return false;
+            }
+        }
+
+        mBluetoothAdapter = mBluetoothManager.getAdapter();
+        if (mBluetoothAdapter == null) {
+            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            super.onConnectionStateChange(gatt, status, newState);
+
+            if (status == BluetoothGatt.GATT_FAILURE) {
+                Log.i(TAG, "Failed to connect.");
+                mConnected = false;
+                mConnecting = false;
+
+                sendMessageToUI(MSG_GATT_FAILED);
+
+                Toast.makeText(BLEHandlerService.this, "Connection failed." , Toast.LENGTH_SHORT).show();
+
+                return;
+            } else if (status != BluetoothGatt.GATT_SUCCESS) {
+                mConnected = false;
+                //broadcastUpdate(intentAction);
+                Log.i(TAG, "Failed to connect.");
+                return;
+            }
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                mConnected = true;
+                Log.i(TAG, "Connected to GATT server.");
+                Log.i(TAG, "Attempting to start service discovery:" +
+                        mBluetoothGatt.discoverServices());
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                mConnected = false;
+                Log.i(TAG, "Disconnected from GATT server.");
+                mConnected = false;
+                mConnecting = false;
+
+                sendMessageToUI(MSG_GATT_DISCONNECTED);
+            }
+        }
+
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            super.onServicesDiscovered(gatt, status);
+            if (status != BluetoothGatt.GATT_SUCCESS) {
+                return;
+            }
+
+            BluetoothGattService service = gatt.getService(NUS_UUID);
+            BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_TX_UUID);
+            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+
+            boolean mInitialized = gatt.setCharacteristicNotification(characteristic, true);
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            gatt.writeDescriptor(descriptor);
+
+            if(mInitialized)
+                Log.d(TAG, "Services initialized!");
+            else
+                Log.d(TAG, "Services not initialized");
+
+            try {
+                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
+                Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
+
+            } catch (FileNotFoundException e) {
+                disconnect();
+                sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
+            }
+        }
+
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            super.onCharacteristicChanged(gatt, characteristic);
+
+            byte[] messageBytes = characteristic.getValue();
+
+            //String messageString = Constants.bytesToHex(messageBytes);
+            //Log.d(TAG, "Received message: " + messageString);
+
+            processPacket(messageBytes);
+            //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+
+            Log.e(TAG, characteristic.getStringValue(0));
+        }
+    };
 
     //////////////////////////Scanning//////////////////////////////////////////////////
     private void setupBLEScanner() {
@@ -448,68 +566,6 @@ public class BLEHandlerService extends Service {
 
     /////////////////////////Connecting////////////////////////////////////////////////
 
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-            if (!mBluetoothLeService.initialize()) {
-                Log.e(TAG, "Unable to initialize Bluetooth");
-                Toast toast = Toast.makeText(BLEHandlerService.this, "Unable to initialize Bluetooth", Toast.LENGTH_SHORT);
-                toast.show();
-                stopSelf(); // Kill the service since BT was unable to be initialized.
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBluetoothLeService = null;
-        }
-    };
-
-    private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                mConnected = true;
-
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-
-                sendMessageToUI(MSG_GATT_DISCONNECTED);
-
-            } else if (BluetoothLeService.ACTION_GATT_FAILED.equals(action)) {
-                mConnected = false;
-                mConnecting = false;
-
-                sendMessageToUI(MSG_GATT_FAILED);
-
-                Toast.makeText(BLEHandlerService.this, "Connection failed." , Toast.LENGTH_SHORT).show();
-
-                //mBluetoothLeService.disconnect();
-
-                //Warning: this was commented out for autoconnect. May be incorrect.
-                //mBluetoothLeService.close();
-                //mBluetoothLeService = null;
-
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                try {
-                    initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
-                    Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-
-                } catch (FileNotFoundException e) {
-                    disconnectGattServer();
-                    sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
-                }
-            } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
-                byte data[] = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-                processPacket(data);
-                //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-            }
-        }
-    };
-
     //Returns the name, or address if name is null
     private String getBluetoothIdentifier (String deviceAddress) {
         if(mScanResults.get(deviceAddress).getName() != null)
@@ -517,36 +573,75 @@ public class BLEHandlerService extends Service {
         return "Unknown (" + deviceAddress + ")";
     }
 
-    private void connectDevice(String deviceAddress) {
+    /**
+     * Connects to the GATT server hosted on the Bluetooth LE device.
+     *
+     * @param address The device address of the destination device.
+     *
+     * @return Return true if the connection is initiated successfully. The connection result
+     *         is reported asynchronously through the
+     *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     *         callback.
+     */
+    public boolean connectDevice(final String address) {
+        deviceAddress = address;
         deviceNameToConnect = getBluetoothIdentifier(deviceAddress);
-        //Toast toast = Toast.makeText(getApplicationContext(), "Connecting to " + deviceNameToConnect, Toast.LENGTH_SHORT);
-        //toast.show();
-        mBluetoothLeService.connect(deviceAddress);
+
+        if (mBluetoothAdapter == null || address == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
+            return false;
+        }
+
+        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        if (device == null) {
+            Log.w(TAG, "Device not found.  Unable to connect.");
+            return false;
+        }
+
+        //Autoconnect = True
+        mBluetoothGatt = device.connectGatt(this, true, mGattCallback);
+        Log.d(TAG, "Trying to create a new connection.");
+
+        mConnecting = true;
+        return true;
     }
 
-    public void disconnectGattServer() {
-        if (mBluetoothLeService != null) {
-            if(mConnected){
-                //String toast = "Device disconnected";
-                //Toast.makeText(BLEHandlerService.this, toast, Toast.LENGTH_SHORT).show();
-            }
+    /**
+     * Disconnects an existing connection or cancel a pending connection. The disconnection result
+     * is reported asynchronously through the
+     * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
+     * callback.
+     */
 
-            mBluetoothLeService.disconnect();
-            mBluetoothLeService.close();
-
-            sendMessageToUI(MSG_GATT_DISCONNECTED);
+    public void disconnect() {
+        if(mConnected){
+            //String toast = "Device disconnected";
+            //Toast.makeText(BLEHandlerService.this, toast, Toast.LENGTH_SHORT).show();
         }
+
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.disconnect();
+
+        close();
+
+        sendMessageToUI(MSG_GATT_DISCONNECTED);
+
         mConnected = false;
     }
 
-    private static IntentFilter makeGattUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_FAILED);
-        intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
+    /**
+     * After using a given BLE device, the app must call this method to ensure resources are
+     * released properly.
+     */
+    public void close() {
+        if (mBluetoothGatt == null) {
+            return;
+        }
+        mBluetoothGatt.close();
+        mBluetoothGatt = null;
     }
 
     public static boolean isRunning() {
@@ -554,6 +649,33 @@ public class BLEHandlerService extends Service {
     }
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+    }
+
+    public void writeCharacteristic(byte[] txBytes) {
+        BluetoothGattService service = mBluetoothGatt.getService(NUS_UUID);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_RX_UUID);
+
+        if(characteristic != null){
+            characteristic.setValue(txBytes);
+        }
+
+        mBluetoothGatt.writeCharacteristic(characteristic);
+
+        this.setCharacteristicNotification(characteristic, true);
+    }
+
     private void initializeBLEParser() throws FileNotFoundException {
         bleparser = new BLEPacketParser(this, deviceNameToConnect);
 
@@ -583,7 +705,6 @@ public class BLEHandlerService extends Service {
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
 
         //For each signal, filter in the right way
-
         ArrayList<float[]> filtered_data = new ArrayList<>();
         for (int i = 0; i < packaged_data.size(); i ++)
             filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));

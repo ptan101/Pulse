@@ -41,5 +41,8 @@ dependencies {
 //    implementation 'com.opencsv:opencsv:5.1'
 //    implementation files('libs/opencsv-5.1.jar')
     implementation 'androidx.core:core:1.0.0'
+    implementation ('io.socket:socket.io-client:2.0.0') {
+        exclude group: 'org.json', module: 'json'
+    }
 
 }

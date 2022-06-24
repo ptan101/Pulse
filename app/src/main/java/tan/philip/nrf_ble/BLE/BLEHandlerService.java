@@ -16,11 +16,9 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,6 +46,7 @@ import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DE
 import static tan.philip.nrf_ble.Constants.NUS_RX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
+import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
@@ -62,35 +61,9 @@ public class BLEHandlerService extends Service {
 
     //Messenger to communicate with client threads
     //final Messenger mMessenger = new Messenger(new ServiceHandler()); // Target we publish for clients to send messages to IncomingHandler.
-    Messenger mMessenger;
+    Messenger activityToServiceMessenger;
+    final Messenger serviceToServiceMessenger = new Messenger(new BLEHandlerService.ServiceHandler());;
     ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
-
-    //Client -> Service
-    public static final int MSG_REGISTER_CLIENT = 1;
-    public static final int MSG_UNREGISTER_CLIENT = 2;
-    public static final int MSG_START_SCAN = 3;
-    public static final int MSG_STOP_SCAN = 4;
-    public static final int MSG_CLEAR_SCAN = 5;
-    public static final int MSG_REQUEST_SCAN_RESULTS = 6;
-    public static final int MSG_CONNECT = 7;
-    public static final int MSG_DISCONNECT = 17;
-    public static final int MSG_CHECK_BT_ENABLED = 16;
-    public static final int MSG_START_RECORD = 18;
-    public static final int MSG_STOP_RECORD = 19;
-    public static final int MSG_STOP_FOREGROUND = 21;
-    public static final int MSG_START_DEBUG_MODE = 22;
-    //Service -> Client
-    public static final int MSG_BT_DEVICES = 8;
-    public static final int MSG_SEND_PACKAGE_INFORMATION = 9;
-    public static final int MSG_GATT_CONNECTED = 10;
-    public static final int MSG_GATT_DISCONNECTED = 11;
-    public static final int MSG_GATT_FAILED = 12;
-    public static final int MSG_GATT_SERVICES_DISCOVERED = 13;
-    public static final int MSG_GATT_ACTION_DATA_AVAILABLE = 14;
-    public static final int MSG_CHECK_PERMISSIONS = 15;
-    public static final int MSG_UNRECOGNIZED_NUS_DEVICE = 20;
-
-    //final Messenger mMessenger = new Messenger(new IncomingHandler()); // Target we publish for clients to send messages to IncomingHandler.
 
     //Scanning
     private int numDevicesFound = 0;
@@ -123,6 +96,12 @@ public class BLEHandlerService extends Service {
     private float debugNotificationFrequency;
     private int debugModeTime = 0;
 
+    //Communication to SickbayPush
+    SickbayPushService mService;
+    boolean mIsBound = false;
+    boolean pushToSickbay = true;
+
+
     NotificationCompat.Builder notificationBuilder;
 
 
@@ -132,8 +111,8 @@ public class BLEHandlerService extends Service {
     //@Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        mMessenger = new Messenger(new ServiceHandler());
-        return mMessenger.getBinder();
+        activityToServiceMessenger = new Messenger(new ServiceHandler());
+        return activityToServiceMessenger.getBinder();
     }
 
     //@Override
@@ -151,8 +130,9 @@ public class BLEHandlerService extends Service {
         mConnectingIndex = -1;
         disconnect();
 
-        Intent sickbayPushServiceIntent = new Intent(this, SickbayPushService.class);
-        //bindService(sickbayPushServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        //Start and bind to the SickbayPushService
+        Intent intent = new Intent(this, SickbayPushService.class);
+        bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
 
         isRunning = true;
 
@@ -171,6 +151,10 @@ public class BLEHandlerService extends Service {
 
     @Override
     public void onDestroy() {
+        //Unbind from the SickbayPushService
+        unbindService(sickbayPushConnection);
+        mIsBound = false;
+
         //Connecting
         mConnecting = false;
         mConnectingIndex = -1;
@@ -278,31 +262,24 @@ public class BLEHandlerService extends Service {
         }
     }
 
-    /////////////////////////
-    /**
-     * Initializes a reference to the local Bluetooth adapter.
-     *
-     * @return Return true if the initialization is successful.
-     */
-    public boolean initializeAdapter() {
-        // For API level 18 and above, get a reference to BluetoothAdapter through
-        // BluetoothManager.
-        if (mBluetoothManager == null) {
-            mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-            if (mBluetoothManager == null) {
-                Log.e(TAG, "Unable to initialize BluetoothManager.");
-                return false;
-            }
+    ////////////////////////////Connection to SickbayPush Service/////////////////////////////////
+
+    private ServiceConnection sickbayPushConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            SickbayPushService.LocalBinder binder = (SickbayPushService.LocalBinder) service;
+            mService = binder.getService();
+            mIsBound = true;
         }
 
-        mBluetoothAdapter = mBluetoothManager.getAdapter();
-        if (mBluetoothAdapter == null) {
-            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
-            return false;
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mIsBound = false;
         }
+    };
 
-        return true;
-    }
+    //////////////////////////////Gatt Callback///////////////////////////////////////////////////
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 
@@ -392,10 +369,29 @@ public class BLEHandlerService extends Service {
     };
 
     //////////////////////////Scanning//////////////////////////////////////////////////
-    private void setupBLEScanner() {
-        //Get Bluetooth adapter
-        final BluetoothManager bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+    /**
+     * Initializes a reference to the local Bluetooth adapter.
+     *
+     * @return Return true if the initialization is successful.
+     */
+    private boolean setupBLEScanner() {
+        // For API level 18 and above, get a reference to BluetoothAdapter through
+        // BluetoothManager.
+        if (mBluetoothManager == null) {
+            mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+            if (mBluetoothManager == null) {
+                Log.e(TAG, "Unable to initialize BluetoothManager.");
+                return false;
+            }
+        }
+
+        mBluetoothAdapter = mBluetoothManager.getAdapter();
+        if (mBluetoothAdapter == null) {
+            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
+            return false;
+        }
+
+        return true;
     }
 
     private void startScan() {
@@ -561,7 +557,7 @@ public class BLEHandlerService extends Service {
 
             return serviceList;
         }
-    };
+    }
 
 
     /////////////////////////Connecting////////////////////////////////////////////////
@@ -701,14 +697,20 @@ public class BLEHandlerService extends Service {
         if (bleparser == null)
             return;
 
-        //Convert byte array into arrays of signals and send over messenger
+        //Convert byte array into arrays of signals
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
 
+        //Send data to SickbayPushService to be sent over web sockets
+        if (pushToSickbay)
+            mService.addToQueue(packaged_data);
+
+        ///Formatting for plotting
         //For each signal, filter in the right way
         ArrayList<float[]> filtered_data = new ArrayList<>();
         for (int i = 0; i < packaged_data.size(); i ++)
             filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));
 
+        //Send the data to the UI for display
         Bundle b = new Bundle();
         b.putSerializable("btData", filtered_data);
         sendDataToUI(b, MSG_GATT_ACTION_DATA_AVAILABLE);

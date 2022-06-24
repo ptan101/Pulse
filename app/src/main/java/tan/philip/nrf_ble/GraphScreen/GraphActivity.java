@@ -56,7 +56,9 @@ import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 
 import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
+import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
+
 
 public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
 
@@ -124,17 +126,17 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case BLEHandlerService.MSG_GATT_FAILED:
-                case BLEHandlerService.MSG_GATT_DISCONNECTED:
+                case MSG_GATT_FAILED:
+                case MSG_GATT_DISCONNECTED:
                     onDisconnect();
                     break;
-                case BLEHandlerService.MSG_GATT_ACTION_DATA_AVAILABLE:
+                case MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
 
                     timestampPacket();
 
                     break;
-                case BLEHandlerService.MSG_GATT_CONNECTED:
+                case MSG_GATT_CONNECTED:
                     onReconnect();
 
                     break;
@@ -148,7 +150,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             try {
-                Message msg = Message.obtain(null, BLEHandlerService.MSG_REGISTER_CLIENT);
+                Message msg = Message.obtain(null, MSG_REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
             }
@@ -172,7 +174,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             // If we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 try {
-                    Message msg = Message.obtain(null, BLEHandlerService.MSG_UNREGISTER_CLIENT);
+                    Message msg = Message.obtain(null, MSG_UNREGISTER_CLIENT);
                     msg.replyTo = mMessenger;
                     mService.send(msg);
                 }
@@ -277,7 +279,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     protected void onDestroy() {
         super.onDestroy();
 
-        sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+        sendMessageToService(MSG_DISCONNECT);
 
         //Unbind the service
         try {
@@ -637,7 +639,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                             storeData = true;
                             fileName = input.getText().toString();
                             fileName = fileName.replace(":", "");
-                            sendStringToService(BLEHandlerService.MSG_START_RECORD, fileName);
+                            sendStringToService(MSG_START_RECORD, fileName);
                             writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), "Recording started at " + curTime}, fileName);
                         }
 
@@ -651,7 +653,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     private void stopRecord() {
-        sendMessageToService(BLEHandlerService.MSG_STOP_RECORD);
+        sendMessageToService(MSG_STOP_RECORD);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
         storeData = false;
     }
@@ -756,13 +758,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         .show();
                 return true;
             case MENU_DISCONNECT_BLE:
-                sendMessageToService(BLEHandlerService.MSG_DISCONNECT);
+                sendMessageToService(MSG_DISCONNECT);
                 //Manually disconnect, do not want to autoconnect
                 autoconnect = false;
                 stopRecord();
                 return true;
             case MENU_RECONNECT_BLE:
-                sendStringToService(BLEHandlerService.MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
+                sendStringToService(MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
                 //Manual reconnect, want following disconnects to be automatically reconnected.
                 autoconnect = true;
                 return true;

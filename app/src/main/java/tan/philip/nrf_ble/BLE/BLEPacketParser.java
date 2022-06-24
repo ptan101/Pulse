@@ -64,6 +64,9 @@ public class BLEPacketParser {
             //Determine size of data in bytes
             int size = signalSetting.bytesPerPoint;
 
+            if(size > 4)
+                size = 4; //Clamp data length to a 32 bit integer.
+
             int cur_data = data[i];
 
             //If the data is big endian and signed, we want to extend the MSB to maintain sign.

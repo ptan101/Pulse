@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="tan.philip.nrf_ble">
+    package="tan.philip.nrf_ble" >
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -26,12 +26,12 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <service
             android:name=".SickbayPush.SickbayPushService"
             android:enabled="true"
-            android:exported="true"></service>
-
+            android:exported="true" >
+        </service>
         <activity
             android:name=".GraphScreen.GraphActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -47,7 +47,7 @@
             android:name=".ScanScreen.ClientActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -38,10 +38,10 @@ import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
 
-import static tan.philip.nrf_ble.BLE.BLEHandlerService.MSG_START_DEBUG_MODE;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
+import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
@@ -73,7 +73,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case BLEHandlerService.MSG_BT_DEVICES:
+                case MSG_BT_DEVICES:
                     //The service is sending the list of Bluetooth devices
                     ArrayList<String> bluetoothAddresses = (ArrayList<String>)msg.getData().getSerializable("btAddresses");
                     int newNumDevices = bluetoothAddresses.size();
@@ -81,11 +81,11 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
                         foundDevice(newNumDevices);
                     }
                     break;
-                case BLEHandlerService.MSG_CHECK_PERMISSIONS:
+                case MSG_CHECK_PERMISSIONS:
                     requestBluetoothEnable();
                     FileWriter.isStoragePermissionGranted(ClientActivity.this);
                     break;
-                case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
+                case MSG_SEND_PACKAGE_INFORMATION:
                     startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
                             (BiometricsSet) msg.getData().getSerializable("bioSettings"),
                             (float) msg.getData().getFloat("notif f"));
@@ -100,10 +100,10 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             try {
-                Message msg = Message.obtain(null, BLEHandlerService.MSG_REGISTER_CLIENT);
+                Message msg = Message.obtain(null, MSG_REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
-                sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
+                sendMessageToService(MSG_CLEAR_SCAN);
                 numDevicesFound = 0;
             }
             catch (RemoteException e) {
@@ -132,7 +132,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
             // If we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 try {
-                    Message msg = Message.obtain(null, BLEHandlerService.MSG_UNREGISTER_CLIENT);
+                    Message msg = Message.obtain(null, MSG_UNREGISTER_CLIENT);
                     msg.replyTo = mMessenger;
                     mService.send(msg);
                 }
@@ -231,8 +231,8 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 
         //Clear scan results
         numDevicesFound = 0;
-        sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
-        sendMessageToService(BLEHandlerService.MSG_STOP_FOREGROUND);
+        sendMessageToService(MSG_CLEAR_SCAN);
+        sendMessageToService(MSG_STOP_FOREGROUND);
 
 
     }
@@ -291,9 +291,9 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     private void startScan() {
         mBinding.layout1.getBackground().setAlpha(0);
 
-        sendMessageToService(BLEHandlerService.MSG_CLEAR_SCAN);
+        sendMessageToService(MSG_CLEAR_SCAN);
         numDevicesFound = 0;
-        sendMessageToService(BLEHandlerService.MSG_START_SCAN);
+        sendMessageToService(MSG_START_SCAN);
 
         if (!hasPermissions() || mScanning) {
             return;
@@ -315,7 +315,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     }
 
     private void stopScan() {
-        sendMessageToService(BLEHandlerService.MSG_STOP_SCAN);
+        sendMessageToService(MSG_STOP_SCAN);
         //valueAnimator.cancel();
         mScanning = false;
         for(Pulse pulse: pulses) {
@@ -374,7 +374,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 //            return false;
 //
 //        } else
-        sendMessageToService(BLEHandlerService.MSG_CHECK_BT_ENABLED);
+        sendMessageToService(MSG_CHECK_BT_ENABLED);
 
 //        if (!hasLocationPermissions()) {
 //            requestLocationPermission();

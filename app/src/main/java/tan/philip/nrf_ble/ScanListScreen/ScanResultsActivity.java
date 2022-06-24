@@ -3,6 +3,7 @@ package tan.philip.nrf_ble.ScanListScreen;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
+import static tan.philip.nrf_ble.MessengerIDs.*;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothDevice;
@@ -62,24 +63,24 @@ public class ScanResultsActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case BLEHandlerService.MSG_BT_DEVICES:
+                case MSG_BT_DEVICES:
                     //The service is sending the list of Bluetooth devices
                     bluetoothAddresses = (ArrayList<String>)msg.getData().getSerializable("btAddresses");
                     bluetoothDevices = (ArrayList<BluetoothDevice>)msg.getData().getSerializable("btDevices");
                     buildRecyclerView();
                     break;
-                case BLEHandlerService.MSG_GATT_CONNECTED:
+                case MSG_GATT_CONNECTED:
                     mConnected = true;
                     invalidateOptionsMenu();
                     break;
-                case BLEHandlerService.MSG_GATT_DISCONNECTED:
-                case BLEHandlerService.MSG_GATT_FAILED:
+                case MSG_GATT_DISCONNECTED:
+                case MSG_GATT_FAILED:
                     mConnected = false;
                     mConnecting = false;
                     Toast.makeText(ScanResultsActivity.this, "Connection failed", Toast.LENGTH_SHORT).show();
                     resetConnectingText();
                     break;
-                case BLEHandlerService.MSG_SEND_PACKAGE_INFORMATION:
+                case MSG_SEND_PACKAGE_INFORMATION:
                     resetConnectingText();
                     mConnected = true;
                     mConnecting = false;
@@ -87,7 +88,7 @@ public class ScanResultsActivity extends AppCompatActivity {
                             (BiometricsSet) msg.getData().getSerializable("bioSettings"),
                             (float) msg.getData().getFloat("notif f"));
                     break;
-                case BLEHandlerService.MSG_UNRECOGNIZED_NUS_DEVICE:
+                case MSG_UNRECOGNIZED_NUS_DEVICE:
                     new AlertDialog.Builder(ScanResultsActivity.this)
                             .setIcon(android.R.drawable.ic_dialog_alert)
                             .setTitle("Unable to connect")
@@ -105,7 +106,7 @@ public class ScanResultsActivity extends AppCompatActivity {
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             try {
-                Message msg = Message.obtain(null, BLEHandlerService.MSG_REGISTER_CLIENT);
+                Message msg = Message.obtain(null, MSG_REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
                 getBluetoothDevices();
@@ -136,7 +137,7 @@ public class ScanResultsActivity extends AppCompatActivity {
             // If we have received the service, and hence registered with it, then now is the time to unregister.
             if (mService != null) {
                 try {
-                    Message msg = Message.obtain(null, BLEHandlerService.MSG_UNREGISTER_CLIENT);
+                    Message msg = Message.obtain(null, MSG_UNREGISTER_CLIENT);
                     msg.replyTo = mMessenger;
                     mService.send(msg);
                 }
@@ -168,7 +169,7 @@ public class ScanResultsActivity extends AppCompatActivity {
         if (mIsBound) {
             if (mService != null) {
                 try {
-                    Message msg = Message.obtain(null, BLEHandlerService.MSG_CONNECT, deviceAddress);
+                    Message msg = Message.obtain(null, MSG_CONNECT, deviceAddress);
                     msg.replyTo = mMessenger;
                     mService.send(msg);
                 }
@@ -288,7 +289,7 @@ public class ScanResultsActivity extends AppCompatActivity {
     }
 
     private void getBluetoothDevices() {
-        sendMessageToService(BLEHandlerService.MSG_REQUEST_SCAN_RESULTS);
+        sendMessageToService(MSG_REQUEST_SCAN_RESULTS);
     }
 
     //Returns the name, or address if name is null

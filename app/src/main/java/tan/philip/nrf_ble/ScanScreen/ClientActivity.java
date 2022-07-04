@@ -41,6 +41,9 @@ import tan.philip.nrf_ble.databinding.ActivityClientBinding;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
 import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_RX_MESSAGES_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_TX_MESSAGES_IDENTIFIER;
 import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
@@ -86,9 +89,11 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
                     FileWriter.isStoragePermissionGranted(ClientActivity.this);
                     break;
                 case MSG_SEND_PACKAGE_INFORMATION:
-                    startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable("sigSettings"),
-                            (BiometricsSet) msg.getData().getSerializable("bioSettings"),
-                            (float) msg.getData().getFloat("notif f"));
+                    startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER),
+                            (BiometricsSet) msg.getData().getSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER),
+                            (ArrayList<String>) msg.getData().getSerializable(EXTRA_RX_MESSAGES_IDENTIFIER),
+                            (ArrayList<String>) msg.getData().getSerializable(EXTRA_TX_MESSAGES_IDENTIFIER),
+                            (float) msg.getData().getFloat(EXTRA_NOTIF_F_IDENTIFIER));
                     break;
                 default:
                     super.handleMessage(msg);
@@ -269,13 +274,16 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         }
     }
 
-    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings, float notif_f) {
+    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings,
+                                    ArrayList<String> rxMessages, ArrayList<String> txMessages, float notif_f) {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
         Bundle extras = new Bundle();
-        extras.putSerializable(GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
+        extras.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
         extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
         extras.putString(EXTRA_BT_IDENTIFIER, "Debug Mode"); //Probably not necessary, graph activity can ask for it from the service
+        extras.putSerializable(EXTRA_RX_MESSAGES_IDENTIFIER, rxMessages);
+        extras.putSerializable(EXTRA_TX_MESSAGES_IDENTIFIER, txMessages);
         extras.putFloat(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
         intent.putExtras(extras);
 

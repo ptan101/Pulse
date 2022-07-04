@@ -1,5 +1,7 @@
+Packet Information
 3.125, 242
 end
+Signals Information
 0, IR Signal (P), 3, 25, 19, unsigned
 .big
 .graphable
@@ -41,10 +43,12 @@ end
 ..conversion: x*0.0078125
 ..suffix: \u00B0C
 end
+Biometric Settings
 heartrate, 0
 spo2, 0, 0, 0, 0
 pwv, 0, 0
 end
+Packet Structure
 1
 5
 2
@@ -134,4 +138,25 @@ end
 9
 10
 11
+end
+RX Messages
+Tattoo is in a normal operating state
+.brief Reading from device %id
+.alertDialog false
+Tattoo sensors are currently turned off.
+.brief %id shutoff
+.sendTX 1
+Tattoo detected an overtemperature condition and automatically shut off. To restart, turn the tattoo battery off and on. (ID = 0x01)
+.brief shut off
+end
+TX Messages
+Shutdown tattoo
+.brief %id shut off
+.alternate 2
+Turn on tattoo
+.alternate 1
+.brief Reading from device %id
+.isAlternate true
+Request tattoo state
+.isAlternate true
 end

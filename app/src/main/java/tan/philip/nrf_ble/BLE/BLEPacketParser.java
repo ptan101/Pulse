@@ -22,12 +22,18 @@ public class BLEPacketParser {
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
     ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Byte> signalOrder;
+    ArrayList<TattooMessage> rxMessages;
+    ArrayList<TattooMessage> txMessages;
     BiometricsSet biometrics = new BiometricsSet();
 
     //Use this to instantiate a new BLEPackageParser object
     public BLEPacketParser(Context context, String deviceName) throws FileNotFoundException {
         signalSettings = new ArrayList<>();
         signalOrder = new ArrayList<>();
+        rxMessages = new ArrayList<>();
+        rxMessages.add(null);   //Message ID 0 should be an empty message (i.e., no messsage)
+        txMessages = new ArrayList<>();
+        txMessages.add(null);   //Message ID 0 should be an empty message (i.e., no messsage)
 
         //First, use the deviceName to lookup the right init file
         String initFileName = lookupInitFile(deviceName, context);
@@ -122,47 +128,94 @@ public class BLEPacketParser {
         int i = 0;
         String cur_line;
 
-        //First section (information about the packet as a whole)
-        cur_line = lines.get(i);
-        String[] packet_data = cur_line.split(", ");
-        notificationFrequency = Float.parseFloat(packet_data[0]);
-        packageSizeBytes = Integer.parseInt(packet_data[1]);
-        i+=2;
-
-        //Second section (information about each signal)
-        while(true) {
+        while (true) {
             cur_line = lines.get(i);
-            //If main heading, add a new signal setting
-            i++;
-            if (cur_line.equals("end"))
-                break;
-            if(cur_line.charAt(0) != '.') {
-                String[] signal_info = cur_line.split(", ");
-                SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
-                        Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
-                        Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
-                signalSettings.add(cur_setting);
-            } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
-                parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1), cur_line, gatherSubHeadings(lines, i));
+            switch(cur_line) {
+                case "Packet Information":
+                    i++;
+                    cur_line = lines.get(i);
+                    String[] packet_data = cur_line.split(", ");
+                    notificationFrequency = Float.parseFloat(packet_data[0]);
+                    packageSizeBytes = Integer.parseInt(packet_data[1]);
+                    i++;
+                    break;
+                case "Signals Information":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        //If main heading, add a new signal setting
+                        if (cur_line.equals("end"))
+                            break;
+                        i++;
+                        if(cur_line.charAt(0) != '.') {
+                            String[] signal_info = cur_line.split(", ");
+                            SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
+                                    Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
+                                    Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
+                            signalSettings.add(cur_setting);
+                        } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
+                            parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1),
+                                    cur_line, gatherSubHeadings(lines, i));
+                        }
+                    }
+                    break;
+                case "Biometric Settings":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        if (cur_line.equals("end"))
+                            break;
+                        parseBiometricsOptions(biometrics, cur_line);
+                        i++;
+                    }
+                    break;
+                case "Packet Structure":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        if (cur_line.equals("end"))
+                            break;
+                        signalOrder.add(Byte.parseByte(cur_line));
+                        i++;
+                    }
+                    break;
+                case "RX Messages":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        if (cur_line.equals("end"))
+                            break;
+                        if(cur_line.charAt(0) != '.') {
+                            TattooMessage cur_mesg = new TattooMessage(cur_line, true);
+                            rxMessages.add(cur_mesg);
+                        } else if (cur_line.charAt(0) == '.') {
+                            parseMessageData(rxMessages.get(rxMessages.size() - 1), cur_line);
+                        }
+                        i++;
+                    }
+                    break;
+                case "TX Messages":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        if (cur_line.equals("end"))
+                            break;
+                        if(cur_line.charAt(0) != '.') {
+                            TattooMessage cur_mesg = new TattooMessage(cur_line, false);
+                            txMessages.add(cur_mesg);
+                        } else if (cur_line.charAt(0) == '.') {
+                            parseMessageData(txMessages.get(txMessages.size() - 1), cur_line);
+                        }
+                        i++;
+                    }
+                    break;
+                default:
+                    Log.e(TAG, "Unknown header: " + cur_line);
+                    break;
             }
-
-
-        }
-        //Third section (information about calculated biometrics)
-        while(true) {
-            cur_line = lines.get(i);
             i++;
-            if (cur_line.equals("end"))
+            if (i >= lines.size())
                 break;
-            parseBiometricsOptions(biometrics, cur_line);
-        }
-        //Fourth section (information about order of data in packet)
-        while(true) {
-            cur_line = lines.get(i);
-            i++;
-            if (cur_line.equals("end"))
-                break;
-            signalOrder.add(Byte.parseByte(cur_line));
         }
     }
 
@@ -178,7 +231,18 @@ public class BLEPacketParser {
         return signalOrder;
     }
 
+    public ArrayList<TattooMessage> getRxMessages() {
+        return rxMessages;
+    }
+
+    public ArrayList<TattooMessage> getTxMessages() {
+        return txMessages;
+    }
+
     ////////////////////////Helper Methods to Parse Init file/////////////////////////////////////
+
+
+
     private ArrayList<String> loadInitFile(String initFileName, Context context) {
         BufferedReader reader = null;
         ArrayList<String> lines = new ArrayList<String>();
@@ -206,11 +270,11 @@ public class BLEPacketParser {
         return lines;
     }
 
-    private void parseSignalMainOptions(SignalSetting signalSetting, String mLine, ArrayList<String> subheadings) {
+    private void parseSignalMainOptions(SignalSetting signalSetting, String pLine, ArrayList<String> subheadings) {
         //Cut out the initial period
-        mLine = mLine.substring(1);
+        pLine = pLine.substring(1);
 
-        switch (mLine) {
+        switch (pLine) {
             case "graphable":
                 signalSetting.graphable = true;
                 importGraphableSubSettings(signalSetting, subheadings);
@@ -229,6 +293,32 @@ public class BLEPacketParser {
                 break;
         }
 
+    }
+
+    private void parseMessageData(TattooMessage message, String pLine) {
+        //Cut out the initial period
+        String option = pLine.substring(1, pLine.indexOf(" "));
+        String setting = pLine.substring(pLine.indexOf(" ") + 1);
+
+        switch (option) {
+            case "brief":
+                message.brief = setting;
+                break;
+            case "alternate":
+                message.alternate = Integer.parseInt(setting);
+                break;
+            case "isAlternate":
+                message.isAlternate = Boolean.parseBoolean(setting);
+                break;
+            case "alertDialog":
+                message.alertDialog = Boolean.parseBoolean(setting);
+                break;
+            case "sendTX":
+                message.idTXMessage = Integer.parseInt(setting);
+                break;
+            default:
+                break;
+        }
     }
 
     private void parseBiometricsOptions(BiometricsSet biometrics, String mLine) {
@@ -320,6 +410,8 @@ public class BLEPacketParser {
 
         signalSetting.filter = new Filter(b, a, gain);
     }
+
+
 
     private void importDigitalDisplaySubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
         for(String s: subsettings) {

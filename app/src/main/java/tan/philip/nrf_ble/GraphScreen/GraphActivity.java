@@ -50,8 +50,8 @@ import tan.philip.nrf_ble.Algorithms.SpO2Algorithm;
 import tan.philip.nrf_ble.Algorithms.ZeroCrossingAlgorithm;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.FileWriter;
+import tan.philip.nrf_ble.BLE.TattooMessage;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.BLE.SignalSetting;
 import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 
@@ -71,6 +71,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     public static final String EXTRA_BT_IDENTIFIER = "bt identifier";
     public static final String EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER = "bio settings";
     public static final String EXTRA_NOTIF_F_IDENTIFIER = "notif f";
+    public static final String EXTRA_RX_MESSAGES_IDENTIFIER = "rx messages";
+    public static final String EXTRA_TX_MESSAGES_IDENTIFIER = "tx messages";
 
     private final float MIN_Y = 0;
     private final float MAX_Y = 12;
@@ -93,6 +95,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private float amplification = 5;
     private boolean monitorView = true;
     private float t = 0;
+    private ArrayList<TattooMessage> rxMessages = new ArrayList<>();
+    private ArrayList<TattooMessage> txMessages = new ArrayList<>();
 
     private BiometricsSet biometrics;
 
@@ -132,12 +136,17 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                     break;
                 case MSG_GATT_ACTION_DATA_AVAILABLE:
                     displayData( (ArrayList<float[]>)msg.getData().getSerializable("btData"));
-
                     timestampPacket();
-
                     break;
                 case MSG_GATT_CONNECTED:
                     onReconnect();
+                    break;
+                case MSG_TMS_MSG_RECIEVED:
+                    TattooMessage message = (TattooMessage) msg.getData().getSerializable("tmsMessage");
+                    displayTMSMessage(message);
+
+                    if(message.getAutoTXMessage() > 0)
+                        sendTMSMessage(message.getAutoTXMessage());
 
                     break;
                 default:
@@ -150,9 +159,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         public void onServiceConnected(ComponentName className, IBinder service) {
             mService = new Messenger(service);
             try {
+                //Register this activity
                 Message msg = Message.obtain(null, MSG_REGISTER_CLIENT);
                 msg.replyTo = mMessenger;
                 mService.send(msg);
+
+                //Ask tattoo for current state
+                sendMessageToService(MSG_TMS_MSG_TRANSMIT, 0);
             }
             catch (RemoteException e) {
                 // In this case the service has crashed before we could even do anything with it
@@ -188,25 +201,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
     }
 
-    private void sendMessageToService(int msgID) {
+    private void sendMessageToService(int msgID, Object o) {
         if (mIsBound) {
             if (mService != null) {
                 try {
-                    Message msg = Message.obtain(null, msgID);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                }
-                catch (RemoteException e) {
-                }
-            }
-        }
-    }
-
-    private void sendStringToService(int msgID, String s) {
-        if (mIsBound) {
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null, msgID, s);
+                    Message msg = Message.obtain(null, msgID, o);
                     msg.replyTo = mMessenger;
                     mService.send(msg);
                 }
@@ -243,6 +242,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         setupBiometricsDigitalDisplay();
         notification_frequency = extras.getFloat(EXTRA_NOTIF_F_IDENTIFIER);
         notification_period = 1000 / notification_frequency;
+        rxMessages = (ArrayList<TattooMessage>)extras.getSerializable(EXTRA_RX_MESSAGES_IDENTIFIER);
+        txMessages = (ArrayList<TattooMessage>)extras.getSerializable(EXTRA_TX_MESSAGES_IDENTIFIER);
     }
 
     @Override
@@ -279,7 +280,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     protected void onDestroy() {
         super.onDestroy();
 
-        sendMessageToService(MSG_DISCONNECT);
+        sendMessageToService(MSG_DISCONNECT, null);
 
         //Unbind the service
         try {
@@ -317,12 +318,11 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
         if(autoconnect) {
             Toast.makeText(GraphActivity.this, "Connection failed.", Toast.LENGTH_SHORT).show();
-            mBinding.deviceIDText.setText(deviceIdentifier + " disconnected (attempting auto-reconnect)");
+            setDeviceHeader("%id disconnected (attempting auto-reconnect)", Color.rgb(255, 0, 0));
             makeNotification("Device disconnected", "Device " + deviceIdentifier + " lost connection on " + curTime, GraphActivity.this);
         } else {
-            mBinding.deviceIDText.setText(deviceIdentifier + " disconnected");
+            setDeviceHeader("%id disconnected", Color.rgb(255, 0, 0));
         }
-        mBinding.deviceIDText.setTextColor(Color.rgb(255,0,0));
         mConnected = false;
         invalidateOptionsMenu();
 
@@ -338,8 +338,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         String curTime = Calendar.getInstance().getTime().toString();
 
         mConnected = true;
-        mBinding.deviceIDText.setText("Reading from " + deviceIdentifier);
-        mBinding.deviceIDText.setTextColor(defaultTextColor);
+        setDeviceHeader("Reading from %id", defaultTextColor.getDefaultColor());
         invalidateOptionsMenu();
 
         if(storeData) {
@@ -347,6 +346,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         }
 
         makeNotification("Device reconnected", "Device " + deviceIdentifier + " regained connection on " + curTime, GraphActivity.this);
+        sendMessageToService(MSG_TMS_MSG_TRANSMIT, 0);
     }
 
     ////////////////////////////////////GRAPH STUFF////////////////////////////////////////////////
@@ -611,13 +611,67 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
 
-    //////////////////////////////////////////SEND DATA TO NRF/////////////////////////////////////
-    /*
-    private void checkSD() {
-        byte[] output = {CHECK_SD};
-        mBluetoothLeService.writeCharacteristic(output);
+    /**
+     * Change the device ID text.
+     * @param text What the header should read. %id will be replaced with the device identifier.
+     * @param color Color of the header.
+     */
+    private void setDeviceHeader(String text, int color) {
+        String header = text.replaceAll("%id", deviceIdentifier);
+        mBinding.deviceIDText.setText(header);
+        mBinding.deviceIDText.setTextColor(color);
     }
-    */
+
+
+    //////////////////////////////////////////SEND DATA TO NRF/////////////////////////////////////
+    private void displayTMSMessage(TattooMessage message) {
+        if(message == null)
+            return;
+
+        if(message.isAlertDialog())
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("New Message from Tattoo")
+                    .setMessage(message.getMainMessage())
+                    .setPositiveButton("Close", null)
+                    .show();
+
+        String brief = message.getBrief();
+        if (brief != null)
+            setDeviceHeader(brief, defaultTextColor.getDefaultColor());
+
+    }
+
+    private void sendTMSMessage(int tms_msg_id) {
+        if(mConnected) {
+            TattooMessage msg = txMessages.get(tms_msg_id);
+
+            sendMessageToService(MSG_TMS_MSG_TRANSMIT, tms_msg_id);
+            displayTMSMessage(msg);
+
+            int alternateID = msg.getAlternate();
+            if(alternateID > 0) {
+                //Hide this message from the menu
+                msg.setIsAlternate(true);
+
+                //Set the alternate as visible
+                txMessages.get(alternateID).setIsAlternate(false);
+            }
+
+
+        } else {
+            Toast.makeText(this, "Cannot send message (tattoo disconnected)", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void displayTxMessagesInMenu(Menu menu) {
+        for(int i = 1; i < txMessages.size(); i ++) {
+            TattooMessage msg = txMessages.get(i);
+
+            if(!msg.isAlternate())
+                menu.add(0, MENU_FIRST_TX_MESSAGE + i, Menu.NONE, txMessages.get(i).getMainMessage());
+        }
+    }
 
     //////////////////////////////////////////SAVING TO MEMORY/////////////////////////////////////
     private void startRecord() {
@@ -639,7 +693,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                             storeData = true;
                             fileName = input.getText().toString();
                             fileName = fileName.replace(":", "");
-                            sendStringToService(MSG_START_RECORD, fileName);
+                            sendMessageToService(MSG_START_RECORD, fileName);
                             writeCSV(new String[] {Float.toString((t - startRecordTimeEventMarker) / 1000), "Recording started at " + curTime}, fileName);
                         }
 
@@ -653,7 +707,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     }
 
     private void stopRecord() {
-        sendMessageToService(MSG_STOP_RECORD);
+        sendMessageToService(MSG_STOP_RECORD, null);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
         storeData = false;
     }
@@ -688,6 +742,8 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private static final int MENU_DISCONNECT_BLE = 1;
     private static final int MENU_RECONNECT_BLE = 2;
 
+    private static final int MENU_FIRST_TX_MESSAGE = 1000;
+
     public void showOptions(View v) {
         PopupMenu popup = new PopupMenu(this, v);
         popup.setOnMenuItemClickListener(this);
@@ -701,6 +757,9 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             popup.getMenu().add(0, MENU_MARK_EVENT, Menu.NONE, "Mark Event");
         } else
             recordMenuItem.setTitle("Record");
+
+        //Add all the TX message options
+        displayTxMessagesInMenu(popup.getMenu());
 
         if(mConnected)
             popup.getMenu().add(0, MENU_DISCONNECT_BLE, Menu.NONE, "Disconnect");
@@ -758,29 +817,31 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
                         .show();
                 return true;
             case MENU_DISCONNECT_BLE:
-                sendMessageToService(MSG_DISCONNECT);
+                sendMessageToService(MSG_DISCONNECT, null);
                 //Manually disconnect, do not want to autoconnect
                 autoconnect = false;
                 stopRecord();
                 return true;
             case MENU_RECONNECT_BLE:
-                sendStringToService(MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
+                sendMessageToService(MSG_CONNECT, deviceIdentifier.substring(deviceIdentifier.indexOf("(")+1, deviceIdentifier.indexOf(")")));
                 //Manual reconnect, want following disconnects to be automatically reconnected.
                 autoconnect = true;
                 return true;
             default:
+                if (menuItem.getItemId() >= MENU_FIRST_TX_MESSAGE)
+                    sendTMSMessage(menuItem.getItemId() - MENU_FIRST_TX_MESSAGE);
+
+
                 return false;
         }
     }
-
-
 
     //////////////////Setup//////////////////////////////////////////////////////////////
     private void setupButtons() {
         mBinding  = DataBindingUtil.setContentView(this, R.layout.activity_graph);
         mBinding.recordTimer.setVisibility(View.INVISIBLE);
-        mBinding.deviceIDText.setText("Reading from device " + deviceIdentifier);
         defaultTextColor = mBinding.deviceIDText.getTextColors();
+        setDeviceHeader("Reading from device %id", defaultTextColor.getDefaultColor());
         mBinding.btnReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

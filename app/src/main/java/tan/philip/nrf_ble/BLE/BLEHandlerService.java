@@ -43,9 +43,16 @@ import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.SickbayPush.SickbayPushService;
 
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
-import static tan.philip.nrf_ble.Constants.NUS_RX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_RX_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_TX_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_UUID;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_RX_MESSAGES_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER;
+import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_TX_MESSAGES_IDENTIFIER;
 import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
@@ -62,7 +69,6 @@ public class BLEHandlerService extends Service {
     //Messenger to communicate with client threads
     //final Messenger mMessenger = new Messenger(new ServiceHandler()); // Target we publish for clients to send messages to IncomingHandler.
     Messenger activityToServiceMessenger;
-    final Messenger serviceToServiceMessenger = new Messenger(new BLEHandlerService.ServiceHandler());;
     ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
 
     //Scanning
@@ -76,13 +82,16 @@ public class BLEHandlerService extends Service {
 
     //Connecting
     private ArrayList<String> bluetoothAddresses = new ArrayList<>();
-    private ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
+    private ArrayList<BluetoothDevice> broadcastingBLEDevices = new ArrayList<>();
     private String deviceNameToConnect = "";
     private String deviceAddress = "";
 
     private boolean mConnecting;
     private int mConnectingIndex;
     private boolean mConnected;
+
+    //Characteristics that need subscription to notifications
+    private List<BluetoothGattCharacteristic> charNeedSub = new ArrayList<>();
 
     //Transceiving
     private BLEPacketParser bleparser;
@@ -101,10 +110,7 @@ public class BLEHandlerService extends Service {
     boolean mIsBound = false;
     boolean pushToSickbay = true;
 
-
     NotificationCompat.Builder notificationBuilder;
-
-
 
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
@@ -191,8 +197,8 @@ public class BLEHandlerService extends Service {
                 case MSG_REQUEST_SCAN_RESULTS:
                     Bundle b = new Bundle();
                     b.putSerializable("btAddresses", bluetoothAddresses);
-                    b.putSerializable("btDevices", bluetoothDevices);
-                    sendDataToUI(b, MSG_BT_DEVICES);  //Should make this a reply maybe
+                    b.putSerializable("btDevices", broadcastingBLEDevices);
+                    sendMessageToUI(MSG_BT_DEVICES, b);  //Should make this a reply maybe
                     break;
                 case MSG_CONNECT:
 //                    String address = msg.getData().getString("deviceAddress");
@@ -214,7 +220,7 @@ public class BLEHandlerService extends Service {
                 case MSG_CHECK_BT_ENABLED:
                     if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                         //Request permission to enable BT
-                        sendMessageToUI(MSG_CHECK_PERMISSIONS);
+                        sendMessageToUI(MSG_CHECK_PERMISSIONS, null);
                     }
                     break;
                 case MSG_START_RECORD:
@@ -230,30 +236,24 @@ public class BLEHandlerService extends Service {
                 case MSG_START_DEBUG_MODE:
                     startDebugMode();
                     break;
+                case MSG_TMS_MSG_TRANSMIT:
+                    int message = (Integer) msg.obj;
+                    writeCharacteristic(new byte[]{(byte) message}, TMS_UUID, TMS_RX_UUID);
+                    break;
                 default:
                     super.handleMessage(msg);
             }
         }
     }
 
-    private void sendDataToUI(Bundle b, int message_id) {
+    private void sendMessageToUI(int message_id, Bundle data) {
         for (int i = mClients.size()-1; i >= 0; i--) {
             try {
                 Message msg = Message.obtain(null, message_id);
-                msg.setData(b);
-                mClients.get(i).send(msg);
-            }
-            catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
-        }
-    }
+                if(data != null)
+                    msg.setData(data);
 
-    private void sendMessageToUI(int msg_id) {
-        for (int i = mClients.size()-1; i >= 0; i--) {
-            try {
-                mClients.get(i).send(Message.obtain(null, msg_id));
+                mClients.get(i).send(msg);
             }
             catch (RemoteException e) {
                 // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
@@ -292,7 +292,7 @@ public class BLEHandlerService extends Service {
                 mConnected = false;
                 mConnecting = false;
 
-                sendMessageToUI(MSG_GATT_FAILED);
+                sendMessageToUI(MSG_GATT_FAILED, null);
 
                 Toast.makeText(BLEHandlerService.this, "Connection failed." , Toast.LENGTH_SHORT).show();
 
@@ -314,7 +314,7 @@ public class BLEHandlerService extends Service {
                 mConnected = false;
                 mConnecting = false;
 
-                sendMessageToUI(MSG_GATT_DISCONNECTED);
+                sendMessageToUI(MSG_GATT_DISCONNECTED, null);
             }
         }
 
@@ -324,28 +324,46 @@ public class BLEHandlerService extends Service {
                 return;
             }
 
+            //Initialize NUS Service
             BluetoothGattService service = gatt.getService(NUS_UUID);
+            //Initialize the TX characteristic in NUS for writing
             BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_TX_UUID);
+            charNeedSub.add(characteristic);
+
+            //Initialize TMS Service
+            service = gatt.getService(TMS_UUID);
+            if (service != null) {
+                //Initialize the TX characteristic in TMS for writing
+                characteristic = service.getCharacteristic(TMS_TX_UUID);
+                charNeedSub.add(characteristic);
+            }
+
+            subscribeToCharacteristics(mBluetoothGatt);
+
+            try {
+                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
+                //Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
+            } catch (FileNotFoundException e) {
+                disconnect();
+                sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE, null);
+            }
+        }
+
+        private void subscribeToCharacteristics(BluetoothGatt gatt) {
+            if(charNeedSub.size() == 0) {
+                Log.d("GattCallback", "All notification characteristics subscribed to!");
+                return;
+            }
+
+            BluetoothGattCharacteristic characteristic = charNeedSub.get(0);
+            gatt.setCharacteristicNotification(characteristic, true);
             characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
-            boolean mInitialized = gatt.setCharacteristicNotification(characteristic, true);
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             gatt.writeDescriptor(descriptor);
 
-            if(mInitialized)
-                Log.d(TAG, "Services initialized!");
-            else
-                Log.d(TAG, "Services not initialized");
-
-            try {
-                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
-                Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-
-            } catch (FileNotFoundException e) {
-                disconnect();
-                sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE);
-            }
+            charNeedSub.remove(0);
         }
 
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
@@ -353,10 +371,22 @@ public class BLEHandlerService extends Service {
 
             byte[] messageBytes = characteristic.getValue();
 
+            //Data is sensor data (from NUS)
+            //Unfortunately switch case does not work with objects
+            if(characteristic.getUuid().equals(NUS_TX_UUID)) {
+                processPacket(messageBytes);
+            } else if (characteristic.getUuid().equals(TMS_TX_UUID)) {
+                Bundle b = new Bundle();
+                b.putSerializable("tmsMessage", bleparser.rxMessages.get(characteristic.getValue()[0]));
+                sendMessageToUI(MSG_TMS_MSG_RECIEVED, b);
+            }
+
+
+
             //String messageString = Constants.bytesToHex(messageBytes);
             //Log.d(TAG, "Received message: " + messageString);
 
-            processPacket(messageBytes);
+
             //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
         }
 
@@ -364,7 +394,25 @@ public class BLEHandlerService extends Service {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
 
+            if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+                Log.w(TAG, "BluetoothAdapter not initialized");
+                return;
+            }
+
+            if(characteristic.getUuid().equals(TMS_TX_UUID)) {
+                Bundle b = new Bundle();
+                b.putSerializable("tmsMessage", bleparser.rxMessages.get(characteristic.getValue()[0]));
+                sendMessageToUI(MSG_TMS_MSG_RECIEVED, b);
+            }
+
             Log.e(TAG, characteristic.getStringValue(0));
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            super.onDescriptorWrite(gatt, descriptor, status);
+
+            subscribeToCharacteristics(gatt);
         }
     };
 
@@ -472,7 +520,7 @@ public class BLEHandlerService extends Service {
     }
 
     private void clearScan() {
-        bluetoothDevices.clear();
+        broadcastingBLEDevices.clear();
         bluetoothAddresses.clear();
         mScanResults.clear();
         numDevicesFound = 0;
@@ -490,16 +538,16 @@ public class BLEHandlerService extends Service {
 
         //Seperate map to two seperate ArrayLists (may not be necessary if I can send HashMap but oh well)
         bluetoothAddresses.clear();
-        bluetoothDevices.clear();
+        broadcastingBLEDevices.clear();
         for(String deviceAddress : mScanResults.keySet()) {
             bluetoothAddresses.add(deviceAddress);
-            bluetoothDevices.add(mScanResults.get(deviceAddress));
+            broadcastingBLEDevices.add(mScanResults.get(deviceAddress));
         }
 
         Bundle b = new Bundle();
         b.putSerializable("btAddresses", bluetoothAddresses);
-        b.putSerializable("btDevices", bluetoothDevices);
-        sendDataToUI(b, MSG_BT_DEVICES);
+        b.putSerializable("btDevices", broadcastingBLEDevices);
+        sendMessageToUI(MSG_BT_DEVICES, b);
     }
 
 
@@ -623,7 +671,7 @@ public class BLEHandlerService extends Service {
 
         close();
 
-        sendMessageToUI(MSG_GATT_DISCONNECTED);
+        sendMessageToUI(MSG_GATT_DISCONNECTED, null);
 
         mConnected = false;
     }
@@ -659,9 +707,14 @@ public class BLEHandlerService extends Service {
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
     }
 
-    public void writeCharacteristic(byte[] txBytes) {
-        BluetoothGattService service = mBluetoothGatt.getService(NUS_UUID);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_RX_UUID);
+    public void writeCharacteristic(byte[] txBytes, UUID serviceUUID, UUID characteristicUUID) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        BluetoothGattService service = mBluetoothGatt.getService(serviceUUID);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(characteristicUUID);
 
         if(characteristic != null){
             characteristic.setValue(txBytes);
@@ -672,19 +725,35 @@ public class BLEHandlerService extends Service {
         this.setCharacteristicNotification(characteristic, true);
     }
 
+    public void readCharacteristic(UUID serviceUUID, UUID characteristicUUID) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        BluetoothGattService service = mBluetoothGatt.getService(serviceUUID);
+        BluetoothGattCharacteristic characteristic = service.getCharacteristic(characteristicUUID);
+
+        if(characteristic != null) {
+            mBluetoothGatt.readCharacteristic(characteristic);
+        }
+    }
+
     private void initializeBLEParser() throws FileNotFoundException {
         bleparser = new BLEPacketParser(this, deviceNameToConnect);
 
         Bundle b = new Bundle();
-        b.putSerializable("sigSettings", bleparser.getSignalSettings());
-        b.putSerializable("bioSettings", bleparser.getBiometricsSettings());
-        b.putFloat("notif f", bleparser.notificationFrequency);
-        sendDataToUI(b, MSG_SEND_PACKAGE_INFORMATION);
+        b.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, bleparser.getSignalSettings());
+        b.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bleparser.getBiometricsSettings());
+        b.putSerializable(EXTRA_RX_MESSAGES_IDENTIFIER, bleparser.getRxMessages());
+        b.putSerializable(EXTRA_TX_MESSAGES_IDENTIFIER, bleparser.getTxMessages());
+        b.putFloat(EXTRA_NOTIF_F_IDENTIFIER, bleparser.notificationFrequency);
+        sendMessageToUI(MSG_SEND_PACKAGE_INFORMATION, b);
 
         notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
         makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
-        sendMessageToUI(MSG_GATT_CONNECTED);
+        sendMessageToUI(MSG_GATT_CONNECTED, null);
     }
 
     private void processPacket(byte[] data) {
@@ -713,7 +782,7 @@ public class BLEHandlerService extends Service {
         //Send the data to the UI for display
         Bundle b = new Bundle();
         b.putSerializable("btData", filtered_data);
-        sendDataToUI(b, MSG_GATT_ACTION_DATA_AVAILABLE);
+        sendMessageToUI(MSG_GATT_ACTION_DATA_AVAILABLE, b);
     }
 
     private void startRecord() {
@@ -792,5 +861,17 @@ public class BLEHandlerService extends Service {
             }
         }
     };
+
+    //Object that represents a new tattoo connected to the app.
+    private class BLETattooDevice {
+        BluetoothDevice device = null;
+
+        //Whether the device supports TMS or not.
+        boolean hasTMS = false;
+
+        public BLETattooDevice() {
+
+        }
+    }
 }
 

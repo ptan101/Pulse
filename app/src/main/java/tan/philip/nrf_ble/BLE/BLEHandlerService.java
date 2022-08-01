@@ -770,8 +770,12 @@ public class BLEHandlerService extends Service {
         ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
 
         //Send data to SickbayPushService to be sent over web sockets
-        if (pushToSickbay)
-            mService.addToQueue(packaged_data);
+        if (pushToSickbay) {
+            //Convert to HashMap. Keys are the Sickbay IDs.
+            HashMap<Integer, ArrayList<Integer>> sickbayPush = bleparser.convertToSickbayHashMap(packaged_data);
+
+            mService.addToQueue(sickbayPush);
+        }
 
         ///Formatting for plotting
         //For each signal, filter in the right way

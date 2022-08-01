@@ -31,6 +31,8 @@ public class SignalSetting implements Serializable {
     public String conversion = null;
     public String prefix = null;
     public String suffix = null;
+    //Sickbay settings
+    public int sickbayID = -1;
 
     public SignalSetting(byte index, String name, byte bytesPerPoint, int fs, byte resolution, boolean signed) {
         this.index = index;

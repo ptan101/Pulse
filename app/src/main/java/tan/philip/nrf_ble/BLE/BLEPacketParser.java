@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 
 import tan.philip.nrf_ble.Algorithms.BiometricsSet;
@@ -47,17 +48,7 @@ public class BLEPacketParser {
         parseInitFile(initFileName, context);
     }
 
-    //To do: make this arraylist of arrays
     public ArrayList<ArrayList<Integer>> parsePacket(byte data[]) {
-        /*
-        if (data.length != packageSizeBytes) {
-            //Should send alert dialog in client
-            Log.e("Data parser", "The package is not the same size as expected");
-            return null;
-        }
-
-         */
-
         ArrayList<ArrayList<Integer>> parsedData = new ArrayList();
         for (int i = 0; i < signalSettings.size(); i ++) {
             parsedData.add(new ArrayList<>());
@@ -103,6 +94,20 @@ public class BLEPacketParser {
         }
 
         return parsedData;
+    }
+
+    public HashMap<Integer, ArrayList<Integer>> convertToSickbayHashMap(ArrayList<ArrayList<Integer>> signals) {
+        HashMap<Integer, ArrayList<Integer>> sickbayQueue = new HashMap<>();
+
+        for (int i = 0; i < signals.size(); i ++) {
+            int sickbayID = signalSettings.get(i).sickbayID;
+
+            if(sickbayID >= 0) {
+                sickbayQueue.put(sickbayID, signals.get(i));
+            }
+        }
+
+        return sickbayQueue;
     }
 
     //Use this to filter a signal based on the filter in the init file
@@ -274,7 +279,10 @@ public class BLEPacketParser {
         //Cut out the initial period
         pLine = pLine.substring(1);
 
-        switch (pLine) {
+        //Look at first word
+        String mainOption[] = pLine.split(" ");
+
+        switch (mainOption[0]) {
             case "graphable":
                 signalSetting.graphable = true;
                 importGraphableSubSettings(signalSetting, subheadings);
@@ -289,6 +297,8 @@ public class BLEPacketParser {
             case "big":
                 signalSetting.littleEndian = false;
                 break;
+            case "sickbayID":
+                signalSetting.sickbayID = Integer.parseInt(mainOption[1]);
             default:
                 break;
         }

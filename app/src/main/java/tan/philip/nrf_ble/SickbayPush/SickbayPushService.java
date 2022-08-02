@@ -5,48 +5,34 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Random;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.SynchronousQueue;
+import java.util.stream.Collectors;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
-import io.socket.engineio.client.transports.Polling;
-import io.socket.engineio.client.transports.WebSocket;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
-    //private static final String WEB_SOCKET_URL = "http://192.168.1.97";
-    private static final int QUEUE_MAX_SIZE = 10000;
+    private static final String WEB_SOCKET_URL = "http://192.168.1.97:3000";
     private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
-    private String bedName = "";
-
+    private String bedName = "BED012";
 
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
-    //BlockingQueue should be thread safe.
-    //private ConcurrentLinkedQueue<QueueObject> signals = new ConcurrentLinkedQueue<>();
-    private Map<Integer, ArrayList<Integer>> signals = new ConcurrentHashMap<>();
+    private Map<Integer, ArrayList<Integer>> dataQueue = new ConcurrentHashMap<>();
     private Handler mHandler;
 
     //If we need to deal with IPC, we will need to use a messenger
@@ -80,37 +66,37 @@ public class SickbayPushService extends Service {
     public synchronized void addToQueue(HashMap<Integer, ArrayList<Integer>> dataIn) {
         //Add data to queue
         for (int i : dataIn.keySet()) {
-            signals.get(i).addAll(dataIn.get(i));
+            if (dataQueue.get(i) == null)
+                dataQueue.put(i, dataIn.get(i));
+            else
+                dataQueue.get(i).addAll(dataIn.get(i));
         }
     }
 
-    private void pushQueue(long timestamp) {
+    private synchronized void pushQueue(long timestamp) {
         //Consolidate queue to a single frame and push the frame
 
-        //To ensure that we remove only the number of elements that we push.
-        int elementsToPush = signals.size();
-        synchronized (this) {
-            // Make a local copy of the queue
-
-            //
-        }
-
         //Reformat data in queue into string.
-        JSONObject message = convertToJSONString("TATTOOWAVE", timestamp, (float) PUSH_INTERVAL_MS);
+        JSONObject message = convertQueueToJSONString("TATTOOWAVE", timestamp, (float) PUSH_INTERVAL_MS);
         //Log.d(TAG, message);
 
         //Attempt to send the data
         attemptSend(message);
 
         //Remove elements that we pushed
-        synchronized (this) {
 
-        }
 
 
     }
 
-    private JSONObject convertToJSONString(String namespace, long timestamp, float dt) {
+    /**
+     * Converts the queue into a single data frame JSON String.
+     * @param namespace Name space of the device.
+     * @param timestamp Javascript time (UTC 64 bit). In ms.
+     * @param dt Interval between pushes, in ms.
+     * @return The JSON string. If no data is available to send, returns null.
+     */
+    private JSONObject convertQueueToJSONString(String namespace, long timestamp, float dt) {
         /*
         This is called a data frame
         {
@@ -148,15 +134,45 @@ public class SickbayPushService extends Service {
 
         JSONObject obj = new JSONObject();
         try {
-            obj.put("CH", "BED012");
+            obj.put("CH", bedName);
             obj.put("NS", namespace);
             obj.put("T", ((double) timestamp) / 10000);
             obj.put("DT", dt);
             obj.put("VIZ", new Integer(0));
             obj.put("Z", new Integer(0));
             obj.put("InstanceID", new Integer(0));
-            obj.put("Data", "[{\"s1\": [162],\"s99\": [72]}]");
-        } catch (org.json.JSONException e) {
+
+            String dataString = "[{";
+            ArrayList<String> signalStrings = new ArrayList<>();
+            boolean signalsNeedPushing = false;
+            //Iterate through all signals in the Hashmap
+            for (int i : dataQueue.keySet()) {
+                //Make a local copy of the signals to push. This way, we only remove items that we
+                //pushed. In case new items are enqueued now.
+                ArrayList<Integer> localCopyOfSignal = new ArrayList<>(dataQueue.get(i));
+                String curSignalString = "\"s" + i + "\": " + "[";
+
+                //Question for Dr. Rusin: If there is no data to push from that particular signal,
+                //is it ok to send an empty array? E.g., "s1": [],"s2": [1, 2, 3, 4]. Or should it be omitted?
+                //Add all samples for that particular signal
+                curSignalString += localCopyOfSignal.stream().map(Object::toString).collect(Collectors.joining(", "));
+                curSignalString += "]";
+                signalStrings.add(curSignalString);
+
+                //Check if any signals actually need pushing
+                signalsNeedPushing = signalsNeedPushing || (localCopyOfSignal.size() > 0);
+
+                //Remove the samples that we pushed
+                dataQueue.get(i).subList(0, localCopyOfSignal.size()).clear();
+            }
+            dataString += String.join(", ", signalStrings);
+            dataString += "}]";
+
+            if (!signalsNeedPushing)
+                return null;
+
+            obj.put("DATA", dataString);
+        } catch (JSONException e) {
             Log.e(TAG, "Unable to put data into JSONObject (" + e.getMessage() + ")");
         }
 
@@ -174,7 +190,7 @@ public class SickbayPushService extends Service {
     private Socket mSocket;
     {
         try {
-            /*
+            /* Available options for the socket. Needs newer version of SocketIO to run.
             IO.Options options = IO.Options.builder()
                 // IO factory options
                 .setForceNew(false)
@@ -202,7 +218,7 @@ public class SickbayPushService extends Service {
 
              */
 
-            mSocket = IO.socket("http://192.168.1.97:3000");
+            mSocket = IO.socket(WEB_SOCKET_URL);
             Log.d(TAG, "Socket object created.");
         } catch (URISyntaxException e) {
             Log.e("Error URI", String.valueOf(e));

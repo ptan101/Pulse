@@ -7,157 +7,46 @@
     <data></data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/backgroundCL"
+        android:id="@+id/graphCL"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFF"
-        tools:context=".GraphScreen.PWVGraphActivity">
-
-        <com.jjoe64.graphview.GraphView
-            android:id="@+id/graph1"
-            android:layout_width="match_parent"
-            android:layout_height="500dp"
-            app:layout_constraintTop_toBottomOf="@+id/recordTimer" />
+        android:background="#FFFFFFFE">
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/graphLegendCL"
+            android:id="@+id/graphHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/constraintLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent">
-
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginBottom="20dp">
 
             <TextView
-                android:id="@+id/mainBannerText"
+                android:id="@+id/graphHeaderText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Measuring pulse wave velocity..."
+                android:layout_marginTop="20dp"
+                android:text="Measuring E-tattoo Signals..."
                 android:textSize="20sp"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-            <TextView
-                android:id="@+id/deviceIDText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="Reading from device SAMPLE_NAME"
-                android:textSize="10sp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.5"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/mainBannerText" />
-
-
-            <ImageButton
-                android:id="@+id/imageButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="15dp"
-                android:background="@android:color/transparent"
-                android:onClick="showOptions"
-                app:layout_constraintBottom_toBottomOf="@+id/mainBannerText"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/mainBannerText"
-                app:srcCompat="@drawable/options" />
-
+                app:layout_constraintTop_toTopOf="parent"></TextView>
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/digitalDisplayLeft"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:layout_constraintStart_toStartOf="@+id/graph1"
-            app:layout_constraintTop_toBottomOf="@+id/amplificationText"
-            app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_percent="0.5">
-
-            <View
-                android:id="@+id/divider"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider"
-                android:visibility="invisible"
-                app:layout_constraintTop_toTopOf="@+id/digitalDisplayLeft"
-                tools:layout_editor_absoluteX="10dp" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/digitalDisplayRight"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            app:layout_constraintEnd_toEndOf="@+id/graph1"
-            app:layout_constraintTop_toBottomOf="@+id/amplificationText"
-            app:layout_constraintWidth_default="percent"
-            app:layout_constraintWidth_percent="0.5">
-
-            <View
-                android:id="@+id/divider2"
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="?android:attr/listDivider"
-                android:visibility="invisible"
-                app:layout_constraintTop_toTopOf="@+id/digitalDisplayRight" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/digitalDisplayCenter"
+        <ScrollView
+            android:id="@+id/graphScrollView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="0dp"
-            app:layout_constraintStart_toStartOf="@+id/graph1"
-            app:layout_constraintTop_toBottomOf="@+id/digitalDisplayLeft">
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <Button
-            android:id="@+id/btn_reset"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:backgroundTint="#FFEB3B"
-            android:text="RESET VIEW"
-            android:textColor="#2D5492"
-            app:layout_constraintBottom_toBottomOf="@+id/graph1"
-            app:layout_constraintStart_toStartOf="@+id/graph1" />
-
-        <TextView
-            android:id="@+id/recordTimer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0s"
-            android:layout_marginStart="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/constraintLayout" />
-
-        <SeekBar
-            android:id="@+id/amplification"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:progress="50"
+            android:background="#FFFFFF"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/graph1" />
+            app:layout_constraintTop_toBottomOf="@+id/graphHeader">
 
-        <TextView
-            android:id="@+id/amplificationText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Amplification"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/amplification" />
-
+            <LinearLayout
+                android:id="@+id/graph_space_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"></LinearLayout>
+        </ScrollView>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

@@ -1,10 +1,6 @@
 package tan.philip.nrf_ble.Algorithms;
 
-import android.content.Context;
-
 import java.util.ArrayList;
-
-import tan.philip.nrf_ble.GraphScreen.DigitalDisplay;
 
 import static java.lang.Math.round;
 
@@ -23,7 +19,7 @@ public class ZeroCrossingAlgorithm extends Biometric {
     private float bpm;
     private float delta;
     private int num_beats = 0;
-    private float[] beat_buffer = new float[MA_SIZE];
+    private final float[] beat_buffer = new float[MA_SIZE];
 
 
     public ZeroCrossingAlgorithm(int[] signalIndices, int sampleRate) {

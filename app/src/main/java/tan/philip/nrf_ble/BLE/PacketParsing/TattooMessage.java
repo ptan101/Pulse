@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble.BLE;
+package tan.philip.nrf_ble.BLE.PacketParsing;
 
 import java.io.Serializable;
 

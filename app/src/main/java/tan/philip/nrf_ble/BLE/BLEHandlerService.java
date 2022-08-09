@@ -4,13 +4,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
@@ -20,13 +14,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 import android.os.Messenger;
 import android.os.ParcelUuid;
-import android.os.RemoteException;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -39,24 +32,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
+import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
+import tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice;
+import tan.philip.nrf_ble.BLE.Gatt.GattManager;
+import tan.philip.nrf_ble.Events.NUSPacketRecievedEvent;
+import tan.philip.nrf_ble.Events.PlotDataEvent;
+import tan.philip.nrf_ble.Events.ScanListUpdatedEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStartScanEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStopScanEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.SickbayPush.SickbayPushService;
 
-import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
-import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
+import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
-import static tan.philip.nrf_ble.Constants.TMS_RX_UUID;
-import static tan.philip.nrf_ble.Constants.TMS_TX_UUID;
-import static tan.philip.nrf_ble.Constants.TMS_UUID;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_RX_MESSAGES_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_TX_MESSAGES_IDENTIFIER;
-import static tan.philip.nrf_ble.MessengerIDs.*;
 import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
 public class BLEHandlerService extends Service {
@@ -64,12 +64,14 @@ public class BLEHandlerService extends Service {
     public static final String TAG = "BLEHandlerService";
     private Map<String, BluetoothDevice> mScanResults = new HashMap();
     private static boolean isRunning = false;
-    private BluetoothGatt mBluetoothGatt;
 
     //Messenger to communicate with client threads
-    //final Messenger mMessenger = new Messenger(new ServiceHandler()); // Target we publish for clients to send messages to IncomingHandler.
-    Messenger activityToServiceMessenger;
     ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
+    private final IBinder binder = new LocalBinder();
+
+    //Tattoo Connection Management
+    private GattManager mGattManager;
+    private TattooConnectionManager mConnectionManager;
 
     //Scanning
     private int numDevicesFound = 0;
@@ -81,34 +83,16 @@ public class BLEHandlerService extends Service {
     private Handler scanHandler;
 
     //Connecting
-    private ArrayList<String> bluetoothAddresses = new ArrayList<>();
-    private ArrayList<BluetoothDevice> broadcastingBLEDevices = new ArrayList<>();
-    private String deviceNameToConnect = "";
-    private String deviceAddress = "";
-
-    private boolean mConnecting;
-    private int mConnectingIndex;
-    private boolean mConnected;
-
-    //Characteristics that need subscription to notifications
-    private List<BluetoothGattCharacteristic> charNeedSub = new ArrayList<>();
-
-    //Transceiving
-    private BLEPacketParser bleparser;
-    private String fileName;
-    private boolean mRecording = false;
-
-    //Debug mode
-    public static final String DEBUG_MODE_BT_ID = "Debug Mode";
-    private Handler debugNotificationHandler;
-    private boolean inDebugMode = false;
-    private float debugNotificationFrequency;
-    private int debugModeTime = 0;
+    private final ArrayList<String> bluetoothAddresses = new ArrayList<>();
+    private final ArrayList<BluetoothDevice> broadcastingBLEDevices = new ArrayList<>();
 
     //Communication to SickbayPush
     SickbayPushService mService;
     boolean mIsBound = false;
     boolean pushToSickbay = true;
+
+    //Saving to file
+    private boolean mRecording = false;
 
     NotificationCompat.Builder notificationBuilder;
 
@@ -117,8 +101,9 @@ public class BLEHandlerService extends Service {
     //@Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        activityToServiceMessenger = new Messenger(new ServiceHandler());
-        return activityToServiceMessenger.getBinder();
+        //activityToServiceMessenger = new Messenger(new ServiceHandler());
+        //return activityToServiceMessenger.getBinder();
+        return binder;
     }
 
     //@Override
@@ -128,13 +113,17 @@ public class BLEHandlerService extends Service {
 
     @Override
     public void onCreate() {
+        mGattManager = new GattManager(this);
+        mConnectionManager = new TattooConnectionManager(this, mGattManager);
+
+        //Register on EventBus
+        EventBus.getDefault().register(this);
+
         //Scanning
         setupBLEScanner();
 
         //Connecting
-        mConnecting = false;
-        mConnectingIndex = -1;
-        disconnect();
+        //disconnect();
 
         //Start and bind to the SickbayPushService
         Intent intent = new Intent(this, SickbayPushService.class);
@@ -157,114 +146,35 @@ public class BLEHandlerService extends Service {
 
     @Override
     public void onDestroy() {
+        //Unregister from EventBus
+        EventBus.getDefault().unregister(this);
+        mConnectionManager.unregister();
+
         //Unbind from the SickbayPushService
         unbindService(sickbayPushConnection);
         mIsBound = false;
 
         //Connecting
-        mConnecting = false;
-        mConnectingIndex = -1;
-        disconnect();
+        closeAllConnections();
 
-        if(inDebugMode) {
-            endDebugMode();
-            inDebugMode = false;
-        }
         isRunning = false;
     }
 
-    //////////////////////////////////Messenger///////////////////////////////////////////////////
-    // Handler that receives messages from the thread
-    private final class ServiceHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_REGISTER_CLIENT:
-                    mClients.add(msg.replyTo);
-                    break;
-                case MSG_UNREGISTER_CLIENT:
-                    mClients.remove(msg.replyTo);
-                    break;
-                case MSG_START_SCAN:
-                    startScan();
-                    break;
-                case MSG_STOP_SCAN:
-                    stopScan();
-                    break;
-                case MSG_CLEAR_SCAN:
-                    clearScan();
-                    break;
-                case MSG_REQUEST_SCAN_RESULTS:
-                    Bundle b = new Bundle();
-                    b.putSerializable("btAddresses", bluetoothAddresses);
-                    b.putSerializable("btDevices", broadcastingBLEDevices);
-                    sendMessageToUI(MSG_BT_DEVICES, b);  //Should make this a reply maybe
-                    break;
-                case MSG_CONNECT:
-//                    String address = msg.getData().getString("deviceAddress");
-                    connectDevice(msg.obj.toString());
-
-                    notificationBuilder.setContentTitle("Attempting BLE connection...");
-                    startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
-                    makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
-
-                    break;
-                case MSG_DISCONNECT:
-                    disconnect();
-                    stopForeground(true);
-
-                    if(inDebugMode)
-                        endDebugMode();
-
-                    break;
-                case MSG_CHECK_BT_ENABLED:
-                    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-                        //Request permission to enable BT
-                        sendMessageToUI(MSG_CHECK_PERMISSIONS, null);
-                    }
-                    break;
-                case MSG_START_RECORD:
-                    fileName = msg.obj.toString();
-                    startRecord();
-                    break;
-                case MSG_STOP_RECORD:
-                    stopRecord();
-                    break;
-                case MSG_STOP_FOREGROUND:
-                    stopForeground(true);
-                    break;
-                case MSG_START_DEBUG_MODE:
-                    startDebugMode();
-                    break;
-                case MSG_TMS_MSG_TRANSMIT:
-                    int message = (Integer) msg.obj;
-                    writeCharacteristic(new byte[]{(byte) message}, TMS_UUID, TMS_RX_UUID);
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-        }
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void endForeground(RequestEndBLEForegroundEvent event) {
+        stopForeground(true);
     }
 
-    private void sendMessageToUI(int message_id, Bundle data) {
-        for (int i = mClients.size()-1; i >= 0; i--) {
-            try {
-                Message msg = Message.obtain(null, message_id);
-                if(data != null)
-                    msg.setData(data);
-
-                mClients.get(i).send(msg);
-            }
-            catch (RemoteException e) {
-                // The client is dead. Remove it from the list; we are going through the list from back to front so this is safe to do inside the loop.
-                mClients.remove(i);
-            }
+    public class LocalBinder extends Binder {
+        public BLEHandlerService getService() {
+            // Return this instance of BLEHandlerService so clients can call public methods
+            return BLEHandlerService.this;
         }
     }
 
     ////////////////////////////Connection to SickbayPush Service/////////////////////////////////
 
-    private ServiceConnection sickbayPushConnection = new ServiceConnection() {
+    private final ServiceConnection sickbayPushConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
@@ -279,144 +189,11 @@ public class BLEHandlerService extends Service {
         }
     };
 
-    //////////////////////////////Gatt Callback///////////////////////////////////////////////////
-
-    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            super.onConnectionStateChange(gatt, status, newState);
-
-            if (status == BluetoothGatt.GATT_FAILURE) {
-                Log.i(TAG, "Failed to connect.");
-                mConnected = false;
-                mConnecting = false;
-
-                sendMessageToUI(MSG_GATT_FAILED, null);
-
-                Toast.makeText(BLEHandlerService.this, "Connection failed." , Toast.LENGTH_SHORT).show();
-
-                return;
-            } else if (status != BluetoothGatt.GATT_SUCCESS) {
-                mConnected = false;
-                //broadcastUpdate(intentAction);
-                Log.i(TAG, "Failed to connect.");
-                return;
-            }
-            if (newState == BluetoothProfile.STATE_CONNECTED) {
-                mConnected = true;
-                Log.i(TAG, "Connected to GATT server.");
-                Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGatt.discoverServices());
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                mConnected = false;
-                Log.i(TAG, "Disconnected from GATT server.");
-                mConnected = false;
-                mConnecting = false;
-
-                sendMessageToUI(MSG_GATT_DISCONNECTED, null);
-            }
-        }
-
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            super.onServicesDiscovered(gatt, status);
-            if (status != BluetoothGatt.GATT_SUCCESS) {
-                return;
-            }
-
-            //Initialize NUS Service
-            BluetoothGattService service = gatt.getService(NUS_UUID);
-            //Initialize the TX characteristic in NUS for writing
-            BluetoothGattCharacteristic characteristic = service.getCharacteristic(NUS_TX_UUID);
-            charNeedSub.add(characteristic);
-
-            //Initialize TMS Service
-            service = gatt.getService(TMS_UUID);
-            if (service != null) {
-                //Initialize the TX characteristic in TMS for writing
-                characteristic = service.getCharacteristic(TMS_TX_UUID);
-                charNeedSub.add(characteristic);
-            }
-
-            subscribeToCharacteristics(mBluetoothGatt);
-
-            try {
-                initializeBLEParser();  //To do: initialize based on sensor name or a version characteristic? Right now just sensor name
-                //Toast.makeText(BLEHandlerService.this, "Connection successful!", Toast.LENGTH_SHORT).show();
-            } catch (FileNotFoundException e) {
-                disconnect();
-                sendMessageToUI(MSG_UNRECOGNIZED_NUS_DEVICE, null);
-            }
-        }
-
-        private void subscribeToCharacteristics(BluetoothGatt gatt) {
-            if(charNeedSub.size() == 0) {
-                Log.d("GattCallback", "All notification characteristics subscribed to!");
-                return;
-            }
-
-            BluetoothGattCharacteristic characteristic = charNeedSub.get(0);
-            gatt.setCharacteristicNotification(characteristic, true);
-            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            gatt.writeDescriptor(descriptor);
-
-            charNeedSub.remove(0);
-        }
-
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            super.onCharacteristicChanged(gatt, characteristic);
-
-            byte[] messageBytes = characteristic.getValue();
-
-            //Data is sensor data (from NUS)
-            //Unfortunately switch case does not work with objects
-            if(characteristic.getUuid().equals(NUS_TX_UUID)) {
-                processPacket(messageBytes);
-            } else if (characteristic.getUuid().equals(TMS_TX_UUID)) {
-                Bundle b = new Bundle();
-                b.putSerializable("tmsMessage", bleparser.rxMessages.get(characteristic.getValue()[0]));
-                sendMessageToUI(MSG_TMS_MSG_RECIEVED, b);
-            }
-
-
-
-            //String messageString = Constants.bytesToHex(messageBytes);
-            //Log.d(TAG, "Received message: " + messageString);
-
-
-            //displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
-
-            if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-                Log.w(TAG, "BluetoothAdapter not initialized");
-                return;
-            }
-
-            if(characteristic.getUuid().equals(TMS_TX_UUID)) {
-                Bundle b = new Bundle();
-                b.putSerializable("tmsMessage", bleparser.rxMessages.get(characteristic.getValue()[0]));
-                sendMessageToUI(MSG_TMS_MSG_RECIEVED, b);
-            }
-
-            Log.e(TAG, characteristic.getStringValue(0));
-        }
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            super.onDescriptorWrite(gatt, descriptor, status);
-
-            subscribeToCharacteristics(gatt);
-        }
-    };
-
     //////////////////////////Scanning//////////////////////////////////////////////////
+    public boolean hasBLEPermissions() {
+        return (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled());
+    }
+
     /**
      * Initializes a reference to the local Bluetooth adapter.
      *
@@ -442,7 +219,8 @@ public class BLEHandlerService extends Service {
         return true;
     }
 
-    private void startScan() {
+    @Subscribe(threadMode =  ThreadMode.MAIN)
+    public void startScan(RequestBLEStartScanEvent event) {
         //BLE code
         //Return all broadcasting Bluetooth devices
         List<ScanFilter> filters = new ArrayList<>();
@@ -451,12 +229,6 @@ public class BLEHandlerService extends Service {
                 .setServiceUuid(new ParcelUuid(NUS_UUID))
                 .build();
 
-        filters.add(scanFilter);
-
-        //For some reason, the dongle is not recognized... This is just temp.
-        scanFilter = new ScanFilter.Builder()
-                .setDeviceName("PPG Dongle")
-                .build();
         filters.add(scanFilter);
 
         ScanSettings settings = new ScanSettings.Builder()
@@ -493,12 +265,16 @@ public class BLEHandlerService extends Service {
                     foundDevice();
                     numDevicesFound = mScanResults.size();
                 }
+
+                EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults));
+
                 scanHandler.postDelayed(this, 200);
             }
         }, 200);
     }
 
-    private void stopScan() {
+    @Subscribe(threadMode =  ThreadMode.MAIN)
+    private void stopScan(RequestBLEStopScanEvent event) {
         //valueAnimator.cancel();
         mScanning = false;
 
@@ -519,7 +295,8 @@ public class BLEHandlerService extends Service {
         scanHandler = null;
     }
 
-    private void clearScan() {
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void clearScan(RequestBLEClearScanListEvent event) {
         broadcastingBLEDevices.clear();
         bluetoothAddresses.clear();
         mScanResults.clear();
@@ -547,9 +324,8 @@ public class BLEHandlerService extends Service {
         Bundle b = new Bundle();
         b.putSerializable("btAddresses", bluetoothAddresses);
         b.putSerializable("btDevices", broadcastingBLEDevices);
-        sendMessageToUI(MSG_BT_DEVICES, b);
+        //sendMessageToUI(MSG_BT_DEVICES, b);
     }
-
 
     private class BtleScanCallback extends ScanCallback {
 
@@ -558,7 +334,7 @@ public class BLEHandlerService extends Service {
         List<UUID> descriptorUUIDsList     = new ArrayList<>();
 
 
-        private Map<String, BluetoothDevice> mScanResults;
+        private final Map<String, BluetoothDevice> mScanResults;
 
         BtleScanCallback(Map<String, BluetoothDevice> scanResults) {
             mScanResults = scanResults;
@@ -609,12 +385,15 @@ public class BLEHandlerService extends Service {
 
 
     /////////////////////////Connecting////////////////////////////////////////////////
+    public ArrayList<BLEDevice> getBLEDevices() {
+        return mConnectionManager.getBLEDevices();
+    }
 
-    //Returns the name, or address if name is null
-    private String getBluetoothIdentifier (String deviceAddress) {
-        if(mScanResults.get(deviceAddress).getName() != null)
-            return mScanResults.get(deviceAddress).getName() + " (" + deviceAddress + ")";
-        return "Unknown (" + deviceAddress + ")";
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void connectDevices(RequestBLEConnectEvent event) {
+        ArrayList<String> addresses = event.getAddresses();
+        for (String address : addresses)
+            connectDevice(address);
     }
 
     /**
@@ -627,27 +406,40 @@ public class BLEHandlerService extends Service {
      *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
-    public boolean connectDevice(final String address) {
-        deviceAddress = address;
-        deviceNameToConnect = getBluetoothIdentifier(deviceAddress);
+    private void connectDevice(final String address) {
+        notificationBuilder.setContentTitle("Attempting BLE connection...");
+        startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+        makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+
+        //deviceAddress = address;
+        //deviceNameToConnect = getBluetoothIdentifier(deviceAddress);
 
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
-            return false;
+            return;
         }
 
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-        if (device == null) {
-            Log.w(TAG, "Device not found.  Unable to connect.");
-            return false;
+        try {
+            BLETattooDevice newTattooDevice;
+            if(!address.equals(DEBUG_MODE_ADDRESS)) {
+                final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+                newTattooDevice = new BLETattooDevice(this, device);
+
+                if (device == null) {
+                    Log.w(TAG, "Device not found.  Unable to connect.");
+                    return;
+                }
+            } else {
+                newTattooDevice = new DebugBLEDevice(this, null);
+            }
+
+            mConnectionManager.checkAndConnectToTattoo(newTattooDevice);
+            notificationBuilder.setContentTitle("Paired with " + newTattooDevice.getBluetoothIdentifier());
+            makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+
+        } catch (FileNotFoundException e) {
+            disconnect(address);
         }
-
-        //Autoconnect = True
-        mBluetoothGatt = device.connectGatt(this, true, mGattCallback);
-        Log.d(TAG, "Trying to create a new connection.");
-
-        mConnecting = true;
-        return true;
     }
 
     /**
@@ -656,226 +448,53 @@ public class BLEHandlerService extends Service {
      * {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      * callback.
      */
-
-    public void disconnect() {
-        if(mConnected){
-            //String toast = "Device disconnected";
-            //Toast.makeText(BLEHandlerService.this, toast, Toast.LENGTH_SHORT).show();
-        }
-
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+    public void disconnect(String address) {
+        if (mBluetoothAdapter == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        mBluetoothGatt.disconnect();
 
-        close();
-
-        sendMessageToUI(MSG_GATT_DISCONNECTED, null);
-
-        mConnected = false;
+        mConnectionManager.disconnectTattoo(address);
+        if(mConnectionManager.getBLEDevices().size() == 0)
+            stopForeground(true);
     }
 
-    /**
-     * After using a given BLE device, the app must call this method to ensure resources are
-     * released properly.
-     */
-    public void close() {
-        if (mBluetoothGatt == null) {
-            return;
-        }
-        mBluetoothGatt.close();
-        mBluetoothGatt = null;
+    public void closeAllConnections() {
+        for(BLEDevice d : mConnectionManager.getBLEDevices())
+            disconnect(d.getAddress());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void disconnect(RequestBLEDisconnectEvent event) {
+        closeAllConnections();
     }
 
     public static boolean isRunning() {
         return isRunning;
     }
 
-    /////////////////////////////////////////Transcieving//////////////////////////////////////////
-    /**
-     * Enables or disables notification on a give characteristic.
-     *
-     * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
-     */
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-    }
+    /////////////////////Transcieving/////////////////////////////////////
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void processNUSPacket(NUSPacketRecievedEvent event) {
+        byte[] messageBytes = event.getPacketData();
+        BLETattooDevice tattoo = event.getTattoo();
 
-    public void writeCharacteristic(byte[] txBytes, UUID serviceUUID, UUID characteristicUUID) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
+        if(mRecording)
+            tattoo.saveToFile(messageBytes);
 
-        BluetoothGattService service = mBluetoothGatt.getService(serviceUUID);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(characteristicUUID);
-
-        if(characteristic != null){
-            characteristic.setValue(txBytes);
-        }
-
-        mBluetoothGatt.writeCharacteristic(characteristic);
-
-        this.setCharacteristicNotification(characteristic, true);
-    }
-
-    public void readCharacteristic(UUID serviceUUID, UUID characteristicUUID) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-
-        BluetoothGattService service = mBluetoothGatt.getService(serviceUUID);
-        BluetoothGattCharacteristic characteristic = service.getCharacteristic(characteristicUUID);
-
-        if(characteristic != null) {
-            mBluetoothGatt.readCharacteristic(characteristic);
-        }
-    }
-
-    private void initializeBLEParser() throws FileNotFoundException {
-        bleparser = new BLEPacketParser(this, deviceNameToConnect);
-
-        Bundle b = new Bundle();
-        b.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, bleparser.getSignalSettings());
-        b.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bleparser.getBiometricsSettings());
-        b.putSerializable(EXTRA_RX_MESSAGES_IDENTIFIER, bleparser.getRxMessages());
-        b.putSerializable(EXTRA_TX_MESSAGES_IDENTIFIER, bleparser.getTxMessages());
-        b.putFloat(EXTRA_NOTIF_F_IDENTIFIER, bleparser.notificationFrequency);
-        sendMessageToUI(MSG_SEND_PACKAGE_INFORMATION, b);
-
-        notificationBuilder.setContentTitle("Paired with " + deviceNameToConnect);
-        makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
-
-        sendMessageToUI(MSG_GATT_CONNECTED, null);
-    }
-
-    private void processPacket(byte[] data) {
-        //If save enabled, save raw data to phone memory
-        if(mRecording) {
-            FileWriter.writeBIN(data, fileName);
-        }
-
-        //Sometimes a packet arrives before app can disconnect when BLE device not recognized.
-        if (bleparser == null)
-            return;
-
-        //Convert byte array into arrays of signals
-        ArrayList<ArrayList<Integer>> packaged_data = bleparser.parsePacket(data);
+        HashMap<Integer, ArrayList<Integer>> packaged_data = tattoo.convertPacketToHashMap(messageBytes);
 
         //Send data to SickbayPushService to be sent over web sockets
+        //TO DO: Send the filtered data to Sickbay
         if (pushToSickbay) {
             //Convert to HashMap. Keys are the Sickbay IDs.
-            HashMap<Integer, ArrayList<Integer>> sickbayPush = bleparser.convertToSickbayHashMap(packaged_data);
+            HashMap<Integer, ArrayList<Integer>> sickbayPush = tattoo.convertPacketForSickbayPush(packaged_data);
 
             mService.addToQueue(sickbayPush);
         }
 
-        ///Formatting for plotting
-        //For each signal, filter in the right way
-        ArrayList<float[]> filtered_data = new ArrayList<>();
-        for (int i = 0; i < packaged_data.size(); i ++)
-            filtered_data.add(bleparser.filterSignals(packaged_data.get(i), i));
-
         //Send the data to the UI for display
-        Bundle b = new Bundle();
-        b.putSerializable("btData", filtered_data);
-        sendMessageToUI(MSG_GATT_ACTION_DATA_AVAILABLE, b);
-    }
-
-    private void startRecord() {
-        FileWriter.createFolder(fileName);
-        FileWriter.createFolder(fileName);
-        FileWriter.writeBINHeader(bleparser.signalSettings, bleparser.signalOrder, fileName);
-        mRecording = true;
-    }
-
-    private void stopRecord() {
-        mRecording = false;
-    }
-
-    /////////////////////Debug mode code//////////////////////////////////
-
-    private void startDebugMode() {
-        inDebugMode = true;
-        deviceNameToConnect = DEBUG_MODE_BT_ID;
-
-        try {
-            initializeBLEParser();
-        } catch (FileNotFoundException e) {
-            //debug.init file was not set up.
-        }
-
-        debugNotificationFrequency = bleparser.notificationFrequency;
-
-        debugNotificationHandler = new Handler();
-        debugNotifier.run();
-    }
-
-    private void endDebugMode() {
-        inDebugMode = false;
-        debugNotificationHandler.removeCallbacks(debugNotifier);
-    }
-
-    Runnable debugNotifier = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                byte data[] = new byte[bleparser.packageSizeBytes];
-                int numSamples[] = new int[bleparser.getSignalSettings().size()];
-                int bytesWritten = 0;
-                //Process fake data
-                for (int i: bleparser.getSignalOrder()) {
-                    int new_data;
-                    SignalSetting curSignal = bleparser.getSignalSettings().get(i);
-                    float t = debugModeTime + (float)numSamples[i] / curSignal.fs; //Time in seconds
-                    switch(curSignal.name) {
-                        case "Sine":
-                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * Math.sin(Math.PI * 2 * t));
-                            break;
-                        case "Square":
-                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * Math.signum(Math.sin(Math.PI * 2 * t)));
-                            break;
-                        case "Sawtooth":
-                            new_data = (int) ((1 << (curSignal.bitResolution - 1) - 1) * t) % (1 << (curSignal.bitResolution - 1) - 1);
-                            break;
-                        default:
-                            new_data = 0;
-                            break;
-                    }
-                    for(int j = 0; j < curSignal.bytesPerPoint; j++) {
-                        data[bytesWritten] = (byte) ((new_data >> (j*8)) & 0xFF);
-                        bytesWritten ++;
-                    }
-                    numSamples[i] ++;
-                }
-                debugModeTime += bleparser.notificationFrequency;
-
-                //In the future, if we care about optimization of debug mode, this can be made into
-                //a lookup table as long as one period is fit in the table
-                processPacket(data);
-            } finally {
-                debugNotificationHandler.postDelayed(debugNotifier, (long) (debugNotificationFrequency * 1000));
-            }
-        }
-    };
-
-    //Object that represents a new tattoo connected to the app.
-    private class BLETattooDevice {
-        BluetoothDevice device = null;
-
-        //Whether the device supports TMS or not.
-        boolean hasTMS = false;
-
-        public BLETattooDevice() {
-
-        }
+        EventBus.getDefault().post(new PlotDataEvent(tattoo.getAddress(), tattoo.convertPacketForDisplay(packaged_data)));
     }
 }
 

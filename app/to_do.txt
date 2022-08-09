@@ -1,0 +1,6 @@
+Fully convert messenger to EventBus
+Sometimes there is a bug when the device tries to connect and nothing happens
+
+SickbayPush
+- Let the IP address be setable
+- Turn on/off Sickbay push

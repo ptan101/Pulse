@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble.GraphScreen;
+package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
 import java.io.Serializable;
 

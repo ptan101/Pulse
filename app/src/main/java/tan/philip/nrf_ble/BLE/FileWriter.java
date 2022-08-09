@@ -6,9 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 import android.util.Log;
-import android.widget.Toast;
-
-import androidx.core.app.ActivityCompat;
 
 import com.opencsv.CSVWriter;
 
@@ -16,12 +13,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
+
+import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 
 public class FileWriter {
     private static final String TAG = "FileWriter";
-    private static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private static final String path = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
 
 
     public static boolean isStoragePermissionGranted(Context context) {
@@ -116,7 +114,7 @@ public class FileWriter {
         writeBIN(out, fileName);
     }
 
-    public static void writeBIN(byte data[], String fileName) {
+    public static void writeBIN(byte[] data, String fileName) {
         String filePath = path + File.separator + fileName + File.separator + fileName + ".bin";
         FileOutputStream fileOutputStream = null;
 
@@ -149,7 +147,7 @@ public class FileWriter {
     }
 
     //Writes to a CSV file. Used for event markers.
-    public static void writeCSV(String data[], String fileName) {
+    public static void writeCSV(String[] data, String fileName) {
         Log.d(TAG, "Writing to CSV");
         String filePath = path + File.separator + fileName + File.separator + fileName + ".csv";
         File f = new File(filePath);

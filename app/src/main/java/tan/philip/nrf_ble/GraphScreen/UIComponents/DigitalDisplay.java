@@ -1,6 +1,5 @@
-package tan.philip.nrf_ble.GraphScreen;
+package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
-import android.app.ActionBar;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.View;

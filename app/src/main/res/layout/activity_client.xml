@@ -21,7 +21,7 @@
 
 
             <ImageButton
-                android:id="@+id/imageButton2"
+                android:id="@+id/scan_options_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="15dp"
@@ -146,7 +146,7 @@
                 app:layout_constraintVertical_bias="0.499" />
 
             <Button
-                android:id="@+id/btn_list_devices"
+                android:id="@+id/btn_start_ble_connection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"

@@ -2,9 +2,8 @@ package tan.philip.nrf_ble.Algorithms;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import tan.philip.nrf_ble.GraphScreen.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
 
 public class Biometric implements Serializable {
     public ArrayList<Integer> signalIndices = new ArrayList<>(); //Which signal (from ArrayList of SignalSettings or GraphSettings) to use

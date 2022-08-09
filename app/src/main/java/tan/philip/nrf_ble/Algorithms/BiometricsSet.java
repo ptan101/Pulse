@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class BiometricsSet implements Serializable {
-    private ArrayList<Biometric> biometrics = new ArrayList<>();
+    private final ArrayList<Biometric> biometrics = new ArrayList<>();
 
     /*
     //Things to handle heart rate. Move this to ZeroCrossingAlgorithm.java

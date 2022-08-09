@@ -44,5 +44,6 @@ dependencies {
     implementation ('io.socket:socket.io-client:1.0.1') {
         exclude group: 'org.json', module: 'json'
     }
+    implementation("org.greenrobot:eventbus:3.3.1")
 
 }

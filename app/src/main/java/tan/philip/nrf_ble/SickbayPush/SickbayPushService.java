@@ -27,12 +27,12 @@ public class SickbayPushService extends Service {
     private static final String WEB_SOCKET_URL = "http://192.168.1.97:3000";
     private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
-    private String bedName = "BED012";
+    private final String bedName = "BED012";
 
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
-    private Map<Integer, ArrayList<Integer>> dataQueue = new ConcurrentHashMap<>();
+    private final Map<Integer, ArrayList<Integer>> dataQueue = new ConcurrentHashMap<>();
     private Handler mHandler;
 
     //If we need to deal with IPC, we will need to use a messenger
@@ -82,11 +82,6 @@ public class SickbayPushService extends Service {
 
         //Attempt to send the data
         attemptSend(message);
-
-        //Remove elements that we pushed
-
-
-
     }
 
     /**
@@ -179,15 +174,10 @@ public class SickbayPushService extends Service {
         return obj;
     }
 
-    private String convertSignalToString() {
-        String out = "";
-        return out;
-    }
-
     ///////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////Functions for sockets/////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    private Socket mSocket;
+    private final Socket mSocket;
     {
         try {
             /* Available options for the socket. Needs newer version of SocketIO to run.
@@ -256,7 +246,7 @@ public class SickbayPushService extends Service {
     }
 
     //For listening. Currently we do not expect to receive packets, so it doesn't do anything.
-    private Emitter.Listener onNewMessage = new Emitter.Listener() {
+    private final Emitter.Listener onNewMessage = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             Runnable listenSocket = new Runnable() {
@@ -277,7 +267,7 @@ public class SickbayPushService extends Service {
     };
 
     //Handler for server connection error
-    private Emitter.Listener onConnectError = new Emitter.Listener() {
+    private final Emitter.Listener onConnectError = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             mSocket.connect();
@@ -286,7 +276,7 @@ public class SickbayPushService extends Service {
     };
 
     //Handler for connection event
-    private Emitter.Listener onConnection = new Emitter.Listener() {
+    private final Emitter.Listener onConnection = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
             Log.d(TAG, "Socket connected!");

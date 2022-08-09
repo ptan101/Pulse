@@ -6,16 +6,25 @@ Signals Information
 .graphable
 ..gain: 1
 ..color: 255 0 0 255
+.filter
+..b: 1
+..a: 1
 .sickbayID 1000
 1, Square, 1, 20, 8, signed
 .graphable
 ..gain: 1
 ..color: 0 0 0 255
+.filter
+..b: 1
+..a: 1
 .sickbayID 1001
 2, Sawtooth, 1, 20, 8, signed
 .graphable
 ..gain: 1
 ..color: 150 150 150 255
+.filter
+..b: 1
+..a: 1
 .sickbayID 1002
 end
 Biometric Settings

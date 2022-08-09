@@ -1,12 +1,8 @@
-package tan.philip.nrf_ble.BLE;
+package tan.philip.nrf_ble.BLE.PacketParsing;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 
-import tan.philip.nrf_ble.GraphScreen.Filter;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.Filter;
 
 //Definitely rename this once I have a better idea of what it does lol
 //Should I combine this with GraphSignal?

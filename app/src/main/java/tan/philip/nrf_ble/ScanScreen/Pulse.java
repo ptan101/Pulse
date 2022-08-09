@@ -16,12 +16,12 @@ public class Pulse {
 
     private static float scale;
 
-    private AnimatorSet animatorSet;
-    private ValueAnimator sizeAnimator;
-    private ValueAnimator alphaAnimator;
-    private ImageView imageView;
-    private int position;
-    private Vibrator vibrator;
+    private final AnimatorSet animatorSet;
+    private final ValueAnimator sizeAnimator;
+    private final ValueAnimator alphaAnimator;
+    private final ImageView imageView;
+    private final int position;
+    private final Vibrator vibrator;
 
 
     public Pulse(ImageView image, int position, Vibrator v) {

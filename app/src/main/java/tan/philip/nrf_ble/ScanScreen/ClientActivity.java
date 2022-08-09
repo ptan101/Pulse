@@ -1,19 +1,18 @@
 package tan.philip.nrf_ble.ScanScreen;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.MenuItem;
@@ -23,30 +22,36 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
-import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.FileWriter;
-import tan.philip.nrf_ble.BLE.SignalSetting;
+import tan.philip.nrf_ble.Events.Connecting.BLEIconNumSelectedChangedEvent;
+import tan.philip.nrf_ble.Events.ScanListUpdatedEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStartScanEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStopScanEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.ScanListScreen.ScanResultsActivity;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
 
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_BT_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_NOTIF_F_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_RX_MESSAGES_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_SIGNAL_SETTINGS_IDENTIFIER;
-import static tan.philip.nrf_ble.GraphScreen.GraphActivity.EXTRA_TX_MESSAGES_IDENTIFIER;
-import static tan.philip.nrf_ble.MessengerIDs.*;
+import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     //private ImageButton btnScan;
@@ -56,14 +61,16 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     private static final int REQUEST_PERMISSION_CODE = 2;
     public static final String EXTRA_BT_SCAN_RESULTS = "scan results";
 
-    Messenger mService = null;
+    BLEHandlerService bleHandlerService;
     boolean mIsBound = false;
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
 
     private ActivityClientBinding mBinding;
 
+    private boolean connectButtonVisible = false;
     private boolean mScanning = false;
     private int numDevicesFound = 0;
+    private Map<String, BluetoothDevice> scanResults = new HashMap<>();
+    BLEScanIconManager mIconManager;
 
     //Color scan background
     private final int GREY = 0xFF2C2C2C;
@@ -71,120 +78,50 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 
     ////////////////////Methods for communicating with BLEHandlerService///////////////////////////
 
-    //Handles messages from the BLEHandlerService
-    class IncomingHandler extends Handler {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MSG_BT_DEVICES:
-                    //The service is sending the list of Bluetooth devices
-                    ArrayList<String> bluetoothAddresses = (ArrayList<String>)msg.getData().getSerializable("btAddresses");
-                    int newNumDevices = bluetoothAddresses.size();
-                    if(newNumDevices > numDevicesFound) {
-                        foundDevice(newNumDevices);
-                    }
-                    break;
-                case MSG_CHECK_PERMISSIONS:
-                    requestBluetoothEnable();
-                    FileWriter.isStoragePermissionGranted(ClientActivity.this);
-                    break;
-                case MSG_SEND_PACKAGE_INFORMATION:
-                    startGraphActivity((ArrayList<SignalSetting>) msg.getData().getSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER),
-                            (BiometricsSet) msg.getData().getSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER),
-                            (ArrayList<String>) msg.getData().getSerializable(EXTRA_RX_MESSAGES_IDENTIFIER),
-                            (ArrayList<String>) msg.getData().getSerializable(EXTRA_TX_MESSAGES_IDENTIFIER),
-                            (float) msg.getData().getFloat(EXTRA_NOTIF_F_IDENTIFIER));
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-        }
-    }
 
-    private ServiceConnection mConnection = new ServiceConnection() {
+    private final ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
-            mService = new Messenger(service);
-            try {
-                Message msg = Message.obtain(null, MSG_REGISTER_CLIENT);
-                msg.replyTo = mMessenger;
-                mService.send(msg);
-                sendMessageToService(MSG_CLEAR_SCAN);
-                numDevicesFound = 0;
-            }
-            catch (RemoteException e) {
-                // In this case the service has crashed before we could even do anything with it
-            }
+            EventBus.getDefault().post(new RequestBLEClearScanListEvent());
+            numDevicesFound = 0;
+
+            BLEHandlerService.LocalBinder binder = (BLEHandlerService.LocalBinder) service;
+            bleHandlerService = binder.getService();
+            mIsBound = true;
+            if(!bleHandlerService.hasBLEPermissions())
+                getPermissions();
         }
 
-        public void onServiceDisconnected(ComponentName className) {
-            // This is called when the connection with the service has been unexpectedly disconnected - process crashed.
-            mService = null;
-        }
+        public void onServiceDisconnected(ComponentName className) { mIsBound = false; }
     };
-
-    private void CheckIfServiceIsRunning() {
-        //If the service is running when the activity starts, we want to automatically bind to it.
-        if (BLEHandlerService.isRunning()) {
-            doBindService();
-        }
-    }
-
-    void doBindService() {
-        mIsBound = bindService(new Intent(ClientActivity.this, BLEHandlerService.class), mConnection, Context.BIND_AUTO_CREATE);
-    }
-    void doUnbindService() {
-        if (mIsBound) {
-            // If we have received the service, and hence registered with it, then now is the time to unregister.
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null, MSG_UNREGISTER_CLIENT);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                }
-                catch (RemoteException e) {
-                    // There is nothing special we need to do if the service has crashed.
-                }
-            }
-            // Detach our existing connection.
-            unbindService(mConnection);
-            mIsBound = false;
-        }
-    }
-
-    private void sendMessageToService(int msgID) {
-        if (mIsBound) {
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null, msgID);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                }
-                catch (RemoteException e) {
-                }
-            }
-        }
-    }
-
 
     /////////////////////////////Life cycle functions///////////////////////////////////////////////
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_client);
 
+        //Register to EventBus
+        EventBus.getDefault().register(this);
+
         createNotificationChannel(this);
+
+        //Request permissions
+        requestBluetoothEnable();
+        FileWriter.isStoragePermissionGranted(ClientActivity.this);
 
         //Start the BLEHandlerService
         Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);
         startService(intent);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
         //this.getSupportActionBar().hide();
 
         //Set up background color transition
         setupPulses();
         setupButtons();
-
-
+        mIconManager = new BLEScanIconManager((ConstraintLayout)findViewById(R.id.layout1));
 
         //setupBLE();
 
@@ -196,12 +133,11 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     protected void onStop() {
         super.onStop();
 
-
         //if(mHandler != null)
         //    mHandler.removeCallbacksAndMessages(null);
 
         try {
-            doUnbindService();
+            //doUnbindService();
         }
         catch (Throwable t) {
             Log.e(TAG, "Failed to unbind from the service", t);
@@ -213,9 +149,9 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     @Override
     protected void onStart() {
         super.onStart();
-        doBindService();
+        //doBindService();
 
-        mBinding.btnListDevices.setVisibility(View.GONE);
+        mBinding.btnStartBleConnection.setVisibility(View.GONE);
         mBinding.layout1.getBackground().setAlpha(0);
         //mBinding.layout1.setBackgroundColor(0xFF2c2a3a);
         //mBinding.layout1.setBackgroundColor(GREY);
@@ -236,22 +172,19 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 
         //Clear scan results
         numDevicesFound = 0;
-        sendMessageToService(MSG_CLEAR_SCAN);
-        sendMessageToService(MSG_STOP_FOREGROUND);
-
-
+        EventBus.getDefault().post(new RequestBLEClearScanListEvent());
+        EventBus.getDefault().post(new RequestEndBLEForegroundEvent());
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         stopScan();
-        try {
-            doUnbindService();
-        }
-        catch (Throwable t) {
-            Log.e(TAG, "Failed to unbind from the service", t);
-        }
+        //Unregister from EventBus
+        EventBus.getDefault().unregister(this);
+        mIconManager.deregister();
+
+        unbindService(mConnection);
     }
 
     /////////////////////////////////////UI///////////////////////////////////////////////////////
@@ -267,41 +200,96 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     public boolean onMenuItemClick(MenuItem menuItem) {
         switch(menuItem.getItemId()) {
             case R.id.enterDebugMode:
-                sendMessageToService(MSG_START_DEBUG_MODE);
+                startDebugMode();
                 return true;
             default:
                 return false;
         }
     }
 
-    private void startGraphActivity(ArrayList<SignalSetting> signalSettings, BiometricsSet bioSettings,
-                                    ArrayList<String> rxMessages, ArrayList<String> txMessages, float notif_f) {
+    //TO DO
+    private void startDebugMode() {
+        //Create a DebugMode object (extends BLETattooDevice?) that acts as BLE device
+        connectToDevices(new ArrayList<String> (Arrays.asList(DEBUG_MODE_ADDRESS)));
+    }
+
+    private void connectToDevices(ArrayList<String> addresses) {
+        EventBus.getDefault().post(new RequestBLEConnectEvent(addresses));
+        startGraphActivity();
+    }
+
+    private void startGraphActivity() {
         Log.d(TAG, "Starting Graph Activity");
         Intent intent = new Intent(this, GraphActivity.class);
-        Bundle extras = new Bundle();
-        extras.putSerializable(EXTRA_SIGNAL_SETTINGS_IDENTIFIER, signalSettings);
-        extras.putSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER, bioSettings);
-        extras.putString(EXTRA_BT_IDENTIFIER, "Debug Mode"); //Probably not necessary, graph activity can ask for it from the service
-        extras.putSerializable(EXTRA_RX_MESSAGES_IDENTIFIER, rxMessages);
-        extras.putSerializable(EXTRA_TX_MESSAGES_IDENTIFIER, txMessages);
-        extras.putFloat(EXTRA_NOTIF_F_IDENTIFIER, notif_f);
-        intent.putExtras(extras);
-
         startActivity(intent);
     }
 
-    public void viewScanList(View view) {
-        Intent intent = new Intent(this, ScanResultsActivity.class);
-        //intent.putExtra(EXTRA_BT_SCAN_RESULTS, (HashMap)mScanResults);
-        startActivity(intent);
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateScanList(ScanListUpdatedEvent event) {
+        Map<String, BluetoothDevice> scanList = event.getScanResults();
+
+        for(String address : scanList.keySet()) {
+            //If not already in the local scan results, add it
+            if(!scanResults.containsKey(address)) {
+                scanResults.put(address, scanList.get(address));
+                mIconManager.generateNewIcon(this, scanList.get(address).getName(), address, -25, R.drawable.ic_bluetooth_black_24dp);
+            }
+        }
+    }
+
+    @Subscribe
+    public void updateNumDevicesSelected(BLEIconNumSelectedChangedEvent event) {
+        int numSelected = event.getNumDevicesSelected();
+
+        if (numSelected == 0) {
+            //Fade button out
+            ValueAnimator connectAlpha = ValueAnimator.ofInt(255, 0);
+            connectAlpha.setDuration(1000);
+            connectAlpha.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    mBinding.btnStartBleConnection.getBackground().setAlpha((int) connectAlpha.getAnimatedValue());
+                    mBinding.btnStartBleConnection.setTextColor((mBinding.btnStartBleConnection.getTextColors().withAlpha((int) connectAlpha.getAnimatedValue())));
+                }
+            });
+            connectAlpha.start();
+
+            //When finished fading, make it untouchable
+            connectAlpha.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    mBinding.btnStartBleConnection.setVisibility(View.GONE);
+                }
+            });
+
+            connectButtonVisible = false;
+        } else {
+            if(!connectButtonVisible) {
+                mBinding.btnStartBleConnection.setVisibility(View.VISIBLE);
+                //Fade button in
+                ValueAnimator connectAlpha = ValueAnimator.ofInt(0, 255);
+                connectAlpha.setDuration(1000);
+                connectAlpha.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                        mBinding.btnStartBleConnection.getBackground().setAlpha((int) connectAlpha.getAnimatedValue());
+                        mBinding.btnStartBleConnection.setTextColor((mBinding.btnStartBleConnection.getTextColors().withAlpha((int) connectAlpha.getAnimatedValue())));
+                    }
+                });
+                connectAlpha.start();
+            }
+
+            if (numSelected == 1)
+                mBinding.btnStartBleConnection.setText("Connect (" + numSelected + " device)");
+            else
+                mBinding.btnStartBleConnection.setText("Connect (" + numSelected + " devices)");
+        }
     }
 
     private void startScan() {
         mBinding.layout1.getBackground().setAlpha(0);
 
-        sendMessageToService(MSG_CLEAR_SCAN);
-        numDevicesFound = 0;
-        sendMessageToService(MSG_START_SCAN);
+        EventBus.getDefault().post(new RequestBLEStartScanEvent());
 
         if (!hasPermissions() || mScanning) {
             return;
@@ -317,43 +305,16 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
             currentPulse.restart();
         }
 
-
-
         mScanning = true;
     }
 
     private void stopScan() {
-        sendMessageToService(MSG_STOP_SCAN);
+        EventBus.getDefault().post(new RequestBLEStopScanEvent());
         //valueAnimator.cancel();
         mScanning = false;
         for(Pulse pulse: pulses) {
             pulse.end();
         }
-    }
-
-    private void foundDevice(int newNumDevices) {
-        if(numDevicesFound == 0) {
-            //Animate button
-            mBinding.btnListDevices.setVisibility(View.VISIBLE);
-
-            //Change background color
-            startBackgroundTransition();
-
-
-            ValueAnimator newButton = ValueAnimator.ofInt(0, 255);
-            newButton.setDuration(1000);
-            newButton.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                @Override
-                public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                    mBinding.btnListDevices.getBackground().setAlpha((int) newButton.getAnimatedValue());
-                    mBinding.btnListDevices.setTextColor((mBinding.btnListDevices.getTextColors().withAlpha((int) newButton.getAnimatedValue())));
-                }
-            });
-            newButton.start();
-        }
-
-        numDevicesFound = newNumDevices;
-        mBinding.btnListDevices.setText("List Devices (" + numDevicesFound + ")");
     }
 
     @Override
@@ -369,28 +330,16 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
                 }
                 break;
             default:
-                Toast.makeText(this, "????????", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "????????", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
     private boolean hasPermissions() {
-
-//        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-//            requestBluetoothEnable();
-//            Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Adapter not enabled", Toast.LENGTH_LONG);
-//            toast.show();
-//            return false;
-//
-//        } else
-        sendMessageToService(MSG_CHECK_BT_ENABLED);
-
-//        if (!hasLocationPermissions()) {
-//            requestLocationPermission();
-//            Toast toast = Toast.makeText(getApplicationContext(), "Please enable location permissions", Toast.LENGTH_LONG);
-//            toast.show();
-//            return false;
-//        }
-//        return true;
+        if(bleHandlerService != null && !bleHandlerService.hasBLEPermissions()) {
+            requestBluetoothEnable();
+            return false;
+        }
 
         int write_external_storage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int location_access = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
@@ -402,12 +351,6 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         Log.d(TAG, "Requested user enabled Bluetooth. Try starting the scan again.");
     }
-//    private boolean hasLocationPermissions() {
-//        return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-//    }
-//    private void requestLocationPermission() {
-//        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
-//    }
 
     private void getPermissions() {
         ActivityCompat.requestPermissions(this, new String[]{
@@ -446,7 +389,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     }
 
     private void setupButtons() {
-        mBinding.btnListDevices.setVisibility(View.GONE);
+        mBinding.btnStartBleConnection.setVisibility(View.GONE);
 
         mBinding.btnScan.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -466,11 +409,11 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
             }
         });
 
-        mBinding.btnListDevices.setOnClickListener(new View.OnClickListener() {
+        mBinding.btnStartBleConnection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 stopScan();
-                viewScanList(view);
+                connectToDevices(mIconManager.getSelectedAddresses());
             }
         });
     }

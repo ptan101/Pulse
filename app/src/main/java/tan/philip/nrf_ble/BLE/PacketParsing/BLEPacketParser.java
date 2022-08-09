@@ -1,4 +1,4 @@
-package tan.philip.nrf_ble.BLE;
+package tan.philip.nrf_ble.BLE.PacketParsing;
 
 import android.content.Context;
 import android.util.Log;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import tan.philip.nrf_ble.Algorithms.BiometricsSet;
-import tan.philip.nrf_ble.GraphScreen.Filter;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.Filter;
 
 public class BLEPacketParser {
     private static final String TAG = "BLEPacketParser";
@@ -21,7 +21,7 @@ public class BLEPacketParser {
     //int numSignals;
     float notificationFrequency;
     int packageSizeBytes;                              //Use this to check incoming packages and if the init file is valid
-    ArrayList<SignalSetting> signalSettings;           //Just holds all the information about each signal
+    HashMap<Integer, SignalSetting> signalSettings;           //Just holds all the information about each signal
     ArrayList<Byte> signalOrder;
     ArrayList<TattooMessage> rxMessages;
     ArrayList<TattooMessage> txMessages;
@@ -29,7 +29,7 @@ public class BLEPacketParser {
 
     //Use this to instantiate a new BLEPackageParser object
     public BLEPacketParser(Context context, String deviceName) throws FileNotFoundException {
-        signalSettings = new ArrayList<>();
+        signalSettings = new HashMap<>();
         signalOrder = new ArrayList<>();
         rxMessages = new ArrayList<>();
         rxMessages.add(null);   //Message ID 0 should be an empty message (i.e., no messsage)
@@ -48,10 +48,10 @@ public class BLEPacketParser {
         parseInitFile(initFileName, context);
     }
 
-    public ArrayList<ArrayList<Integer>> parsePacket(byte data[]) {
-        ArrayList<ArrayList<Integer>> parsedData = new ArrayList();
-        for (int i = 0; i < signalSettings.size(); i ++) {
-            parsedData.add(new ArrayList<>());
+    public HashMap<Integer, ArrayList<Integer>> parsePacket(byte[] data) {
+        HashMap<Integer, ArrayList<Integer>> parsedData = new HashMap();
+        for (Integer i : signalSettings.keySet()) {
+            parsedData.put(i, new ArrayList<>());
         }
 
         int i = 0;
@@ -96,10 +96,10 @@ public class BLEPacketParser {
         return parsedData;
     }
 
-    public HashMap<Integer, ArrayList<Integer>> convertToSickbayHashMap(ArrayList<ArrayList<Integer>> signals) {
+    public HashMap<Integer, ArrayList<Integer>> convertToSickbayHashMap(HashMap<Integer, ArrayList<Integer>> signals) {
         HashMap<Integer, ArrayList<Integer>> sickbayQueue = new HashMap<>();
 
-        for (int i = 0; i < signals.size(); i ++) {
+        for (Integer i : signalSettings.keySet()) {
             int sickbayID = signalSettings.get(i).sickbayID;
 
             if(sickbayID >= 0) {
@@ -113,15 +113,18 @@ public class BLEPacketParser {
     //Use this to filter a signal based on the filter in the init file
     //index is the index in the ArrayList that the data was parsed
     //Also converts the ArrayList to a normal array of floats
-    public float[] filterSignals(ArrayList<Integer> raw_data, int index) {
-        float [] filtered_data = new float[raw_data.size()];
+    public ArrayList<Float> filterSignals(ArrayList<Integer> raw_data, int index) {
+        ArrayList<Float> filtered_data = new ArrayList<>(raw_data.size());
+        float prescaler = (float) Math.pow(2, signalSettings.get(index).bitResolution);
 
         for(int i = 0; i < raw_data.size(); i ++) {
-            if(signalSettings.get(index).filter != null)
-                filtered_data[i] = signalSettings.get(index).filter.findNextY((raw_data.get(i)));
-                //filtered_data[i] = raw_data.get(i);
-            else
-                filtered_data[i] = raw_data.get(i);
+            if(signalSettings.get(index).filter != null) {
+                float filteredSample = signalSettings.get(index).filter.findNextY((raw_data.get(i)));
+                filteredSample /= prescaler;
+                filtered_data.add(filteredSample);
+            } else {
+                filtered_data.add((float) raw_data.get(i));
+            }
         }
 
         return filtered_data;
@@ -157,8 +160,8 @@ public class BLEPacketParser {
                             SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
                                     Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
                                     Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
-                            signalSettings.add(cur_setting);
-                        } else if (cur_line.charAt(0) == '.' && !cur_line.substring(0, 2).equals("..")) {
+                            signalSettings.put((int) cur_setting.index, cur_setting);
+                        } else if (cur_line.charAt(0) == '.' && !cur_line.startsWith("..")) {
                             parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1),
                                     cur_line, gatherSubHeadings(lines, i));
                         }
@@ -224,7 +227,7 @@ public class BLEPacketParser {
         }
     }
 
-    public ArrayList<SignalSetting> getSignalSettings() {
+    public HashMap<Integer, SignalSetting> getSignalSettings() {
         return signalSettings;
     }
 
@@ -243,6 +246,12 @@ public class BLEPacketParser {
     public ArrayList<TattooMessage> getTxMessages() {
         return txMessages;
     }
+
+    public float getNotificationFrequency() { return notificationFrequency; }
+
+    public int getPackageSizeBytes() { return packageSizeBytes; }
+
+    public BiometricsSet getBiometrics() { return biometrics; }
 
     ////////////////////////Helper Methods to Parse Init file/////////////////////////////////////
 
@@ -280,7 +289,7 @@ public class BLEPacketParser {
         pLine = pLine.substring(1);
 
         //Look at first word
-        String mainOption[] = pLine.split(" ");
+        String[] mainOption = pLine.split(" ");
 
         switch (mainOption[0]) {
             case "graphable":
@@ -353,7 +362,7 @@ public class BLEPacketParser {
     private ArrayList<String> gatherSubHeadings(ArrayList<String> lines, int curLine) {
         ArrayList<String> out = new ArrayList<String>();
         for(int i = curLine; i < lines.size(); i ++) {
-            if(!lines.get(i).substring(0, 2).equals(".."))
+            if(!lines.get(i).startsWith(".."))
                 break;
 
             out.add(lines.get(i));
@@ -369,7 +378,7 @@ public class BLEPacketParser {
 
             switch (options[0]) {
                 case "color":
-                    int color[] = new int[4];
+                    int[] color = new int[4];
                     String[] color_s = options[1].split(" ");
                     for (int i = 0; i < color_s.length; i++) {
                         color[i] = Integer.parseInt(color_s[i]);

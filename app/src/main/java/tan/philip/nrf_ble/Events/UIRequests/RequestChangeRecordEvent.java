@@ -10,7 +10,7 @@ public class RequestChangeRecordEvent {
         mFilename = filename;
     }
 
-    public boolean getRecord() {
+    public boolean startRecord() {
         return mRecord;
     }
 

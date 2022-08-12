@@ -1,0 +1,79 @@
+Packet Information
+6, 132
+end
+Signals Information
+0, PPG-1, 4, 30, 20, unsigned
+.graphable
+..color: 0 250 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, ECG, 3, 120, 18, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 35
+2, num, 2, 6, 16, unsigned
+3, LIS-X, 2, 6, 14, signed
+4, LIS-Y, 2, 6, 14, signed
+5, LIS-Z, 2, 6, 14, signed
+6, TEMP, 2, 6, 16, signed
+end
+Biometric Settings
+end
+Packet Structure
+2
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+0
+0
+0
+0
+0
+3
+4
+5
+3
+4
+5
+3
+4
+5
+3
+4
+5
+3
+4
+5
+3
+4
+5
+3
+4
+5
+3
+4
+5
+6
+end

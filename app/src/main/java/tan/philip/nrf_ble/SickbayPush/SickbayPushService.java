@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
@@ -53,15 +56,26 @@ public class SickbayPushService extends Service {
         mHandler = new Handler();
         connectSocket();
         startPushingPackets();
+
+        //Register on EventBus
+        EventBus.getDefault().register(this);
     }
 
     @Override
     public void onDestroy() {
         disconnectSocket();
         stopPushingPackets();
+
+        //Unregister from EventBus
+        EventBus.getDefault().unregister(this);
     }
 
     ////////////////////////////////////Queue Functions////////////////////////////////////////////
+
+    @Subscribe
+    public void addToQueueEvent(SickbayQueueEvent event) {
+        addToQueue(event.getData());
+    }
 
     public synchronized void addToQueue(HashMap<Integer, ArrayList<Integer>> dataIn) {
         //Add data to queue

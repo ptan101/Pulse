@@ -45,5 +45,4 @@ dependencies {
         exclude group: 'org.json', module: 'json'
     }
     implementation("org.greenrobot:eventbus:3.3.1")
-
 }

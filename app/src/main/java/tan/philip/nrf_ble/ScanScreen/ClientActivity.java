@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
-import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.Events.Connecting.BLEIconNumSelectedChangedEvent;
 import tan.philip.nrf_ble.Events.ScanListUpdatedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
@@ -41,6 +40,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStartScanEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStopScanEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
+import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.databinding.ActivityClientBinding;
@@ -109,7 +109,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 
         //Request permissions
         requestBluetoothEnable();
-        FileWriter.isStoragePermissionGranted(ClientActivity.this);
+        PulseFile.isStoragePermissionGranted(ClientActivity.this);
 
         //Start the BLEHandlerService
         Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);
@@ -174,6 +174,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         numDevicesFound = 0;
         EventBus.getDefault().post(new RequestBLEClearScanListEvent());
         EventBus.getDefault().post(new RequestEndBLEForegroundEvent());
+        mIconManager.deselectAllIcons();
     }
 
     @Override
@@ -237,13 +238,17 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         }
     }
 
+    ValueAnimator connectAlpha = ValueAnimator.ofInt(255, 0);
+
+
     @Subscribe
     public void updateNumDevicesSelected(BLEIconNumSelectedChangedEvent event) {
         int numSelected = event.getNumDevicesSelected();
 
+        connectAlpha.cancel();
+
         if (numSelected == 0) {
             //Fade button out
-            ValueAnimator connectAlpha = ValueAnimator.ofInt(255, 0);
             connectAlpha.setDuration(1000);
             connectAlpha.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                 @Override

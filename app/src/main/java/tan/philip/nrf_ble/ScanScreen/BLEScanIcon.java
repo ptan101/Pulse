@@ -109,6 +109,15 @@ public class BLEScanIcon extends LinearLayout {
         mAlphaAnimator.setDuration(FADE_IN_TIME_MS);
     }
 
+    public void setSelected(boolean selected) {
+        mSelected = selected;
+
+        if(selected)
+            mHighlight.setVisibility(View.VISIBLE);
+        else
+            mHighlight.setVisibility(View.GONE);
+    }
+
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();

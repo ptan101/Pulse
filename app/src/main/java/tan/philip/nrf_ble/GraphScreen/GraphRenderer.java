@@ -5,8 +5,14 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +21,7 @@ import java.util.Queue;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 
 public class GraphRenderer {
@@ -23,17 +30,26 @@ public class GraphRenderer {
     private boolean firstData = true;
 
     private HashMap<String, HashMap<Integer, GraphSignal>> signals;
-    private boolean isRunning = false;
 
-    public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices) {
+    private final TextView recordTimer;
+    private boolean recording = false;
+    private long startRecordTime;
+
+    public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices, TextView recordTimer) {
         this.signals = new HashMap<>();
+        this.recordTimer = recordTimer;
 
         setupGraphSignals(bleDevices);
         setupRenderer();
+
+        //Register activity on EventBus
+        EventBus.getDefault().register(this);
     }
 
     public void deregister() {
         mRenderHandler.removeCallbacks(renderLoop);
+        //Unregister from EventBus
+        EventBus.getDefault().unregister(this);
     }
 
     public synchronized void queueDataPoints(String address, HashMap<Integer, ArrayList<Float>> newDataPoints) {
@@ -61,6 +77,26 @@ public class GraphRenderer {
                 v.addView(newView);
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void recordStateChanged(RequestChangeRecordEvent event) {
+        if(event.startRecord())
+            startRecord();
+        else
+            stopRecord();
+    }
+
+    public void startRecord() {
+        startRecordTime = System.currentTimeMillis();
+        recordTimer.setVisibility(View.VISIBLE);
+        recordTimer.setText("Record length: " + 0.00 + "s");
+        recording = true;
+    }
+
+    public void stopRecord() {
+        recordTimer.setVisibility(View.INVISIBLE);
+        recording = false;
     }
 
     private void setupGraphSignals(ArrayList<BLEDevice> bleDevices) {
@@ -102,6 +138,17 @@ public class GraphRenderer {
                 dequeueDataPoint(signalsInDevice.get(i));
             }
         }
+
+        if(recording) {
+            int totalSecs = (int) (System.currentTimeMillis() - startRecordTime) / 1000;
+
+            int hours = totalSecs / 3600;
+            int minutes = (totalSecs % 3600) / 60;
+            int seconds = totalSecs % 60;
+
+            recordTimer.setText("Record length: " + String.format("%02d:%02d:%02d", hours, minutes, seconds));
+        }
+
     }
 
     private void dequeueDataPoint(GraphSignal signal) {

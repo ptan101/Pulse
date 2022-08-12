@@ -35,6 +35,13 @@ public class BLEScanIconManager {
         register();
     }
 
+    public void deselectAllIcons() {
+        for (BLEScanIcon icon : icons) {
+            icon.setSelected(false);
+        }
+        selectedAddresses.clear();
+    }
+
     public void register() {
         //Register on EventBus
         EventBus.getDefault().register(this);

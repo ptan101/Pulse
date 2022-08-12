@@ -13,8 +13,10 @@ import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.NUSPacketRecievedEvent;
+import tan.philip.nrf_ble.FileWriting.MarkerFile;
+import tan.philip.nrf_ble.FileWriting.TattooFile;
 
-public class DebugBLEDevice extends BLETattooDevice{
+public class DebugBLEDevice extends BLETattooDevice {
     public static final String DEBUG_MODE_ADDRESS = "00:00:00:00:00:00d";
     public static final String DEBUG_MODE_BT_ID = "Debug Mode";
 
@@ -80,7 +82,7 @@ public class DebugBLEDevice extends BLETattooDevice{
                 }
                 debugModeTime += mBLEParser.getNotificationFrequency();
 
-                EventBus.getDefault().post(new NUSPacketRecievedEvent(DebugBLEDevice.this, data));
+                processNUSPacket(data);
             } finally {
                 debugNotificationHandler.postDelayed(debugNotifier, (long) (mBLEParser.getNotificationFrequency() * 1000));
             }

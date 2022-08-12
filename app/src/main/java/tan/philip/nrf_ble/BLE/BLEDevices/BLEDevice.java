@@ -4,52 +4,87 @@ import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_BT_ID;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.os.Bundle;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
-import tan.philip.nrf_ble.BLE.FileWriter;
 import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
+import tan.philip.nrf_ble.FileWriting.MarkerFile;
+import tan.philip.nrf_ble.FileWriting.TattooFile;
 
 public class BLEDevice {
     protected Context mCtx;
 
     protected BluetoothDevice mBluetoothDevice;
 
-    protected boolean mConnected;
+    protected int instanceId = 0;
     protected String displayName;
 
     protected BLEPacketParser mBLEParser;
 
     protected ArrayList<UUID> mServiceUUIDs;
 
+    protected boolean pushToSickbay = true;
+    protected float recordTime;
+
     //Saving
-    protected String fileName;
     protected boolean mRecording = false;
+    protected TattooFile mFile;
+    // Although the event markers will be the same for each device, the time relative to the actual data points
+    // will not. Can be used for synchronization. Therefore, need separate marker files per device.
+    protected MarkerFile markerFile;
 
     public BLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
         this.mCtx = context;
         this.mBluetoothDevice = bluetoothDevice;
+
         mServiceUUIDs = new ArrayList<>();
         //Temporary solution. Use GattCallback to populate this. TO DO
         mServiceUUIDs.add(NUS_UUID);
 
         if(bluetoothDevice != null)
-            mBLEParser = new BLEPacketParser(mCtx, bluetoothDevice.getName());
+            displayName = bluetoothDevice.getName();
         else
-            mBLEParser = new BLEPacketParser(mCtx, DEBUG_MODE_BT_ID);
+            displayName = DEBUG_MODE_BT_ID;
+        if (displayName == null)
+            displayName = "Unknown";
+
+        mBLEParser = new BLEPacketParser(mCtx, displayName);
+
+        //Register on EventBus
+        //EventBus.getDefault().register(this);
+    }
+
+    public void unregister() {
+        //Unregister from EventBus
+        //EventBus.getDefault().unregister(this);
+    }
+
+    public int getInstanceId() {
+        return instanceId;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setInstanceId(int id) {
+        this.instanceId = id;
     }
 
     //Returns the name, or address if name is null
     public String getBluetoothIdentifier () {
-        if(mBluetoothDevice.getName() != null)
-            return mBluetoothDevice.getName() + " (" + mBluetoothDevice.getAddress() + ")";
-        return "Unknown (" + mBluetoothDevice.getAddress() + ")";
+        return displayName + " (" + mBluetoothDevice.getAddress() + ")";
     }
 
     public String getAddress() {
@@ -69,10 +104,6 @@ public class BLEDevice {
     }
 
     /////////////////////////////////////////Transcieving//////////////////////////////////////////
-    public void saveToFile(byte[] data) {
-        FileWriter.writeBIN(data, fileName);
-    }
-
     public HashMap<Integer, ArrayList<Integer>> convertPacketToHashMap(byte[] data) {
         //Sometimes a packet arrives before app can disconnect when BLE device not recognized.
         if (mBLEParser == null)
@@ -103,15 +134,34 @@ public class BLEDevice {
         return filtered_data;
     }
 
-    private void startRecord() {
-        FileWriter.createFolder(fileName);
-        FileWriter.createFolder(fileName);
-        //FileWriter.writeBINHeader(mBLEParser.getSignalSettings(), mBLEParser.getSignalOrder(), fileName);
+    public void saveToFile(byte[] data) {
+        if(mRecording)
+            mFile.queueWrite(data);
+    }
+
+    public void markEvent(String label) {
+        if(mRecording && markerFile != null)
+            markerFile.queueWrite(new String [] {Float.toString(recordTime), label});
+    }
+
+    //To Do: If multiple devices with the same name connect, have different file names. Right now,
+    // there will be file conflicts.
+    public void startRecord(String fileName) {
+        recordTime = 0;
+        String fileDisplayName = displayName;
+        if(instanceId > 0)
+            fileDisplayName += "_" + instanceId;
+
+        TattooFile.createFolder(fileName);
+        TattooFile.createFolder(fileName + File.separator + fileDisplayName);
+        mFile = new TattooFile(fileName, fileDisplayName, mBLEParser.getSignalSettings(), mBLEParser.getSignalOrder());
+        markerFile = new MarkerFile(fileName, fileDisplayName);
         mRecording = true;
     }
 
-    private void stopRecord() {
+    public void stopRecord() {
         mRecording = false;
     }
+
 }
 

@@ -24,6 +24,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.databinding.DataBindingUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -40,21 +41,28 @@ import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
+import tan.philip.nrf_ble.FileWriting.FileManager;
+import tan.philip.nrf_ble.FileWriting.MarkerFile;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.OptionsMenu;
 import tan.philip.nrf_ble.R;
 import tan.philip.nrf_ble.ScanScreen.ClientActivity;
+import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 
-public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
+public class GraphActivity extends AppCompatActivity {
     private GraphRenderer renderer;
     private BLEHandlerService bleHandlerService;
     private boolean mIsBound = false;
     private HashMap<String, TextView> deviceStates;
+    private OptionsMenu menu;
+    private ActivityGraphBinding mBinding;
+    private FileManager fileManager;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_graph);
-        invalidateOptionsMenu();
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_graph);
 
         //Bind BLEHandlerService
         Intent intent = new Intent(GraphActivity.this, BLEHandlerService.class);
@@ -80,6 +88,7 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
         super.onDestroy();
 
         renderer.deregister();
+        fileManager.deregister();
 
         //Unregister from EventBus
         EventBus.getDefault().unregister(this);
@@ -121,17 +130,21 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
     private void setupGraphs() {
         ArrayList<BLEDevice> bleDevices = bleHandlerService.getBLEDevices();
 
-        renderer = new GraphRenderer(this, bleDevices);
+        renderer = new GraphRenderer(this, bleDevices, mBinding.graphRecordStopwatch);
 
-        LinearLayout layout = findViewById(R.id.graph_space_layout);
+        LinearLayout layout = mBinding.graphSpaceLayout;
         renderer.addGraphContainersToView(layout, this);
+        fileManager = new FileManager(bleDevices);
+
+        menu = new OptionsMenu(this, mBinding.graphOptionsButton, fileManager);
+        invalidateOptionsMenu();
     }
 
     private void setupDeviceStateTexts() {
         deviceStates = new HashMap<>();
         ArrayList<BLEDevice> bleDevices = bleHandlerService.getBLEDevices();
-        ConstraintLayout layout = findViewById(R.id.graphHeader);
-        View lastView = findViewById(R.id.graphHeaderText);
+        ConstraintLayout layout = mBinding.graphHeader;
+        View lastView = mBinding.graphHeaderText;
 
         for (BLEDevice device : bleDevices) {
             TextView text = new TextView(this);
@@ -151,6 +164,13 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
 
             lastView = text;
         }
+
+        //Make the recording timer below the connection texts
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(layout);
+
+        constraintSet.connect(mBinding.graphRecordStopwatch.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, (int) convertDpToPixel(10, this));
+        constraintSet.applyTo(layout);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -177,19 +197,5 @@ public class GraphActivity extends AppCompatActivity implements PopupMenu.OnMenu
             default:
                 break;
         }
-    }
-
-    @Override
-    public boolean onMenuItemClick(MenuItem item) {
-        return false;
-    }
-
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-
-    }
-
-    public void setDeviceConnectionStateText(String connectionText, int deviceIndex) {
-
     }
 }

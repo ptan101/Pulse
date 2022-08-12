@@ -18,7 +18,6 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
@@ -28,7 +27,6 @@ import tan.philip.nrf_ble.BLE.Gatt.GattManager;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattDisconnectOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattSetNotificationOperation;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
-import tan.philip.nrf_ble.Events.NUSPacketRecievedEvent;
 import tan.philip.nrf_ble.Events.TMSPacketRecievedEvent;
 
 public class TattooConnectionManager {
@@ -68,7 +66,7 @@ public class TattooConnectionManager {
                         //Data is sensor data (from NUS)
                         //Unfortunately switch case does not work with objects
                         if(characteristic.getUuid().equals(NUS_TX_UUID)) {
-                            EventBus.getDefault().post(new NUSPacketRecievedEvent((BLETattooDevice) device, messageBytes));
+                            ((BLETattooDevice) device).processNUSPacket(messageBytes);
                         } else if (characteristic.getUuid().equals(TMS_TX_UUID)) {
                             EventBus.getDefault().post(new TMSPacketRecievedEvent(device.getTMSMessage(messageBytes[0])));
                         }
@@ -83,6 +81,14 @@ public class TattooConnectionManager {
         }
 
         Log.i(TAG, "Found Tattoo. Initiating gatt subscribe to " + tattoo);
+
+        //Check if the same tattoo name already exists. If so, assign a different instance id.
+        int instanceId = 0;
+        for(BLEDevice d : mConnectedDevices)
+            if(d.getDisplayName().equals(tattoo.getDisplayName()))
+                instanceId ++;
+
+        tattoo.setInstanceId(instanceId);
         mConnectedDevices.add(tattoo);
 
         new Handler().postDelayed(new Runnable() {
@@ -124,6 +130,7 @@ public class TattooConnectionManager {
     public synchronized void disconnectTattoo(String address) {
         for (BLEDevice d : mConnectedDevices) {
             if (d.getAddress().equals(address)) {
+                d.unregister();
                 mConnectedDevices.remove(d);
                 if(d.getAddress().equals(DEBUG_MODE_ADDRESS)) {
                     DebugBLEDevice dDebug = (DebugBLEDevice)d;
@@ -141,6 +148,9 @@ public class TattooConnectionManager {
     public void unregister() {
         //Unregister from EventBus
         EventBus.getDefault().unregister(this);
+
+        for(BLEDevice d : mConnectedDevices)
+            d.unregister();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

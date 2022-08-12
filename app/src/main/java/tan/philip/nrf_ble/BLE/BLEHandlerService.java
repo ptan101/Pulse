@@ -87,7 +87,7 @@ public class BLEHandlerService extends Service {
     private final ArrayList<BluetoothDevice> broadcastingBLEDevices = new ArrayList<>();
 
     //Communication to SickbayPush
-    SickbayPushService mService;
+    //SickbayPushService mService;
     boolean mIsBound = false;
     boolean pushToSickbay = true;
 
@@ -179,7 +179,7 @@ public class BLEHandlerService extends Service {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             SickbayPushService.LocalBinder binder = (SickbayPushService.LocalBinder) service;
-            mService = binder.getService();
+            //mService = binder.getService();
             mIsBound = true;
         }
 
@@ -423,6 +423,7 @@ public class BLEHandlerService extends Service {
             BLETattooDevice newTattooDevice;
             if(!address.equals(DEBUG_MODE_ADDRESS)) {
                 final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+                Log.w(TAG, device.getName());
                 newTattooDevice = new BLETattooDevice(this, device);
 
                 if (device == null) {
@@ -438,6 +439,7 @@ public class BLEHandlerService extends Service {
             makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
         } catch (FileNotFoundException e) {
+            Log.e("", "Tattoo not recognized");
             disconnect(address);
         }
     }
@@ -474,27 +476,5 @@ public class BLEHandlerService extends Service {
     }
 
     /////////////////////Transcieving/////////////////////////////////////
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void processNUSPacket(NUSPacketRecievedEvent event) {
-        byte[] messageBytes = event.getPacketData();
-        BLETattooDevice tattoo = event.getTattoo();
-
-        if(mRecording)
-            tattoo.saveToFile(messageBytes);
-
-        HashMap<Integer, ArrayList<Integer>> packaged_data = tattoo.convertPacketToHashMap(messageBytes);
-
-        //Send data to SickbayPushService to be sent over web sockets
-        //TO DO: Send the filtered data to Sickbay
-        if (pushToSickbay) {
-            //Convert to HashMap. Keys are the Sickbay IDs.
-            HashMap<Integer, ArrayList<Integer>> sickbayPush = tattoo.convertPacketForSickbayPush(packaged_data);
-
-            mService.addToQueue(sickbayPush);
-        }
-
-        //Send the data to the UI for display
-        EventBus.getDefault().post(new PlotDataEvent(tattoo.getAddress(), tattoo.convertPacketForDisplay(packaged_data)));
-    }
 }
 

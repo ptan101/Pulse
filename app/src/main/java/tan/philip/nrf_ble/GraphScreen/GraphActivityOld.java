@@ -45,7 +45,7 @@
 //import tan.philip.nrf_ble.Algorithms.ZeroCrossingAlgorithm;
 //import tan.philip.nrf_ble.BLE.BLEHandlerService;
 //import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
-//import tan.philip.nrf_ble.BLE.FileWriter;
+//import tan.philip.nrf_ble.FileWriting.FileWriter;
 //import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 //import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 //import tan.philip.nrf_ble.Events.PlotDataEvent;
@@ -58,7 +58,7 @@
 //import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 //import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 //
-//import static tan.philip.nrf_ble.BLE.FileWriter.writeCSV;
+//import static tan.philip.nrf_ble.FileWriting.FileWriter.writeCSV;
 //import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 //
 //import org.greenrobot.eventbus.EventBus;

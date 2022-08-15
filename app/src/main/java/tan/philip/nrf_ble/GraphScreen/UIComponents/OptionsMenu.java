@@ -7,6 +7,7 @@ import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -15,9 +16,14 @@ import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
+import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
+import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestTMSSendEvent;
 import tan.philip.nrf_ble.FileWriting.FileManager;
 import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.R;
@@ -29,10 +35,12 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
     private final Context ctx;
     private String fileName;
     private final FileManager fileManager;
+    private final ArrayList<BLEDevice> devices;
 
-    public OptionsMenu(Context ctx, ImageButton b, FileManager fileManager) {
+    public OptionsMenu(Context ctx, ImageButton b, FileManager fileManager, ArrayList<BLEDevice> devices) {
         this.ctx = ctx;
         this.fileManager = fileManager;
+        this.devices = devices;
 
         b.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,6 +63,23 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
         } else
             recordMenuItem.setTitle("Record");
 
+        //Add submenu items for each BLE Device.
+        int itemId = MENU_MARK_EVENT;
+        for (BLEDevice d : devices) {
+            itemId ++;
+            d.setMenuID(itemId);
+            popup.getMenu().addSubMenu(Menu.NONE, itemId, Menu.NONE, d.getDisplayName());
+            SubMenu subMenu = popup.getMenu().findItem(itemId).getSubMenu();
+
+            for(TattooMessage t : d.getTmsTxMessages()) {
+                if(t != null && !t.isAlternate()) {
+                    itemId++;
+                    t.setMenuID(itemId);
+                    subMenu.add(Menu.NONE, itemId, Menu.NONE, t.getMainMessage());
+                }
+            }
+        }
+
         popup.show();
     }
 
@@ -71,11 +96,46 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
                 markEvent();
                 return true;
             default:
-                //if (menuItem.getItemId() >= MENU_FIRST_TX_MESSAGE) {
-                //    sendTMSMessage(menuItem.getItemId() - MENU_FIRST_TX_MESSAGE);
-                //    return true;
-                //}
-                return false;
+                return checkTXMessageClicked(menuItem.getItemId());
+        }
+    }
+
+    private boolean checkTXMessageClicked(int menuItemId) {
+        for(BLEDevice d : devices) {
+            if(d.getMenuID() > menuItemId)
+                break;
+
+            ArrayList<TattooMessage> messages = d.getTmsTxMessages();
+            for(int i = 0; i < messages.size(); i ++) {
+                TattooMessage t = messages.get(i);
+                if (t != null && t.getMenuId() == menuItemId) {
+                    sendTMSMessage(t, i, d);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void sendTMSMessage(TattooMessage msg, int msgId, BLEDevice device) {
+        if(device.connected()) {
+            EventBus.getDefault().post(new RequestSendTMSEvent(device.getBluetoothDevice(),
+                    new byte[] {(byte) msgId}));
+
+            //TO DO: May need to display the message. Eg.m if the brief or alert dialog needs display.
+            //displayTMSMessage(msg);
+
+            int alternateID = msg.getAlternate();
+            if(alternateID > 0) {
+                //Hide this message from the menu
+                msg.setIsAlternate(true);
+
+                //Set the alternate as visible
+                device.getTmsTxMessages().get(alternateID).setIsAlternate(false);
+            }
+        } else {
+            Toast.makeText(ctx, "Cannot send message (tattoo disconnected)", Toast.LENGTH_SHORT).show();
         }
     }
 

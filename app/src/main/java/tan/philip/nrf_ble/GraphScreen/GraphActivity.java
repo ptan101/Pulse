@@ -38,10 +38,13 @@ import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
+import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
+import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 import tan.philip.nrf_ble.FileWriting.FileManager;
 import tan.philip.nrf_ble.FileWriting.MarkerFile;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
@@ -136,7 +139,7 @@ public class GraphActivity extends AppCompatActivity {
         renderer.addGraphContainersToView(layout, this);
         fileManager = new FileManager(bleDevices);
 
-        menu = new OptionsMenu(this, mBinding.graphOptionsButton, fileManager);
+        menu = new OptionsMenu(this, mBinding.graphOptionsButton, fileManager, bleDevices);
         invalidateOptionsMenu();
     }
 
@@ -196,6 +199,45 @@ public class GraphActivity extends AppCompatActivity {
                 break;
             default:
                 break;
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public synchronized void onTMSReceived(TMSMessageReceivedEvent event) {
+        TattooMessage message = event.getMessage();
+
+        if(message == null)
+            return;
+
+        //If the message should appear as an alert dialog, display.
+        if(message.isAlertDialog())
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("New Message from Tattoo")
+                    .setMessage(message.getMainMessage())
+                    .setPositiveButton("Close", null)
+                    .show();
+
+        //Change the header text if required
+        String brief = message.getBrief();
+        TextView text = deviceStates.get(event.getAddress());
+        String state = text.getText().toString();
+        state = state.substring(0, 1+state.indexOf(")")) + " connected.";
+        if (brief != null)
+            state = state.substring(0, 1+state.indexOf(")")) + brief;
+        text.setText(state);
+        text.setTextColor(Color.GRAY);
+
+        //If an automatic response is required, send the response.
+        if(message.getAutoTXMessage() >= 0) {
+            ArrayList<BLEDevice> bleDevices = bleHandlerService.getBLEDevices();
+            for(BLEDevice d: bleDevices) {
+                if(d.getAddress().equals(event.getAddress())) {
+                    EventBus.getDefault().post(new RequestSendTMSEvent(d.getBluetoothDevice(),
+                            new byte[] {(byte)message.getAutoTXMessage()}));
+
+                }
+            }
         }
     }
 }

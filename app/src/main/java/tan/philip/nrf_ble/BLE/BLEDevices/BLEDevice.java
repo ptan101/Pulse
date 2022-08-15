@@ -43,6 +43,8 @@ public class BLEDevice {
     // Although the event markers will be the same for each device, the time relative to the actual data points
     // will not. Can be used for synchronization. Therefore, need separate marker files per device.
     protected MarkerFile markerFile;
+    protected int menuID;
+    protected boolean mConnected;
 
     public BLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
         this.mCtx = context;
@@ -159,9 +161,32 @@ public class BLEDevice {
         mRecording = true;
     }
 
+    public void setServiceUUIDs(ArrayList<UUID> serviceUUIDs) {
+        this.mServiceUUIDs = serviceUUIDs;
+    }
+
+    public ArrayList<UUID> getServiceUUIDs() {
+        return mServiceUUIDs;
+    }
+
+    public boolean connected() { return mConnected;}
+
+    public void setConnected(boolean connected) {mConnected = connected;}
+
     public void stopRecord() {
         mRecording = false;
     }
 
+    public int getMenuID() {
+        return menuID;
+    }
+
+    public void setMenuID(int menuID) {
+        this.menuID = menuID;
+    }
+
+    public ArrayList<TattooMessage> getTmsTxMessages() {
+        return mBLEParser.getTxMessages();
+    }
 }
 

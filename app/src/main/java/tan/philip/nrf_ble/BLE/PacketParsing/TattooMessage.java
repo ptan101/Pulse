@@ -14,6 +14,8 @@ public class TattooMessage implements Serializable {
     //Can be used for message acknowledgments or to ensure a state (e.g., tattoo shutoff).
     //Set to 0 for no automatic TX
     int idTXMessage = 0;
+    //Each menu item needs a unique id for the touch listener
+    int menuId;
 
     public TattooMessage(String message, boolean alertDialog) {
         this.message = message;
@@ -46,5 +48,13 @@ public class TattooMessage implements Serializable {
 
     public int getAutoTXMessage() {
         return idTXMessage;
+    }
+
+    public int getMenuId() {
+        return menuId;
+    }
+
+    public void setMenuID(int menuId) {
+        this.menuId = menuId;
     }
 }

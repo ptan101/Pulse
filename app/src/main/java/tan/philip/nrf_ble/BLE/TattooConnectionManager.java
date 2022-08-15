@@ -4,7 +4,9 @@ import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRES
 import static tan.philip.nrf_ble.Constants.CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
 import static tan.philip.nrf_ble.Constants.NUS_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_RX_UUID;
 import static tan.philip.nrf_ble.Constants.TMS_TX_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_UUID;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -24,10 +26,12 @@ import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice;
 import tan.philip.nrf_ble.BLE.Gatt.CharacteristicChangeListener;
 import tan.philip.nrf_ble.BLE.Gatt.GattManager;
+import tan.philip.nrf_ble.BLE.Gatt.operations.GattCharacteristicWriteOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattDisconnectOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattSetNotificationOperation;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
 import tan.philip.nrf_ble.Events.TMSPacketRecievedEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 
 public class TattooConnectionManager {
     private static final String TAG = "TattooConnectionManager";
@@ -103,18 +107,6 @@ public class TattooConnectionManager {
                         NUS_TX_UUID,
                         CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
 
-                /*
-                //TO DO: If the tattoo supports Tattoo Messaging Service, subscribe to notifications
-                if (tattoo.getServiceUUIDs().contains(TMS_UUID)) {
-                    mGattManager.queue(new GattSetNotificationOperation(
-                            device,
-                            TMS_UUID,
-                            TMS_TX_UUID,
-                            CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
-                }
-
-                 */
-
                 // Android BLE stack might have issues connecting to
                 // multiple Gatt services right after another.
                 // See: http://stackoverflow.com/questions/21237093/android-4-3-how-to-connect-to-multiple-bluetooth-low-energy-devices
@@ -158,8 +150,11 @@ public class TattooConnectionManager {
         for (BLEDevice device : mConnectedDevices) {
             if (device.getAddress().equals(bundle.mAddress)) {
                 if (bundle.mNewState == BluetoothProfile.STATE_DISCONNECTED || bundle.mNewState == 133) {
+                    device.setConnected(false);
                     //L.i("Disconnected from " + bundle.mAddress + ". Removing from subscribed list.");
                     //mConnectedDevices.remove(device);
+                } else if (bundle.mNewState == BluetoothProfile.STATE_CONNECTED) {
+                    device.setConnected(true);
                 }
             }
         }
@@ -169,13 +164,27 @@ public class TattooConnectionManager {
     public void servicesDiscovered(GATTServicesDiscoveredEvent event) {
         for (BLEDevice device : mConnectedDevices) {
             if (device.getBluetoothDevice().equals(event.getDevice())) {
-               mGattManager.queue(new GattSetNotificationOperation(
-                    event.getDevice(),
-                    NUS_UUID,
-                    NUS_TX_UUID,
-                    CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
+                device.setServiceUUIDs(event.getGATTServiceUUIDs());
+
+                //If the device supports TMS, subscribe to this service.
+                if (event.getGATTServiceUUIDs().contains(TMS_UUID)) {
+                    mGattManager.queue(new GattSetNotificationOperation(
+                            event.getDevice(),
+                            TMS_UUID,
+                            TMS_TX_UUID,
+                            CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
+                }
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void sendByte(RequestSendTMSEvent event) {
+            mGattManager.queue(new GattCharacteristicWriteOperation(
+                    event.getBleDevice(),
+                    TMS_UUID,
+                    TMS_RX_UUID,
+                    event.getMessageId()));
     }
 
     public ArrayList<BLEDevice> getBLEDevices() {

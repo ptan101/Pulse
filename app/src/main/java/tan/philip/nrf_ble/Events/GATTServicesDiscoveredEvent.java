@@ -5,18 +5,22 @@ import android.bluetooth.BluetoothGattService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class GATTServicesDiscoveredEvent {
-    ArrayList<BluetoothGattService> mServices;
-    BluetoothDevice mDevice;
+    private final ArrayList<UUID> mServiceUUIDs;
+    private final BluetoothDevice mDevice;
 
     public GATTServicesDiscoveredEvent(ArrayList<BluetoothGattService> services, BluetoothDevice device) {
-        mServices = services;
+        mServiceUUIDs = new ArrayList<>();
         mDevice = device;
+
+        for(BluetoothGattService s: services)
+            mServiceUUIDs.add(s.getUuid());
     }
 
-    public ArrayList<BluetoothGattService> getGATTServices() {
-        return mServices;
+    public ArrayList<UUID> getGATTServiceUUIDs() {
+        return mServiceUUIDs;
     }
 
     public BluetoothDevice getDevice() {

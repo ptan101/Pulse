@@ -26,6 +26,7 @@ import tan.philip.nrf_ble.BLE.Gatt.operations.GattOperation;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
 
+//Credit to Nordic Puck Manager
 public class GattManager {
     private static final String TAG = "GATTManager";
     private final ConcurrentLinkedQueue<GattOperation> mQueue;
@@ -35,7 +36,7 @@ public class GattManager {
     private final HashMap<UUID, ArrayList<CharacteristicChangeListener>> mCharacteristicChangeListeners;
     private AsyncTask<Void, Void, Void> mCurrentOperationTimeout;
 
-    private Context mCtx;
+    private final Context mCtx;
 
     public GattManager(Context ctx) {
         mQueue = new ConcurrentLinkedQueue<>();

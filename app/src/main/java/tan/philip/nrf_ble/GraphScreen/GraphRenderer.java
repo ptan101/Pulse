@@ -5,7 +5,10 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TableLayout;
 import android.widget.TextView;
+
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -22,24 +25,28 @@ import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 
 public class GraphRenderer {
-    private int mDisplayRateMS = 1000 / 30;
+    private final int mDisplayRateMS = 1000 / 30;
     private Handler mRenderHandler;
     private boolean firstData = true;
 
-    private HashMap<String, HashMap<Integer, GraphSignal>> signals;
+    private final HashMap<String, HashMap<Integer, GraphSignal>> signals;
 
     private final TextView recordTimer;
     private boolean recording = false;
     private long startRecordTime;
+    private final DigitalDisplayManager displayManager;
 
-    public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices, TextView recordTimer) {
+    public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices, TextView recordTimer, ConstraintLayout layout) {
         this.signals = new HashMap<>();
         this.recordTimer = recordTimer;
+        this.displayManager = new DigitalDisplayManager(ctx, layout);
 
-        setupGraphSignals(bleDevices);
+        setupGraphSignals(bleDevices, ctx);
         setupRenderer();
 
         //Register activity on EventBus
@@ -73,8 +80,11 @@ public class GraphRenderer {
             HashMap<Integer, GraphSignal> signalsInDevice = signals.get(s);
 
             for(Integer i : signalsInDevice.keySet()) {
-                GraphContainer newView = signalsInDevice.get(i).setupGraph(ctx, 0 , 10);
-                v.addView(newView);
+                GraphSignal signal = signalsInDevice.get(i);
+                if (signal.isGraphable()) {
+                    GraphContainer newView = signal.setupGraph(ctx, 10);
+                    v.addView(newView);
+                }
             }
         }
     }
@@ -99,21 +109,33 @@ public class GraphRenderer {
         recording = false;
     }
 
-    private void setupGraphSignals(ArrayList<BLEDevice> bleDevices) {
+    private void setupGraphSignals(ArrayList<BLEDevice> bleDevices, Context ctx) {
         for(BLEDevice bleDevice : bleDevices) {
             if(bleDevice instanceof BLETattooDevice) {
                 HashMap<Integer, GraphSignal> signalsInDevice = new HashMap<>();
 
+                //Create  GraphSignals for all plottable signals
                 for(Integer i : bleDevice.getSignalSettings().keySet()) {
                     SignalSetting setting = bleDevice.getSignalSettings().get(i);
-                    if (setting.graphable) {
-                        signalsInDevice.put((int) setting.index, new GraphSignal(setting));
+                    GraphSignal newSignal = new GraphSignal(setting);
+
+                    if (setting.graphable)
+                        signalsInDevice.put((int) setting.index, newSignal);
+                    if (newSignal.useDigitalDisplay()) {
+                        signalsInDevice.put((int) setting.index, newSignal);
+                        DigitalDisplay display = new DigitalDisplay(ctx, newSignal.getName(), "temperature");
+                        displayManager.addToDigitalDisplay(display);
+                        newSignal.setDigitalDisplay(display);
                     }
+
                 }
 
                 signals.put(bleDevice.getAddress(), signalsInDevice);
+
+
             }
         }
+        //displayManager.finishDigitalDisplays();
     }
 
     private void setupRenderer() {
@@ -121,7 +143,7 @@ public class GraphRenderer {
         mRenderHandler.postDelayed(renderLoop, mDisplayRateMS);
     }
 
-    private Runnable renderLoop = new Runnable() {
+    private final Runnable renderLoop = new Runnable() {
         @Override
         public void run() {
             updateDisplay();
@@ -156,7 +178,7 @@ public class GraphRenderer {
         long curTime = System.currentTimeMillis();
 
         //Points to render [n] = Time between renders [s] x samples per time [n/s]
-        int numPointsToRender = (int)((curTime - signal.getLastUpdateTime()) * signal.fs / 1000);
+        int numPointsToRender = (int)((curTime - signal.getLastUpdateTime()) * signal.getFs() / 1000);
         /*
         Log.d("dt", (curTime - signal.getLastUpdateTime()) + "");
         Log.d("npr", numPointsToRender + "\n");

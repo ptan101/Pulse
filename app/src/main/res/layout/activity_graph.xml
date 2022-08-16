@@ -53,14 +53,25 @@
                 app:layout_constraintTop_toBottomOf="@+id/graphHeaderText" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/graph_digitaldisplay_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <ScrollView
             android:id="@+id/graphScrollView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:background="#FFFFFF"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/graphHeader">
+            app:layout_constraintTop_toBottomOf="@+id/graphHeader"
+            app:layout_constraintBottom_toTopOf="@id/graph_digitaldisplay_layout">
 
             <LinearLayout
                 android:id="@+id/graph_space_layout"
@@ -69,5 +80,6 @@
                 android:orientation="vertical"
                 android:padding="10dp"></LinearLayout>
         </ScrollView>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

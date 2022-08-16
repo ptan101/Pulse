@@ -34,10 +34,11 @@ import tan.philip.nrf_ble.Events.TMSPacketRecievedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 
 public class TattooConnectionManager {
+    //Credit to Nordic Puck Manager
     private static final String TAG = "TattooConnectionManager";
 
     private final Context mCtx;
-    private ArrayList<BLEDevice> mConnectedDevices;
+    private final ArrayList<BLEDevice> mConnectedDevices;
 
     GattManager mGattManager;
 
@@ -165,6 +166,12 @@ public class TattooConnectionManager {
         for (BLEDevice device : mConnectedDevices) {
             if (device.getBluetoothDevice().equals(event.getDevice())) {
                 device.setServiceUUIDs(event.getGATTServiceUUIDs());
+
+                mGattManager.queue(new GattSetNotificationOperation(
+                        event.getDevice(),
+                        NUS_UUID,
+                        NUS_TX_UUID,
+                        CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
 
                 //If the device supports TMS, subscribe to this service.
                 if (event.getGATTServiceUUIDs().contains(TMS_UUID)) {

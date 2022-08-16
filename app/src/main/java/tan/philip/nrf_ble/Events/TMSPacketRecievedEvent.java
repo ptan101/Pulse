@@ -3,7 +3,7 @@ package tan.philip.nrf_ble.Events;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 
 public class TMSPacketRecievedEvent {
-    private TattooMessage mMsg;
+    private final TattooMessage mMsg;
 
     public TMSPacketRecievedEvent(TattooMessage msg) {
         mMsg = msg;

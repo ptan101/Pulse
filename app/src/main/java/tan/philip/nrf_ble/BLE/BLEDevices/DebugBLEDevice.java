@@ -21,8 +21,8 @@ public class DebugBLEDevice extends BLETattooDevice {
     public static final String DEBUG_MODE_BT_ID = "Debug Mode";
 
     private int debugModeTime;
-    private Handler debugNotificationHandler;
-    private Handler debugConnectionHandler;
+    private final Handler debugNotificationHandler;
+    private final Handler debugConnectionHandler;
 
 
     public DebugBLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
@@ -52,8 +52,8 @@ public class DebugBLEDevice extends BLETattooDevice {
         @Override
         public void run() {
             try {
-                byte data[] = new byte[mBLEParser.getPackageSizeBytes()];
-                int numSamples[] = new int[mBLEParser.getSignalSettings().size()];
+                byte[] data = new byte[mBLEParser.getPackageSizeBytes()];
+                int[] numSamples = new int[mBLEParser.getSignalSettings().size()];
                 int bytesWritten = 0;
                 //Process fake data
                 for (int i: mBLEParser.getSignalOrder()) {

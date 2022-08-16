@@ -1,9 +1,9 @@
 package tan.philip.nrf_ble.Events.UIRequests;
 
 public class RequestChangeRecordEvent {
-    private boolean mRecord;
+    private final boolean mRecord;
 
-    private String mFilename;
+    private final String mFilename;
 
     public RequestChangeRecordEvent(boolean record, String filename) {
         mRecord = record;

@@ -18,7 +18,7 @@ import tan.philip.nrf_ble.FileWriting.TattooFile;
 import tan.philip.nrf_ble.GraphScreen.GraphSignal;
 
 public class BLETattooDevice extends BLEDevice {
-    private ArrayList<GraphSignal> graphSignals;
+    private final ArrayList<GraphSignal> graphSignals;
 
     public BLETattooDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
         super(context, bluetoothDevice);

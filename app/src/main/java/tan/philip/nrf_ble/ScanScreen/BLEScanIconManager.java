@@ -1,6 +1,11 @@
 package tan.philip.nrf_ble.ScanScreen;
 
+import static tan.philip.nrf_ble.Constants.convertDpToPixel;
+import static tan.philip.nrf_ble.Constants.convertPixelsToDp;
+
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.Log;
 import android.view.View;
@@ -21,16 +26,18 @@ import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.R;
 
 public class BLEScanIconManager {
-    Random rand;
-    ArrayList<BLEScanIcon> icons;
-    ArrayList<String> selectedAddresses;
-    ConstraintLayout mLayout;
+    private static final float DEGREES_BETWEEN_DEVICES = 45;
+    private static final float RADIUS_FROM_CENTER = 125; //DPI
+    private final ArrayList<BLEScanIcon> icons; //Should make this a hashmap honestly
+    private final ArrayList<String> selectedAddresses;
+    private final ConstraintLayout mLayout;
+    private final Context context;
 
-    public BLEScanIconManager(ConstraintLayout layout) {
-        rand = new Random();
+    public BLEScanIconManager(ConstraintLayout layout, Context ctx) {
         icons = new ArrayList<>();
         selectedAddresses = new ArrayList<>();
         mLayout = layout;
+        this.context = ctx;
 
         register();
     }
@@ -40,6 +47,16 @@ public class BLEScanIconManager {
             icon.setSelected(false);
         }
         selectedAddresses.clear();
+    }
+
+    public void clearAllIcons() {
+        for(BLEScanIcon icon : icons) {
+            icon.fadeOut();
+            icons.remove(icon);
+            mLayout.removeView(icon);
+            selectedAddresses.remove(icon.getAddress());
+        }
+        EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
     }
 
     public void register() {
@@ -54,8 +71,10 @@ public class BLEScanIconManager {
 
     public void generateNewIcon(Context ctx, String name, String address, int rssi, int imageResource) {
         BLEScanIcon newIcon = new BLEScanIcon(ctx, name, address, rssi, imageResource);
-        newIcon.setVisibility(View.GONE);
+        newIcon.setVisibility(View.INVISIBLE);
         mLayout.addView(newIcon);
+
+        //setIconLocation(newIcon);
 
         //This is super goofy but basically the view needs to be drawn before we can get the dimensions.
         //After this runnable, the view is fully drawn.
@@ -69,6 +88,15 @@ public class BLEScanIconManager {
         });
     }
 
+    public void updateRSSI(String address, int rssi) {
+        for(BLEScanIcon icon : icons) {
+            if(icon.getAddress().equals(address)) {
+                icon.setRSSI(rssi);
+                return;
+            }
+        }
+    }
+
     public void removeIcon(String address) {
         for(BLEScanIcon icon : icons) {
             if(icon.getAddress().equals(address)) {
@@ -76,6 +104,7 @@ public class BLEScanIconManager {
                 icons.remove(icon);
                 mLayout.removeView(icon);
                 selectedAddresses.remove(icon.getAddress());
+                EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
                 return;
             }
         }
@@ -96,27 +125,17 @@ public class BLEScanIconManager {
     }
 
     private void setIconLocation(BLEScanIcon newIcon) {
-        int xpos;
-        int ypos;
-        int width = newIcon.getWidth();
-        int height = newIcon.getHeight();
+        double degrees = Math.toRadians(180 - DEGREES_BETWEEN_DEVICES * icons.size());
+        int xcenter = mLayout.getResources().getDisplayMetrics().widthPixels / 2;
+        int ycenter = mLayout.getResources().getDisplayMetrics().heightPixels / 2;
+        float radius = RADIUS_FROM_CENTER;
+        if(icons.size() % 2 == 1)
+            radius *= 1.5;
 
-        //Temporary solution. Find out why incorrect width and height are still being produced.
-        if (width == 0)
-            width = 100;
-        if (height == 0)
-            height = 100;
+        int xpos = (int) (Math.cos(degrees) * convertDpToPixel(radius, context) + xcenter - newIcon.getWidth()/2);
+        int ypos = (int) (-Math.sin(degrees) * convertDpToPixel(radius, context) + ycenter - newIcon.getHeight()/2);
 
-
-        int numTries = 1; //To Do: if too many failed attempts, do something
-
-        //Pretty inefficient with many icons but it's fine with just a few.
-        do {
-            xpos = 0;//rand.nextInt(mLayout.getResources().getDisplayMetrics().widthPixels - width);
-            ypos = 0;//rand.nextInt(mLayout.getResources().getDisplayMetrics().heightPixels - 2 * height) + height;
-
-            numTries ++;
-        } while (checkAllOverlaps(xpos, ypos, newIcon));
+        Log.d("", "width " + newIcon.getWidth() + " height " + newIcon.getHeight());
 
         newIcon.setX(xpos);
         newIcon.setY(ypos);
@@ -124,31 +143,5 @@ public class BLEScanIconManager {
         icons.add(newIcon);
         newIcon.setVisibility(View.VISIBLE);
         newIcon.fadeIn();
-    }
-
-    private boolean checkAllOverlaps(int xpos, int ypos, BLEScanIcon icon1) {
-        boolean hasOverlap;
-        for (BLEScanIcon icon2 : icons) {
-            hasOverlap = checkOverlap(xpos, ypos, icon1, icon2);
-
-            if(hasOverlap)
-                return true;
-        }
-
-        return checkOverlap(xpos, ypos, icon1, mLayout.getViewById(R.id.btn_Scan));
-    }
-
-    private boolean checkOverlap(int xpos, int ypos, BLEScanIcon icon1, View icon2) {
-        int[] firstPosition = {xpos, ypos};
-        int[] secondPosition = {(int)icon2.getX(), (int)icon2.getY()};
-
-        // Rect constructor parameters: left, top, right, bottom
-        Rect rectFirstView = new Rect(firstPosition[0], firstPosition[1],
-                firstPosition[0] + icon1.getWidth(), firstPosition[1] + icon1.getHeight());
-        Rect rectSecondView = new Rect(secondPosition[0], secondPosition[1],
-                secondPosition[0] + icon2.getWidth(), secondPosition[1] + icon2.getHeight());
-
-
-        return rectFirstView.intersect(rectSecondView);
     }
 }

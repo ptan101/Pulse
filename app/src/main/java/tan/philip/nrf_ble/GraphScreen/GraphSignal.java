@@ -21,33 +21,24 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 
 public class  GraphSignal {
-    int fs;
-    int sample_period;
-    float offset;
-    int num_points = 0;
-    String name;
-    int bitResolution;
 
-    //For graphable
-    boolean graphable = false;
-    GraphContainer graphContainer;
+    private final SignalSetting settings;
+    private GraphContainer graphContainer;
     //LineGraphSeries<DataPoint> interactive_series;
-    LineGraphSeries<DataPoint> monitor_series;
+    private LineGraphSeries<DataPoint> monitor_series;
     private PointsGraphSeries<DataPoint> monitor_mask;
     private final DataPoint[] mask = new DataPoint[1];
-    DataPoint[] monitor_buffer;
-    int[] color;
+    private DataPoint[] monitor_buffer;
+    private int numPoints;
 
     //For Digital Display
-    boolean useDigitalDisplay = false;          //Probably could remove this and just check if DD is null
-    DigitalDisplay digitalDisplay = null;
-    DecimalFormat decimalFormat = new DecimalFormat("###.#");   //Default format in case user doesn't define one
-    String conversion = "x";                                            //Default conversion (output exactly what is given)
-    String prefix = "";
-    String suffix = "";
+    private DigitalDisplay digitalDisplay;
+    private DecimalFormat decimalFormat = new DecimalFormat("###.#");   //Default format in case user doesn't define one
+    private final float samplePeriod;
 
     //For rendering
     ConcurrentLinkedQueue<Float> renderQueue;
@@ -55,25 +46,20 @@ public class  GraphSignal {
     long lastUpdateTime = 0;
 
     public GraphSignal(SignalSetting settings) {
-        this.fs = settings.fs;
-        this.name = settings.name;
+        this.settings = settings;
 
-        this.graphable = settings.graphable;
-        this.useDigitalDisplay = settings.digitalDisplay;
-        this.bitResolution = settings.bitResolution;
+        if(settings.decimalFormat != null)
+            this.decimalFormat = new DecimalFormat(settings.decimalFormat);
 
-        this.color = settings.color;
-        sample_period = 1000 /  fs;
+        samplePeriod = 1000 /  settings.fs;
 
         this.renderQueue = new ConcurrentLinkedQueue<>();
     }
 
-    public GraphContainer setupGraph(Context ctx, float offset, int monitor_length) {
-        this.offset = offset;
-
+    public GraphContainer setupGraph(Context ctx, int monitor_length) {
         //interactive_series = new LineGraphSeries<>();
         monitor_series = new LineGraphSeries<>();
-        monitor_buffer = new DataPoint[fs * monitor_length];
+        monitor_buffer = new DataPoint[settings.fs * monitor_length];
         monitor_mask = new PointsGraphSeries<>();
         setMaskSettings(android.R.color.background_light);
 
@@ -87,16 +73,16 @@ public class  GraphSignal {
     }
 
     public void resetSeries() {
-        if(graphable) {
+        if(settings.graphable) {
             //interactive_series = new LineGraphSeries<>();
             monitor_series = new LineGraphSeries<>();
 
 
             for (int i = 0; i < monitor_buffer.length; i++) {
-                monitor_buffer[i] = new DataPoint(i * (float) sample_period / 1000f, offset);
+                monitor_buffer[i] = new DataPoint(i * samplePeriod / 1000f, 0);
             }
             monitor_series.resetData(monitor_buffer);
-            setColor(color);
+            setColor(settings.color);
         }
     }
 
@@ -106,15 +92,15 @@ public class  GraphSignal {
      * @return The x value where it was plotted
      */
     public float addDataToMonitorBuffer(float[] data) {
-        int cur_index = num_points % monitor_buffer.length;
-        float display_t = ((float) (cur_index * sample_period)) / 1000f;
+        int cur_index = numPoints % monitor_buffer.length;
+        float display_t = ((float) (cur_index * samplePeriod)) / 1000f;
 
         for(int i = 0; i < data.length; i++) {
-            cur_index = num_points % monitor_buffer.length;
-            display_t = ((float) (cur_index * sample_period)) / 1000f;
+            cur_index = numPoints % monitor_buffer.length;
+            display_t = ((float) (cur_index * samplePeriod)) / 1000f;
 
             monitor_buffer[cur_index] = new DataPoint(display_t, data[i]);
-            num_points++;
+            numPoints++;
         }
 
         monitor_series.resetData(monitor_buffer);
@@ -124,7 +110,7 @@ public class  GraphSignal {
         monitor_mask.resetData(mask);
 
 
-        return (float) (cur_index * sample_period) / 1000f;
+        return (float) (cur_index * samplePeriod) / 1000f;
     }
 
     public synchronized void queueDataPoints(ArrayList<Float> newDataPoints, long curTime) {
@@ -138,9 +124,15 @@ public class  GraphSignal {
         for (int i = 0; i < numPointsToRender; i ++)
             newData[i] = renderQueue.poll();
 
-        addDataToMonitorBuffer(newData);
-        //monitor_series.appendData(new DataPoint(time, renderQueue.poll()), true, 1000);
-        lastUpdateTime = time;
+        if(settings.graphable) {
+            addDataToMonitorBuffer(newData);
+            //monitor_series.appendData(new DataPoint(time, renderQueue.poll()), true, 1000);
+            lastUpdateTime = time;
+        }
+
+        //Display on the Digital Display, if necessary
+        if(settings.digitalDisplay)
+            this.setDigitalDisplayText(newData[newData.length - 1]);
     }
 
     public synchronized void setLastUpdateTime(long curTime) {
@@ -148,70 +140,34 @@ public class  GraphSignal {
     }
 
     public void setColor(int[] color) {
-        this.color = color;
+        settings.color = color;
         //setSeriesPaint(color[3], color[0], color[1], color[2], 5, interactive_series);
         setSeriesPaint(color[3], color[0], color[1], color[2], 5, monitor_series);
     }
 
     public int getColorARGB() {
-        return Color.argb(color[3], color[0], color[1], color[2]);
+        return Color.argb(settings.color[3], settings.color[0], settings.color[1], settings.color[2]);
     }
 
     public boolean graphable() {
-        return graphable;
+        return settings.graphable;
     }
 
     public void startMonitorView() {
         monitor_series.resetData(monitor_buffer);
     }
 
-    //Depending on if it is a graphable or digitial display, add the right UI
-    public void setupDisplay(Context context) {
-        //If graphable, set up legends
-        if(this.graphable) {
-            //Add a new TextView to the legend with the signal name
-            ConstraintSet set = new ConstraintSet();
-            TextView signal_name = new TextView(context);
-            signal_name.setText(this.name);
-            signal_name.setTextColor(this.getColorARGB());
-            signal_name.setId(View.generateViewId());
-
-            /*
-            mBinding.graphLegendCL.addView(signal_name);
-
-            set.clone(mBinding.graphLegendCL);
-            if(legend.size() == 0) {
-                set.connect(signal_name.getId(), ConstraintSet.TOP, mBinding.graphLegendCL.getId(), ConstraintSet.TOP, 20);
-            } else {
-                set.connect(signal_name.getId(), ConstraintSet.TOP, legend.get(legend.size() - 1).getId(), ConstraintSet.BOTTOM, 0);
-            }
-            set.connect(signal_name.getId(), ConstraintSet.END, mBinding.graphLegendCL.getId(), ConstraintSet.END, 60);
-            set.applyTo(mBinding.graphLegendCL);
-            legend.add(signal_name);
-
-             */
-        }
-
-        //If digital display, set up digital display
-        //Try making constraint layout for each
-        if(this.useDigitalDisplay) {
-            //Add a new TextView to the legend with the signal name
-            //digitalDisplay = new DigitalDisplay(context, this.name, "temperature");
-            //DigitalDisplay.addToDigitalDisplay(digitalDisplay, mBinding.digitalDisplayLeft, mBinding.digitalDisplayCenter, mBinding.digitalDisplayRight, digitalDisplays);
-        }
-    }
-
     public void setDigitalDisplayText(Float data) {
         //Convert the signal packet into the desired format
 
         //First, replace 'x' in the string with actual data
-        String func = conversion.replace("x", Float.toString(data));
+        String func = settings.conversion.replace("x", Float.toString(data));
 
         //Now, evaluate the function
-        Double evaluation = DigitalDisplay.eval(func);
+        Double evaluation = DigitalDisplayManager.eval(func);
 
         //Format text and display
-        this.digitalDisplay.label.setText(Html.fromHtml(prefix + decimalFormat.format(evaluation) + suffix));
+        this.digitalDisplay.label.setText(Html.fromHtml(settings.prefix + decimalFormat.format(evaluation) + settings.suffix));
     }
 
     private void setSeriesPaint(int a, int r, int g, int b, int strokeWidth, LineGraphSeries<DataPoint> series) {
@@ -237,31 +193,31 @@ public class  GraphSignal {
     /////////////////////////////////////////////Getters///////////////////////////////////////////
 
     public int getFs() {
-        return fs;
+        return settings.fs;
     }
 
-    public int getSample_period() {
-        return sample_period;
-    }
-
-    public float getOffset() {
-        return offset;
+    public float getSample_period() {
+        return samplePeriod;
     }
 
     public int getNum_points() {
-        return num_points;
+        return numPoints;
     }
 
     public String getName() {
-        return name;
+        return settings.name;
     }
 
     public int getBitResolution() {
-        return bitResolution;
+        return settings.bitResolution;
     }
 
     public boolean isGraphable() {
-        return graphable;
+        return settings.graphable;
+    }
+
+    public boolean useDigitalDisplay() {
+        return settings.digitalDisplay;
     }
 
     public GraphContainer getGraphContainer() {
@@ -277,7 +233,7 @@ public class  GraphSignal {
     }
 
     public int[] getColor() {
-        return color;
+        return settings.color;
     }
 
     public long getLastUpdateTime() {
@@ -288,5 +244,15 @@ public class  GraphSignal {
 
     public int getNumPointsLastEnqueued() {
         return numPointsLastEnqueued;
+    }
+
+    public DigitalDisplay getDigitalDisplay() {
+        return digitalDisplay;
+    }
+
+    ///////////////////////////////////////Setters/////////////////////////////////////////////////
+
+    public void setDigitalDisplay(DigitalDisplay digitalDisplay) {
+        this.digitalDisplay = digitalDisplay;
     }
 }

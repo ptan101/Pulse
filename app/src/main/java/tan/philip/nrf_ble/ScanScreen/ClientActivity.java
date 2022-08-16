@@ -69,7 +69,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     private boolean connectButtonVisible = false;
     private boolean mScanning = false;
     private int numDevicesFound = 0;
-    private Map<String, BluetoothDevice> scanResults = new HashMap<>();
+    private final Map<String, BluetoothDevice> scanResults = new HashMap<>();
     BLEScanIconManager mIconManager;
 
     //Color scan background
@@ -121,7 +121,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         //Set up background color transition
         setupPulses();
         setupButtons();
-        mIconManager = new BLEScanIconManager((ConstraintLayout)findViewById(R.id.layout1));
+        mIconManager = new BLEScanIconManager((ConstraintLayout)findViewById(R.id.layout1), this);
 
         //setupBLE();
 
@@ -203,6 +203,9 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
             case R.id.enterDebugMode:
                 startDebugMode();
                 return true;
+            case R.id.clearScan:
+                clearScan();
+                return true;
             default:
                 return false;
         }
@@ -212,6 +215,12 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     private void startDebugMode() {
         //Create a DebugMode object (extends BLETattooDevice?) that acts as BLE device
         connectToDevices(new ArrayList<String> (Arrays.asList(DEBUG_MODE_ADDRESS)));
+    }
+
+    private void clearScan() {
+        scanResults.clear();
+        mIconManager.clearAllIcons();
+        EventBus.getDefault().post(new RequestBLEClearScanListEvent());
     }
 
     private void connectToDevices(ArrayList<String> addresses) {
@@ -228,13 +237,24 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updateScanList(ScanListUpdatedEvent event) {
         Map<String, BluetoothDevice> scanList = event.getScanResults();
+        Map<String, Integer> rssis = event.getRSSIs();
 
+        for(String address : scanResults.keySet()) {
+            //If no longer available, remove.
+            if(!scanList.containsKey(address)) {
+                scanResults.remove(address);
+                mIconManager.removeIcon(address);
+            }
+        }
         for(String address : scanList.keySet()) {
             //If not already in the local scan results, add it
             if(!scanResults.containsKey(address)) {
                 scanResults.put(address, scanList.get(address));
-                mIconManager.generateNewIcon(this, scanList.get(address).getName(), address, -25, R.drawable.ic_bluetooth_black_24dp);
+                mIconManager.generateNewIcon(this, scanList.get(address).getName(), address, rssis.get(address), R.drawable.ic_bluetooth_black_24dp);
             }
+
+            //Update the RSSIs
+            mIconManager.updateRSSI(address, rssis.get(address));
         }
     }
 
@@ -271,6 +291,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
         } else {
             if(!connectButtonVisible) {
                 mBinding.btnStartBleConnection.setVisibility(View.VISIBLE);
+                connectButtonVisible = true;
                 //Fade button in
                 ValueAnimator connectAlpha = ValueAnimator.ofInt(0, 255);
                 connectAlpha.setDuration(1000);

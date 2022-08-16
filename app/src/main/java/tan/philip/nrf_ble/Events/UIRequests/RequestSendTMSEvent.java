@@ -5,8 +5,8 @@ import android.bluetooth.BluetoothDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 
 public class RequestSendTMSEvent {
-    private byte[] messageId;
-    private BluetoothDevice device;
+    private final byte[] messageId;
+    private final BluetoothDevice device;
 
     public RequestSendTMSEvent(BluetoothDevice device, byte[] messageId) {
         this.messageId = messageId;

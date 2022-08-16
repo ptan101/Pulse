@@ -26,6 +26,7 @@ public class BLEDevice {
     protected Context mCtx;
 
     protected BluetoothDevice mBluetoothDevice;
+    protected int rssi;
 
     protected int instanceId = 0;
     protected String displayName;
@@ -36,6 +37,7 @@ public class BLEDevice {
 
     protected boolean pushToSickbay = true;
     protected float recordTime;
+    protected long disconnectTime;
 
     //Saving
     protected boolean mRecording = false;
@@ -171,7 +173,19 @@ public class BLEDevice {
 
     public boolean connected() { return mConnected;}
 
-    public void setConnected(boolean connected) {mConnected = connected;}
+    public void setConnected(boolean connected) {
+        Long curTime = System.currentTimeMillis();
+        mConnected = connected;
+
+        //If recording, note the disconnect time
+        if(mRecording && mConnected && disconnectTime != 0) {
+            Long timeDisconnected = curTime - disconnectTime;
+            markerFile.queueWrite(new String[] {Float.toString(recordTime),
+                    "Device disconnected for " + timeDisconnected + " ms"});
+        } else if (mRecording && !mConnected){
+            disconnectTime = curTime;
+        }
+    }
 
     public void stopRecord() {
         mRecording = false;
@@ -187,6 +201,14 @@ public class BLEDevice {
 
     public ArrayList<TattooMessage> getTmsTxMessages() {
         return mBLEParser.getTxMessages();
+    }
+
+    public int getRssi() {
+        return rssi;
+    }
+
+    public void setRssi(int rssi) {
+        this.rssi = rssi;
     }
 }
 

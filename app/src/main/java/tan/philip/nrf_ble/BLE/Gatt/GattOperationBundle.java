@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattOperation;
 
+//Credit to Nordic Puck Manager
 public class GattOperationBundle {
     final ArrayList<GattOperation> operations;
 

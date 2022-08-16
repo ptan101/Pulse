@@ -1,8 +1,8 @@
 package tan.philip.nrf_ble.Events;
 
 public class GATTConnectionChangedEvent {
-    private String mAddress;
-    private int mNewState;
+    private final String mAddress;
+    private final int mNewState;
 
     public GATTConnectionChangedEvent(String address, int newState) {
         mAddress = address;

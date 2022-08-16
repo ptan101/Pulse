@@ -24,9 +24,9 @@ public class SignalSetting implements Serializable {
     //Digital display settings
     public boolean digitalDisplay = false;
     public String decimalFormat = null;
-    public String conversion = null;
-    public String prefix = null;
-    public String suffix = null;
+    public String conversion = "x";
+    public String prefix = "";
+    public String suffix = "";
     //Sickbay settings
     public int sickbayID = -1;
 

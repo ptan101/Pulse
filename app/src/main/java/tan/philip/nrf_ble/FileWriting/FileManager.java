@@ -46,7 +46,7 @@ public class FileManager {
         syncHandler.postDelayed(syncLoop, SYNC_RATE_MS);
     }
 
-    private Runnable syncLoop = new Runnable() {
+    private final Runnable syncLoop = new Runnable() {
         @Override
         public void run() {
             long curTime = System.currentTimeMillis();

@@ -10,6 +10,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -47,6 +48,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 import tan.philip.nrf_ble.FileWriting.FileManager;
 import tan.philip.nrf_ble.FileWriting.MarkerFile;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.OptionsMenu;
 import tan.philip.nrf_ble.R;
@@ -62,6 +64,7 @@ public class GraphActivity extends AppCompatActivity {
     private ActivityGraphBinding mBinding;
     private FileManager fileManager;
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,22 +76,13 @@ public class GraphActivity extends AppCompatActivity {
 
         //Register activity on EventBus
         EventBus.getDefault().register(this);
-
-        //UI Setup
-        //setupButtons();
-
-
-        //biometrics = (BiometricsSet)extras.getSerializable(EXTRA_BIOMETRIC_SETTINGS_IDENTIFIER);
-        //setupBiometricsDigitalDisplay();
-        //notification_frequency = extras.getFloat(EXTRA_NOTIF_F_IDENTIFIER);
-        //notification_period = 1000 / notification_frequency;
-        //rxMessages = (ArrayList<TattooMessage>)extras.getSerializable(EXTRA_RX_MESSAGES_IDENTIFIER);
-        //txMessages = (ArrayList<TattooMessage>)extras.getSerializable(EXTRA_TX_MESSAGES_IDENTIFIER);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        EventBus.getDefault().post(new RequestBLEDisconnectEvent());
 
         renderer.deregister();
         fileManager.deregister();
@@ -133,7 +127,7 @@ public class GraphActivity extends AppCompatActivity {
     private void setupGraphs() {
         ArrayList<BLEDevice> bleDevices = bleHandlerService.getBLEDevices();
 
-        renderer = new GraphRenderer(this, bleDevices, mBinding.graphRecordStopwatch);
+        renderer = new GraphRenderer(this, bleDevices, mBinding.graphRecordStopwatch, mBinding.graphDigitaldisplayLayout);
 
         LinearLayout layout = mBinding.graphSpaceLayout;
         renderer.addGraphContainersToView(layout, this);

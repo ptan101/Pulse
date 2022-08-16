@@ -4,6 +4,15 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.util.AttributeSet;
@@ -33,13 +42,14 @@ public class BLEScanIcon extends LinearLayout {
 
     private ImageButton mButton;
     private ImageView mHighlight;
+    private ImageView mHighlight2;
     private TextView mNameView;
     private TextView mAddressView;
     private TextView mRSSIView;
 
     private boolean mSelected = false;
 
-    private final ValueAnimator mAlphaAnimator = ValueAnimator.ofFloat(0, 1);;
+    private final ValueAnimator mAlphaAnimator = ValueAnimator.ofFloat(0, 1);
 
     public BLEScanIcon(Context ctx, String name, String address, int rssi, int imageResource) {
         super(ctx);
@@ -77,17 +87,23 @@ public class BLEScanIcon extends LinearLayout {
         mNameView = (TextView)this.findViewById(R.id.ble_scan_icon_name);
         mAddressView = (TextView)this.findViewById(R.id.ble_scan_icon_address);
         mRSSIView = (TextView)this.findViewById(R.id.ble_scan_icon_rssi);
-        mHighlight.setVisibility(View.GONE);
+        mHighlight2 = (ImageView)this.findViewById(R.id.ble_scan_icon_highlight2);
+        mHighlight.setVisibility(View.INVISIBLE);
+        mHighlight2.setVisibility(View.INVISIBLE);
+
 
         mButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mSelected = !mSelected;
 
                 EventBus.getDefault().post(new BLEIconSelectedEvent(mAddress, mSelected));
-                if(mSelected)
+                if(mSelected) {
                     mHighlight.setVisibility(View.VISIBLE);
-                else
-                    mHighlight.setVisibility(View.GONE);
+                    mHighlight2.setVisibility(View.VISIBLE);
+                } else {
+                    mHighlight.setVisibility(View.INVISIBLE);
+                    mHighlight2.setVisibility(View.INVISIBLE);
+                }
             }
         });
 
@@ -103,6 +119,7 @@ public class BLEScanIcon extends LinearLayout {
                 mAddressView.setAlpha((float)mAlphaAnimator.getAnimatedValue());
                 mRSSIView.setAlpha((float)mAlphaAnimator.getAnimatedValue());
                 mHighlight.setAlpha((float)mAlphaAnimator.getAnimatedValue());
+                mHighlight2.setAlpha((float)mAlphaAnimator.getAnimatedValue());
             }
         });
 
@@ -112,10 +129,13 @@ public class BLEScanIcon extends LinearLayout {
     public void setSelected(boolean selected) {
         mSelected = selected;
 
-        if(selected)
+        if(mSelected) {
             mHighlight.setVisibility(View.VISIBLE);
-        else
-            mHighlight.setVisibility(View.GONE);
+            mHighlight2.setVisibility(View.VISIBLE);
+        } else {
+            mHighlight.setVisibility(View.INVISIBLE);
+            mHighlight2.setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -139,6 +159,4 @@ public class BLEScanIcon extends LinearLayout {
     public void fadeOut() {
         mAlphaAnimator.reverse();
     }
-
-
 }

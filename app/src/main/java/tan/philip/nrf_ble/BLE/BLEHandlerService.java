@@ -63,10 +63,10 @@ public class BLEHandlerService extends Service {
 
     public static final String TAG = "BLEHandlerService";
     private Map<String, BluetoothDevice> mScanResults = new HashMap();
+    private final Map<String, Integer> mScanRSSIs = new HashMap();
     private static boolean isRunning = false;
 
     //Messenger to communicate with client threads
-    ArrayList<Messenger> mClients = new ArrayList<Messenger>(); // Keeps track of all current registered clients.
     private final IBinder binder = new LocalBinder();
 
     //Tattoo Connection Management
@@ -74,7 +74,6 @@ public class BLEHandlerService extends Service {
     private TattooConnectionManager mConnectionManager;
 
     //Scanning
-    private int numDevicesFound = 0;
     private boolean mScanning = false;
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
@@ -82,17 +81,13 @@ public class BLEHandlerService extends Service {
     private ScanCallback mScanCallback;
     private Handler scanHandler;
 
-    //Connecting
-    private final ArrayList<String> bluetoothAddresses = new ArrayList<>();
-    private final ArrayList<BluetoothDevice> broadcastingBLEDevices = new ArrayList<>();
-
     //Communication to SickbayPush
     //SickbayPushService mService;
     boolean mIsBound = false;
     boolean pushToSickbay = true;
 
     //Saving to file
-    private boolean mRecording = false;
+    private final boolean mRecording = false;
 
     NotificationCompat.Builder notificationBuilder;
 
@@ -122,16 +117,10 @@ public class BLEHandlerService extends Service {
         //Scanning
         setupBLEScanner();
 
-        //Connecting
-        //disconnect();
-
         //Start and bind to the SickbayPushService
         Intent intent = new Intent(this, SickbayPushService.class);
         bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
-
         isRunning = true;
-
-        //Transcieving
 
         //Foreground Service - keep it running. Just set up here, need to call startForeground to actually make it run in foreground
         Intent notificationIntent = new Intent(this, BLEHandlerService.class);
@@ -237,7 +226,7 @@ public class BLEHandlerService extends Service {
 
         //Store scan results in HashMap
         mScanResults = new HashMap<>();
-        mScanCallback = new BtleScanCallback(mScanResults);
+        mScanCallback = new BtleScanCallback(mScanResults, mScanRSSIs);
 
         //Now grab hold of the BluetoothLeScanner to start the scan, and set our scanning boolean to true.
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
@@ -261,20 +250,16 @@ public class BLEHandlerService extends Service {
         scanHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(numDevicesFound != mScanResults.size()) {
-                    foundDevice();
-                    numDevicesFound = mScanResults.size();
-                }
-
-                EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults));
-
-                scanHandler.postDelayed(this, 200);
+                EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults, mScanRSSIs));
+                //Clear
+                updateScanList();
+                scanHandler.postDelayed(this, 1500);
             }
-        }, 200);
+        }, 00);
     }
 
     @Subscribe(threadMode =  ThreadMode.MAIN)
-    private void stopScan(RequestBLEStopScanEvent event) {
+    public void stopScan(RequestBLEStopScanEvent event) {
         //valueAnimator.cancel();
         mScanning = false;
 
@@ -297,34 +282,14 @@ public class BLEHandlerService extends Service {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void clearScan(RequestBLEClearScanListEvent event) {
-        broadcastingBLEDevices.clear();
-        bluetoothAddresses.clear();
         mScanResults.clear();
-        numDevicesFound = 0;
     }
 
-    private void viewScanList() {
-        scanHandler = new Handler();
-        scanHandler.removeCallbacksAndMessages(null);
-    }
+    private void updateScanList() {
+        mScanResults.clear();
+        mScanRSSIs.clear();
 
-    private void foundDevice() {
-        for (String deviceAddress : mScanResults.keySet()) {
-            Log.d(TAG, "Found device: " + deviceAddress);
-        }
 
-        //Seperate map to two seperate ArrayLists (may not be necessary if I can send HashMap but oh well)
-        bluetoothAddresses.clear();
-        broadcastingBLEDevices.clear();
-        for(String deviceAddress : mScanResults.keySet()) {
-            bluetoothAddresses.add(deviceAddress);
-            broadcastingBLEDevices.add(mScanResults.get(deviceAddress));
-        }
-
-        Bundle b = new Bundle();
-        b.putSerializable("btAddresses", bluetoothAddresses);
-        b.putSerializable("btDevices", broadcastingBLEDevices);
-        //sendMessageToUI(MSG_BT_DEVICES, b);
     }
 
     private class BtleScanCallback extends ScanCallback {
@@ -333,11 +298,12 @@ public class BLEHandlerService extends Service {
         List<UUID> characteristicUUIDsList = new ArrayList<>();
         List<UUID> descriptorUUIDsList     = new ArrayList<>();
 
-
         private final Map<String, BluetoothDevice> mScanResults;
+        private final Map<String, Integer> mRSSIs;
 
-        BtleScanCallback(Map<String, BluetoothDevice> scanResults) {
+        BtleScanCallback(Map<String, BluetoothDevice> scanResults, Map<String, Integer> rssis) {
             mScanResults = scanResults;
+            mRSSIs = rssis;
         }
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
@@ -360,6 +326,7 @@ public class BLEHandlerService extends Service {
             serviceUUIDsList = getServiceUUIDsList(result, deviceAddress);
 
             mScanResults.put(deviceAddress, device);
+            mRSSIs.put(deviceAddress, result.getRssi());
         }
 
         private List<UUID> getServiceUUIDsList(ScanResult scanResult, String deviceAddress)

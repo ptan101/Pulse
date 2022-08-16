@@ -5,4 +5,7 @@
     <item android:id ="@+id/enterDebugMode"
         android:title="Debug Mode"/>
 
+    <item android:id ="@+id/clearScan"
+        android:title="Clear Scan"/>
+
 </menu>

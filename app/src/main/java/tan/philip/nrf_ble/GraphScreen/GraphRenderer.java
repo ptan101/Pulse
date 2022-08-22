@@ -131,10 +131,11 @@ public class GraphRenderer {
                 }
 
                 signals.put(bleDevice.getAddress(), signalsInDevice);
-
-
             }
         }
+
+        if(displayManager.getDigitalDisplays().size() == 0)
+            displayManager.disableDigitalDisplay();
         //displayManager.finishDigitalDisplays();
     }
 

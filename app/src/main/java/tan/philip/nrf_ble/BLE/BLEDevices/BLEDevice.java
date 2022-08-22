@@ -28,7 +28,8 @@ public class BLEDevice {
     protected BluetoothDevice mBluetoothDevice;
     protected int rssi;
 
-    protected int instanceId = 0;
+    protected int instanceId = 0; //If there are multiple of the same device, this is used for preventing file saving conflicts.
+    protected int uniqueID; //A new unique ID is generated for every device, regardless if they are unique devices.
     protected String displayName;
 
     protected BLEPacketParser mBLEParser;
@@ -36,6 +37,8 @@ public class BLEDevice {
     protected ArrayList<UUID> mServiceUUIDs;
 
     protected boolean pushToSickbay = true;
+
+
     protected float recordTime;
     protected long disconnectTime;
 
@@ -209,6 +212,14 @@ public class BLEDevice {
 
     public void setRssi(int rssi) {
         this.rssi = rssi;
+    }
+
+    public void setUniqueId(int uniqueID) {
+        this.uniqueID = uniqueID;
+    }
+
+    public int getUniqueId() {
+        return uniqueID;
     }
 }
 

@@ -308,6 +308,10 @@ public class BLEPacketParser {
                 break;
             case "sickbayID":
                 signalSetting.sickbayID = Integer.parseInt(mainOption[1]);
+                break;
+            case "sickbayNS":
+                signalSetting.sickbayNS = mainOption[1];
+                break;
             default:
                 break;
         }

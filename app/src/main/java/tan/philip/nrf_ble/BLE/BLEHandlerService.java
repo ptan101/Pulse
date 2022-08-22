@@ -82,7 +82,7 @@ public class BLEHandlerService extends Service {
     private Handler scanHandler;
 
     //Communication to SickbayPush
-    //SickbayPushService mService;
+    SickbayPushService sickbayPushService;
     boolean mIsBound = false;
     boolean pushToSickbay = true;
 
@@ -117,9 +117,6 @@ public class BLEHandlerService extends Service {
         //Scanning
         setupBLEScanner();
 
-        //Start and bind to the SickbayPushService
-        Intent intent = new Intent(this, SickbayPushService.class);
-        bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
         isRunning = true;
 
         //Foreground Service - keep it running. Just set up here, need to call startForeground to actually make it run in foreground
@@ -168,8 +165,10 @@ public class BLEHandlerService extends Service {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             SickbayPushService.LocalBinder binder = (SickbayPushService.LocalBinder) service;
-            //mService = binder.getService();
+            sickbayPushService = binder.getService();
             mIsBound = true;
+
+            sickbayPushService.initializeQueues(mConnectionManager.getBLEDevices());
         }
 
         @Override
@@ -361,6 +360,12 @@ public class BLEHandlerService extends Service {
         ArrayList<String> addresses = event.getAddresses();
         for (String address : addresses)
             connectDevice(address);
+
+        if(pushToSickbay) {
+            //Start and bind to the SickbayPushService
+            Intent intent = new Intent(this, SickbayPushService.class);
+            bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
+        }
     }
 
     /**

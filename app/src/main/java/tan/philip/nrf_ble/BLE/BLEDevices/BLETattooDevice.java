@@ -47,7 +47,7 @@ public class BLETattooDevice extends BLEDevice {
             //Convert to HashMap. Keys are the Sickbay IDs.
             HashMap<Integer, ArrayList<Integer>> sickbayPush = convertPacketForSickbayPush(packaged_data);
 
-            EventBus.getDefault().post(new SickbayQueueEvent(sickbayPush, this.instanceId));
+            EventBus.getDefault().post(new SickbayQueueEvent(sickbayPush, this.uniqueID));
         }
 
         //Send the data to the UI for display

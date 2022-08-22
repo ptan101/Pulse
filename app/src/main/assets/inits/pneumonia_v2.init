@@ -10,6 +10,8 @@ Signals Information
 ..b: 1.0
 ..a: 1.0
 ..gain: 35
+.sickbayID 1050
+.sickbayNS TATTOOWAVE
 2, num, 2, 6, 16, unsigned
 3, LIS-X, 2, 6, 14, signed
 4, LIS-Y, 2, 6, 14, signed

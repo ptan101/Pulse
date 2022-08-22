@@ -12,6 +12,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
 
 public class SickbayPushService extends Service {
@@ -35,10 +37,10 @@ public class SickbayPushService extends Service {
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
 
-    private final Map<Integer, ArrayList<Integer>> dataQueue = new ConcurrentHashMap<>();
+    //Might be better to be a hashmap. However, there are 2 keys (NS and instanceID), which is messy.
+    private final HashMap<Integer, SickbayQueue> dataQueues = new HashMap<>();
     private Handler mHandler;
 
-    //If we need to deal with IPC, we will need to use a messenger
     public class LocalBinder extends Binder {
         public SickbayPushService getService() {
             // Return this instance of SickbayPushService so clients can call public methods
@@ -74,118 +76,28 @@ public class SickbayPushService extends Service {
 
     @Subscribe
     public void addToQueueEvent(SickbayQueueEvent event) {
-        addToQueue(event.getData());
+        dataQueues.get(event.getInstanceId()).addToQueue(event.getData());
     }
 
-    public synchronized void addToQueue(HashMap<Integer, ArrayList<Integer>> dataIn) {
-        //Add data to queue
-        for (int i : dataIn.keySet()) {
-            if (dataQueue.get(i) == null)
-                dataQueue.put(i, dataIn.get(i));
-            else
-                dataQueue.get(i).addAll(dataIn.get(i));
+    public void initializeQueues(ArrayList<BLEDevice> devices) {
+        for (BLEDevice d : devices) {
+            //To do: Unique namespace
+            dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId()));
         }
     }
 
     private synchronized void pushQueue(long timestamp) {
         //Consolidate queue to a single frame and push the frame
 
-        //Reformat data in queue into string.
-        JSONObject message = convertQueueToJSONString("TATTOOWAVE", timestamp, (float) PUSH_INTERVAL_MS);
-        //Log.d(TAG, message);
+        //For every instance ID and namespace, push the respective queue.
+        for (int instanceID : dataQueues.keySet()) {
+            SickbayQueue q = dataQueues.get(instanceID);
+            //Reformat data in queue into string.
+            JSONObject message = q.convertQueueToJSONString(timestamp, (float) PUSH_INTERVAL_MS);
 
-        //Attempt to send the data
-        attemptSend(message);
-    }
-
-    /**
-     * Converts the queue into a single data frame JSON String.
-     * @param namespace Name space of the device.
-     * @param timestamp Javascript time (UTC 64 bit). In ms.
-     * @param dt Interval between pushes, in ms.
-     * @return The JSON string. If no data is available to send, returns null.
-     */
-    private JSONObject convertQueueToJSONString(String namespace, long timestamp, float dt) {
-        /*
-        This is called a data frame
-        {
-        "CH": "BED012", //Bed name (need to put in manually in the mobile app)
-        "NS": "GEVITAL", //Name space (Every signal needs a unique ID, given by Craig, ETATTOOVITAL for num, ETATTOOWAVE for waveforms)
-        "T": 1657310006119.1106, //Time\
-
-        tamp (int64_t UTC 100ns intervals) of the first element entering the queue. Javascript handles time in 1000ms. Use the Javascript time instead of android java time. 64 bit int divided by 10000. Units ms
-        "DT": 2, // Dt of the data frame, num samples * period (seconds, float). E.g., 0.250. Better to do num_samples * time interval per sample.
-        "VIZ": 0, // Always 0
-        "Z": 0, //Always 0
-        "InstanceID": 0, //Probably going to be 0. But may change with multiple tattoos.
-        "DATA": [
-            {
-                "s1": [
-                    162, 100
-                ],
-                "s99": [
-                    72
-                ],
-                "s100": [
-                    76
-                ],
-                "s101": [
-                    162
-                ],
-                "s112": [
-                    -1.3
-                ]
-            }
-        ]
-
-    }
-         */
-
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("CH", bedName);
-            obj.put("NS", namespace);
-            obj.put("T", ((double) timestamp) / 10000);
-            obj.put("DT", dt);
-            obj.put("VIZ", new Integer(0));
-            obj.put("Z", new Integer(0));
-            obj.put("InstanceID", new Integer(0));
-
-            String dataString = "[{";
-            ArrayList<String> signalStrings = new ArrayList<>();
-            boolean signalsNeedPushing = false;
-            //Iterate through all signals in the Hashmap
-            for (int i : dataQueue.keySet()) {
-                //Make a local copy of the signals to push. This way, we only remove items that we
-                //pushed. In case new items are enqueued now.
-                ArrayList<Integer> localCopyOfSignal = new ArrayList<>(dataQueue.get(i));
-                String curSignalString = "\"s" + i + "\": " + "[";
-
-                //Question for Dr. Rusin: If there is no data to push from that particular signal,
-                //is it ok to send an empty array? E.g., "s1": [],"s2": [1, 2, 3, 4]. Or should it be omitted?
-                //Add all samples for that particular signal
-                curSignalString += localCopyOfSignal.stream().map(Object::toString).collect(Collectors.joining(", "));
-                curSignalString += "]";
-                signalStrings.add(curSignalString);
-
-                //Check if any signals actually need pushing
-                signalsNeedPushing = signalsNeedPushing || (localCopyOfSignal.size() > 0);
-
-                //Remove the samples that we pushed
-                dataQueue.get(i).subList(0, localCopyOfSignal.size()).clear();
-            }
-            dataString += String.join(", ", signalStrings);
-            dataString += "}]";
-
-            if (!signalsNeedPushing)
-                return null;
-
-            obj.put("DATA", dataString);
-        } catch (JSONException e) {
-            Log.e(TAG, "Unable to put data into JSONObject (" + e.getMessage() + ")");
+            //Attempt to send the data
+            attemptSend(message);
         }
-
-        return obj;
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,3 +260,36 @@ public class SickbayPushService extends Service {
 
 // TO DO: option to set URL
 // TO DO: option to disable SickbayPush
+
+//This is called a data frame
+//{
+//"CH": "BED012", //Bed name (need to put in manually in the mobile app)
+//"NS": "GEVITAL", //Name space (Every signal needs a unique ID, given by Craig, ETATTOOVITAL for num, ETATTOOWAVE for waveforms)
+//"T": 1657310006119.1106, //Time\
+//
+//tamp (int64_t UTC 100ns intervals) of the first element entering the queue. Javascript handles time in 1000ms. Use the Javascript time instead of android java time. 64 bit int divided by 10000. Units ms
+//"DT": 2, // Dt of the data frame, num samples * period (seconds, float). E.g., 0.250. Better to do num_samples * time interval per sample.
+//"VIZ": 0, // Always 0
+//"Z": 0, //Always 0
+//"InstanceID": 0, //Probably going to be 0. But may change with multiple tattoos.
+//"DATA": [
+//    {
+//        "s1": [
+//            162, 100
+//        ],
+//        "s99": [
+//            72
+//        ],
+//        "s100": [
+//            76
+//        ],
+//        "s101": [
+//            162
+//        ],
+//        "s112": [
+//            -1.3
+//        ]
+//    }
+//]
+//
+//}

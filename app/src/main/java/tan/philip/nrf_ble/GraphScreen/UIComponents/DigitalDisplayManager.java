@@ -55,6 +55,16 @@ public class DigitalDisplayManager {
 
         set.applyTo(layout);
     }
+
+    public void disableDigitalDisplay() {
+        layout.setVisibility(View.GONE);
+    }
+
+    ////////////////////////////////////////////////////GETTERS/////////////////////////////////////
+    public ArrayList<DigitalDisplay> getDigitalDisplays() {
+        return digitalDisplays;
+    }
+
     ////////////////////////////////////////////////////STATIC METHODS/////////////////////////////////////////////
     //Method to take parse a string into an equation.
     //Credit to Boann on Stack Overflow

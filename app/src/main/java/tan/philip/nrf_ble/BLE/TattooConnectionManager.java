@@ -20,6 +20,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
@@ -38,7 +39,8 @@ public class TattooConnectionManager {
     private static final String TAG = "TattooConnectionManager";
 
     private final Context mCtx;
-    private final ArrayList<BLEDevice> mConnectedDevices;
+    private final ArrayList<BLEDevice> mConnectedDevices; //Should use HashMap
+    private int uniqueId = 0;
 
     GattManager mGattManager;
 
@@ -94,30 +96,13 @@ public class TattooConnectionManager {
                 instanceId ++;
 
         tattoo.setInstanceId(instanceId);
+        tattoo.setUniqueId(uniqueId++);
         mConnectedDevices.add(tattoo);
 
-        new Handler().postDelayed(new Runnable() {
-            public void run() {
-                if(tattoo.getAddress().equals(DEBUG_MODE_ADDRESS))
-                    return;
+        if(tattoo.getAddress().equals(DEBUG_MODE_ADDRESS))
+            return;
 
-                BluetoothDevice device = tattoo.getBluetoothDevice();
-                mGattManager.queue(new GattSetNotificationOperation(
-                        device,
-                        NUS_UUID,
-                        NUS_TX_UUID,
-                        CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
-
-                // Android BLE stack might have issues connecting to
-                // multiple Gatt services right after another.
-                // See: http://stackoverflow.com/questions/21237093/android-4-3-how-to-connect-to-multiple-bluetooth-low-energy-devices
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, 100);
+        subscribeToNotification(tattoo.getBluetoothDevice(), NUS_UUID, NUS_TX_UUID);
     }
 
     public synchronized void disconnectTattoo(String address) {
@@ -167,22 +152,34 @@ public class TattooConnectionManager {
             if (device.getBluetoothDevice().equals(event.getDevice())) {
                 device.setServiceUUIDs(event.getGATTServiceUUIDs());
 
-                mGattManager.queue(new GattSetNotificationOperation(
-                        event.getDevice(),
-                        NUS_UUID,
-                        NUS_TX_UUID,
-                        CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
+                subscribeToNotification(device.getBluetoothDevice(), NUS_UUID, NUS_TX_UUID);
 
                 //If the device supports TMS, subscribe to this service.
-                if (event.getGATTServiceUUIDs().contains(TMS_UUID)) {
-                    mGattManager.queue(new GattSetNotificationOperation(
-                            event.getDevice(),
-                            TMS_UUID,
-                            TMS_TX_UUID,
-                            CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
-                }
+                if (event.getGATTServiceUUIDs().contains(TMS_UUID))
+                    subscribeToNotification(device.getBluetoothDevice(), TMS_UUID, TMS_TX_UUID);
             }
         }
+    }
+
+    private void subscribeToNotification(BluetoothDevice device, UUID serviceUUID, UUID characteristicUUID) {
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                mGattManager.queue(new GattSetNotificationOperation(
+                        device,
+                        serviceUUID,
+                        characteristicUUID,
+                        CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID));
+
+                // Android BLE stack might have issues connecting to
+                // multiple Gatt services right after another.
+                // See: http://stackoverflow.com/questions/21237093/android-4-3-how-to-connect-to-multiple-bluetooth-low-energy-devices
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, 0);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

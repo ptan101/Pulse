@@ -198,4 +198,8 @@ public class GraphRenderer {
 
         signal.updateSeriesFromQueue(curTime, numPointsToRender);
     }
+
+    public boolean isEmpty() {
+        return signals.isEmpty();
+    }
 }

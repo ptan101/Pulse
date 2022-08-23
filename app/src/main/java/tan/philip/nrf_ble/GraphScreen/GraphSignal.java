@@ -149,10 +149,6 @@ public class  GraphSignal {
         return Color.argb(settings.color[3], settings.color[0], settings.color[1], settings.color[2]);
     }
 
-    public boolean graphable() {
-        return settings.graphable;
-    }
-
     public void startMonitorView() {
         monitor_series.resetData(monitor_buffer);
     }

@@ -18,6 +18,8 @@ import org.greenrobot.eventbus.ThreadMode;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import tan.philip.nrf_ble.Events.Connecting.BLEIconNumSelectedChangedEvent;
@@ -28,13 +30,13 @@ import tan.philip.nrf_ble.R;
 public class BLEScanIconManager {
     private static final float DEGREES_BETWEEN_DEVICES = 45;
     private static final float RADIUS_FROM_CENTER = 125; //DPI
-    private final ArrayList<BLEScanIcon> icons; //Should make this a hashmap honestly
+    private final Map<String, BLEScanIcon> icons; //Should make this a hashmap honestly
     private final ArrayList<String> selectedAddresses;
     private final ConstraintLayout mLayout;
     private final Context context;
 
     public BLEScanIconManager(ConstraintLayout layout, Context ctx) {
-        icons = new ArrayList<>();
+        icons = new HashMap<>();
         selectedAddresses = new ArrayList<>();
         mLayout = layout;
         this.context = ctx;
@@ -43,14 +45,15 @@ public class BLEScanIconManager {
     }
 
     public void deselectAllIcons() {
-        for (BLEScanIcon icon : icons) {
-            icon.setSelected(false);
+        for (String address : icons.keySet()) {
+            icons.get(address).setSelected(false);
         }
         selectedAddresses.clear();
     }
 
     public void clearAllIcons() {
-        for(BLEScanIcon icon : icons) {
+        for (String address : icons.keySet()) {
+            BLEScanIcon icon = icons.get(address);
             icon.fadeOut();
             icons.remove(icon);
             mLayout.removeView(icon);
@@ -89,25 +92,17 @@ public class BLEScanIconManager {
     }
 
     public void updateRSSI(String address, int rssi) {
-        for(BLEScanIcon icon : icons) {
-            if(icon.getAddress().equals(address)) {
-                icon.setRSSI(rssi);
-                return;
-            }
-        }
+        BLEScanIcon icon = icons.get(address);
+        icon.setRSSI(rssi);
     }
 
     public void removeIcon(String address) {
-        for(BLEScanIcon icon : icons) {
-            if(icon.getAddress().equals(address)) {
-                icon.fadeOut();
-                icons.remove(icon);
-                mLayout.removeView(icon);
-                selectedAddresses.remove(icon.getAddress());
-                EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
-                return;
-            }
-        }
+        BLEScanIcon icon = icons.get(address);
+        icon.fadeOut();
+        icons.remove(icon);
+        mLayout.removeView(icon);
+        selectedAddresses.remove(icon.getAddress());
+        EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -122,6 +117,11 @@ public class BLEScanIconManager {
 
     public ArrayList<String> getSelectedAddresses() {
         return selectedAddresses;
+    }
+
+    public void setInitialized(Map<String, Boolean> isInitialized) {
+        for(String address : isInitialized.keySet())
+            icons.get(address).setIsInitialized();
     }
 
     private void setIconLocation(BLEScanIcon newIcon) {
@@ -140,7 +140,7 @@ public class BLEScanIconManager {
         newIcon.setX(xpos);
         newIcon.setY(ypos);
 
-        icons.add(newIcon);
+        icons.put(newIcon.getAddress(), newIcon);
         newIcon.setVisibility(View.VISIBLE);
         newIcon.fadeIn();
     }

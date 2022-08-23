@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.ScanScreen;
 
+import static android.widget.Toast.LENGTH_SHORT;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -23,6 +25,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 
@@ -39,7 +42,9 @@ public class BLEScanIcon extends LinearLayout {
     private String mName;
     private String mAddress;
     private int mRSSI;
+    private boolean isInitialized;
 
+    private Context context;
     private ImageButton mButton;
     private ImageView mHighlight;
     private ImageView mHighlight2;
@@ -53,12 +58,14 @@ public class BLEScanIcon extends LinearLayout {
 
     public BLEScanIcon(Context ctx, String name, String address, int rssi, int imageResource) {
         super(ctx);
+        this.context = ctx;
         this.mName = name;
         this.mAddress = address;
         this.mRSSI = rssi;
         this.mImageResource = imageResource;
+        this.isInitialized = false;
 
-        initializeViews(ctx);
+        initializeViews();
     }
 
     public BLEScanIcon(Context ctx, AttributeSet attrs, String name, String address, int rssi, int imageResource) {
@@ -71,13 +78,8 @@ public class BLEScanIcon extends LinearLayout {
         new BLEScanIcon(ctx, name, address, rssi, imageResource);
     }
 
-    /**
-     * Inflates the views in the layout.
-     *
-     * @param context
-     *           the current context for the view.
-     */
-    private void initializeViews(Context context) {
+
+    private void initializeViews() {
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.ble_scan_icon, this);
@@ -94,16 +96,7 @@ public class BLEScanIcon extends LinearLayout {
 
         mButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mSelected = !mSelected;
-
-                EventBus.getDefault().post(new BLEIconSelectedEvent(mAddress, mSelected));
-                if(mSelected) {
-                    mHighlight.setVisibility(View.VISIBLE);
-                    mHighlight2.setVisibility(View.VISIBLE);
-                } else {
-                    mHighlight.setVisibility(View.INVISIBLE);
-                    mHighlight2.setVisibility(View.INVISIBLE);
-                }
+                onTouch();
             }
         });
 
@@ -143,6 +136,23 @@ public class BLEScanIcon extends LinearLayout {
         super.onFinishInflate();
     }
 
+    protected void onTouch() {
+        if(isInitialized) {
+            mSelected = !mSelected;
+
+            EventBus.getDefault().post(new BLEIconSelectedEvent(mAddress, mSelected));
+            if (mSelected) {
+                mHighlight.setVisibility(View.VISIBLE);
+                mHighlight2.setVisibility(View.VISIBLE);
+            } else {
+                mHighlight.setVisibility(View.INVISIBLE);
+                mHighlight2.setVisibility(View.INVISIBLE);
+            }
+        } else {
+            Toast.makeText(context, "Tattoo not initialized.", LENGTH_SHORT).show();
+        }
+    }
+
     public void setRSSI(int rssi) {
         mRSSI = rssi;
         mRSSIView.setText(mRSSI + " dBm");
@@ -158,5 +168,9 @@ public class BLEScanIcon extends LinearLayout {
 
     public void fadeOut() {
         mAlphaAnimator.reverse();
+    }
+
+    public void setIsInitialized() {
+        isInitialized = true;
     }
 }

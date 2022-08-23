@@ -43,7 +43,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.databinding.ActivityClientBinding;
+import tan.philip.nrf_ble.databinding.ActivityScanningBinding;
 
 import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
@@ -53,7 +53,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
+public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     //private ImageButton btnScan;
 
     private static final String TAG = "ClientActivity";
@@ -64,7 +64,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     BLEHandlerService bleHandlerService;
     boolean mIsBound = false;
 
-    private ActivityClientBinding mBinding;
+    private ActivityScanningBinding mBinding;
 
     private boolean connectButtonVisible = false;
     private boolean mScanning = false;
@@ -100,7 +100,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_client);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_scanning);
 
         //Register to EventBus
         EventBus.getDefault().register(this);
@@ -109,10 +109,10 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
 
         //Request permissions
         requestBluetoothEnable();
-        PulseFile.isStoragePermissionGranted(ClientActivity.this);
+        PulseFile.isStoragePermissionGranted(ScanningActivity.this);
 
         //Start the BLEHandlerService
-        Intent intent = new Intent(ClientActivity.this, BLEHandlerService.class);
+        Intent intent = new Intent(ScanningActivity.this, BLEHandlerService.class);
         startService(intent);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
@@ -147,8 +147,8 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         //doBindService();
 
         mBinding.btnStartBleConnection.setVisibility(View.GONE);
@@ -238,6 +238,7 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
     public void updateScanList(ScanListUpdatedEvent event) {
         Map<String, BluetoothDevice> scanList = event.getScanResults();
         Map<String, Integer> rssis = event.getRSSIs();
+        Map<String, Boolean> isInitialized = event.getIsInitialized();
 
         for(String address : scanResults.keySet()) {
             //If no longer available, remove.
@@ -256,6 +257,8 @@ public class ClientActivity extends AppCompatActivity implements PopupMenu.OnMen
             //Update the RSSIs
             mIconManager.updateRSSI(address, rssis.get(address));
         }
+
+        mIconManager.setInitialized(isInitialized);
     }
 
     ValueAnimator connectAlpha = ValueAnimator.ofInt(255, 0);

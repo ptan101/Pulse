@@ -77,13 +77,12 @@ public class BLEPacketParser {
                 if(!signalSetting.littleEndian)
                     cur_data = ((cur_data) << 8) | (data[i + j] & 0xFF);          //Shift old bytes by 8 bits to make space for new byte. This is for Big Endian
                 else {
-                    byte cur_byte = data[i + j];
+                    int cur_byte = data[i + j];
                     if(j != size - 1 || !signalSetting.signed)
                         cur_byte &= 0xFF;   //If it's not signed or the MSB, no need to sign extend
 
                     cur_data = (cur_data | (cur_byte) << (8 * j));        //Shift new bytes by however many bytes there are already in cur_data.. This is for little Endian
                 }
-
             }
 
             //Store the parsed data into the correct ArrayList
@@ -473,7 +472,7 @@ public class BLEPacketParser {
     }
 
     //////////////////Helper Method for loading in init file lookup table
-    private String lookupInitFile(String deviceName, Context context) {
+    public static String lookupInitFile(String deviceName, Context context) {
         BufferedReader reader = null;
 
         try {

@@ -1,11 +1,17 @@
 package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
+import static android.content.Context.LAYOUT_INFLATER_SERVICE;
+
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -24,10 +30,14 @@ public class GraphContainer extends LinearLayout {
     GraphView graphView;
     private float minX = 0;
     private float maxX = 10;
+    private Context context;
+    private float range = 1;
+    private int seekbarProgress = 50;
 
 
     public GraphContainer(Context context, GraphSignal signal) {
         super(context);
+        this.context = context;
 
         initializeViews(context, signal);
     }
@@ -61,7 +71,7 @@ public class GraphContainer extends LinearLayout {
 
     private void initializeViews(Context context, GraphSignal signal) {
         LayoutInflater inflater = (LayoutInflater) context
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                .getSystemService(LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.graph_layout, this);
 
         //Attach the GraphView
@@ -76,13 +86,20 @@ public class GraphContainer extends LinearLayout {
         //Attach the data series to the graph
         graphView.addSeries(signal.getMonitor_series());
         graphView.addSeries(signal.getMonitor_mask());
+
+        graphView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showPopupWindow();
+            }
+        });
     }
 
     private void setupGraphView() {
         //Set the GraphView y axis limites
         graphView.getViewport().setYAxisBoundsManual(true);
-        graphView.getViewport().setMinY(-0.5);
-        graphView.getViewport().setMaxY(0.5);
+        graphView.getViewport().setMinY(-range/2);
+        graphView.getViewport().setMaxY(range/2);
 
         graphView.getViewport().setXAxisBoundsManual(true);
 
@@ -94,6 +111,42 @@ public class GraphContainer extends LinearLayout {
 
         //No grid lines
         graphView.getGridLabelRenderer().setGridStyle( GridLabelRenderer.GridStyle.NONE );
+    }
+
+    private void showPopupWindow() {
+        // inflate the layout of the popup window
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.graphview_popup_window, null);
+
+        // create the popup window
+        int width = LinearLayout.LayoutParams.MATCH_PARENT;
+        int height = graphView.getHeight();
+
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
+
+        SeekBar seekBar = popupView.findViewById(R.id.amplifcation_seek_bar);
+        seekBar.setProgress(seekbarProgress);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                seekbarProgress = progress;
+                range = 1 / (float)Math.pow(10f, (float) progress / 50f - 1);
+                graphView.getViewport().setMinY(-range/2);
+                graphView.getViewport().setMaxY(range/2);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        popupWindow.showAsDropDown(this, 0, -height, Gravity.TOP | Gravity.LEFT);
     }
 
     @Override

@@ -1,7 +1,6 @@
 package tan.philip.nrf_ble.GraphScreen;
 
 import static tan.philip.nrf_ble.Constants.convertDpToPixel;
-import static tan.philip.nrf_ble.Constants.convertPixelsToDp;
 
 import android.bluetooth.BluetoothProfile;
 import android.content.ComponentName;
@@ -10,15 +9,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.graphics.Color;
-import android.hardware.display.DisplayManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.util.TypedValue;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
@@ -31,28 +26,20 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
-import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
-import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
-import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 import tan.philip.nrf_ble.FileWriting.FileManager;
-import tan.philip.nrf_ble.FileWriting.MarkerFile;
-import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
-import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.OptionsMenu;
 import tan.philip.nrf_ble.R;
-import tan.philip.nrf_ble.ScanScreen.ClientActivity;
 import tan.philip.nrf_ble.databinding.ActivityGraphBinding;
 
 public class GraphActivity extends AppCompatActivity {
@@ -126,6 +113,20 @@ public class GraphActivity extends AppCompatActivity {
 
     private void setupGraphs() {
         ArrayList<BLEDevice> bleDevices = bleHandlerService.getBLEDevices();
+
+        //If no available devices, close activity.
+        if(bleDevices.size() == 0)
+            new AlertDialog.Builder(this)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setTitle("No devices available to connect.")
+                    .setMessage("None of the BLE devices could connect. Please try again (ensure that .init files are set up correctly).")
+                    .setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    })
+                    .show();
 
         renderer = new GraphRenderer(this, bleDevices, mBinding.graphRecordStopwatch, mBinding.graphDigitaldisplayLayout);
 

@@ -15,10 +15,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Messenger;
 import android.os.ParcelUuid;
 import android.util.Log;
 import android.widget.Toast;
@@ -36,8 +34,7 @@ import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice;
 import tan.philip.nrf_ble.BLE.Gatt.GattManager;
-import tan.philip.nrf_ble.Events.NUSPacketRecievedEvent;
-import tan.philip.nrf_ble.Events.PlotDataEvent;
+import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.Events.ScanListUpdatedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
@@ -249,7 +246,12 @@ public class BLEHandlerService extends Service {
         scanHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults, mScanRSSIs));
+                Map<String, Boolean> isInitialized = new HashMap<>();
+                for(String address : mScanResults.keySet()) //If the init file returns null, put in the not initialized map.
+                    isInitialized.put(address, BLEPacketParser.lookupInitFile(mScanResults.get(address).getName(),BLEHandlerService.this) == null);
+
+                EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults, mScanRSSIs, isInitialized));
+
                 //Clear
                 updateScanList();
                 scanHandler.postDelayed(this, 1500);
@@ -287,8 +289,6 @@ public class BLEHandlerService extends Service {
     private void updateScanList() {
         mScanResults.clear();
         mScanRSSIs.clear();
-
-
     }
 
     private class BtleScanCallback extends ScanCallback {
@@ -410,7 +410,7 @@ public class BLEHandlerService extends Service {
             notificationBuilder.setContentTitle("Paired with " + newTattooDevice.getBluetoothIdentifier());
             makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) { //The init file does not exist for this tattoo.
             Log.e("", "Tattoo not recognized");
             disconnect(address);
         }

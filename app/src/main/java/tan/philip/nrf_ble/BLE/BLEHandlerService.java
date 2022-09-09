@@ -248,7 +248,7 @@ public class BLEHandlerService extends Service {
             public void run() {
                 Map<String, Boolean> isInitialized = new HashMap<>();
                 for(String address : mScanResults.keySet()) //If the init file returns null, put in the not initialized map.
-                    isInitialized.put(address, BLEPacketParser.lookupInitFile(mScanResults.get(address).getName(),BLEHandlerService.this) == null);
+                    isInitialized.put(address, BLEPacketParser.lookupInitFile(mScanResults.get(address).getName(),BLEHandlerService.this) != null);
 
                 EventBus.getDefault().post(new ScanListUpdatedEvent(mScanResults, mScanRSSIs, isInitialized));
 

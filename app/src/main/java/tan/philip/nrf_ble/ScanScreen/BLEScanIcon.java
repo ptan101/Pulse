@@ -56,26 +56,26 @@ public class BLEScanIcon extends LinearLayout {
 
     private final ValueAnimator mAlphaAnimator = ValueAnimator.ofFloat(0, 1);
 
-    public BLEScanIcon(Context ctx, String name, String address, int rssi, int imageResource) {
+    public BLEScanIcon(Context ctx, String name, String address, int rssi, int imageResource, boolean isInitialized) {
         super(ctx);
         this.context = ctx;
         this.mName = name;
         this.mAddress = address;
         this.mRSSI = rssi;
         this.mImageResource = imageResource;
-        this.isInitialized = false;
+        this.isInitialized = isInitialized;
 
         initializeViews();
     }
 
-    public BLEScanIcon(Context ctx, AttributeSet attrs, String name, String address, int rssi, int imageResource) {
+    public BLEScanIcon(Context ctx, AttributeSet attrs, String name, String address, int rssi, int imageResource, boolean isInitialized) {
         super(ctx, attrs);
-        new BLEScanIcon(ctx, name, address, rssi, imageResource);
+        new BLEScanIcon(ctx, name, address, rssi, imageResource, isInitialized);
     }
 
-    public BLEScanIcon(Context ctx, AttributeSet attrs, int defStyleAttr, String name, String address, int rssi, int imageResource) {
+    public BLEScanIcon(Context ctx, AttributeSet attrs, int defStyleAttr, String name, String address, int rssi, int imageResource, boolean isInitialized) {
         super(ctx, attrs, defStyleAttr);
-        new BLEScanIcon(ctx, name, address, rssi, imageResource);
+        new BLEScanIcon(ctx, name, address, rssi, imageResource, isInitialized);
     }
 
 
@@ -170,7 +170,7 @@ public class BLEScanIcon extends LinearLayout {
         mAlphaAnimator.reverse();
     }
 
-    public void setIsInitialized() {
-        isInitialized = true;
+    public void setIsInitialized(boolean isInitialized) {
+        this.isInitialized = isInitialized;
     }
 }

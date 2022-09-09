@@ -249,16 +249,19 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         }
         for(String address : scanList.keySet()) {
             //If not already in the local scan results, add it
-            if(!scanResults.containsKey(address)) {
+            if (!scanResults.containsKey(address)) {
                 scanResults.put(address, scanList.get(address));
-                mIconManager.generateNewIcon(this, scanList.get(address).getName(), address, rssis.get(address), R.drawable.ic_bluetooth_black_24dp);
+                mIconManager.generateNewIcon(this,
+                        scanList.get(address).getName(),
+                        address,
+                        rssis.get(address),
+                        R.drawable.ic_bluetooth_black_24dp,
+                        isInitialized.get(address));
             }
 
             //Update the RSSIs
             mIconManager.updateRSSI(address, rssis.get(address));
         }
-
-        mIconManager.setInitialized(isInitialized);
     }
 
     ValueAnimator connectAlpha = ValueAnimator.ofInt(255, 0);

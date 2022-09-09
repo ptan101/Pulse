@@ -72,8 +72,8 @@ public class BLEScanIconManager {
         EventBus.getDefault().unregister(this);
     }
 
-    public void generateNewIcon(Context ctx, String name, String address, int rssi, int imageResource) {
-        BLEScanIcon newIcon = new BLEScanIcon(ctx, name, address, rssi, imageResource);
+    public void generateNewIcon(Context ctx, String name, String address, int rssi, int imageResource, boolean isInitialized) {
+        BLEScanIcon newIcon = new BLEScanIcon(ctx, name, address, rssi, imageResource, isInitialized);
         newIcon.setVisibility(View.INVISIBLE);
         mLayout.addView(newIcon);
 
@@ -121,7 +121,11 @@ public class BLEScanIconManager {
 
     public void setInitialized(Map<String, Boolean> isInitialized) {
         for(String address : isInitialized.keySet())
-            icons.get(address).setIsInitialized();
+            setInitialized(address, isInitialized.get(address));
+    }
+
+    public void setInitialized(String address, boolean isInitialized) {
+        icons.get(address).setIsInitialized(isInitialized);
     }
 
     private void setIconLocation(BLEScanIcon newIcon) {

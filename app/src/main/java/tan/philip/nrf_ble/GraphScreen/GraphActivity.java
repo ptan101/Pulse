@@ -1,5 +1,9 @@
 package tan.philip.nrf_ble.GraphScreen;
 
+import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
+import static tan.philip.nrf_ble.Constants.NUS_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_TX_UUID;
+import static tan.philip.nrf_ble.Constants.TMS_UUID;
 import static tan.philip.nrf_ble.Constants.convertDpToPixel;
 
 import android.bluetooth.BluetoothProfile;
@@ -33,6 +37,7 @@ import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEHandlerService;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
+import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
@@ -183,7 +188,7 @@ public class GraphActivity extends AppCompatActivity {
         String state = text.getText().toString();
         switch(event.getNewState()) {
             case BluetoothProfile.STATE_CONNECTED:
-                state = state.substring(0, 1+state.indexOf(")")) + " connected.";
+                state = state.substring(0, 1+state.indexOf(")")) + " connecting...";
                 text.setText(state);
                 text.setTextColor(Color.GRAY);
                 break;
@@ -195,6 +200,15 @@ public class GraphActivity extends AppCompatActivity {
             default:
                 break;
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void servicesDiscovered(GATTServicesDiscoveredEvent event) {
+        TextView text = deviceStates.get(event.getDevice().getAddress());
+        String state = text.getText().toString();
+        state = state.substring(0, 1+state.indexOf(")")) + " connected.";
+        text.setText(state);
+        text.setTextColor(Color.GRAY);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

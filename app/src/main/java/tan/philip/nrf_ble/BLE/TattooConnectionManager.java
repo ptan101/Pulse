@@ -30,6 +30,7 @@ import tan.philip.nrf_ble.BLE.Gatt.GattManager;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattCharacteristicWriteOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattDisconnectOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattSetNotificationOperation;
+import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
 import tan.philip.nrf_ble.Events.TMSPacketRecievedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
@@ -132,14 +133,14 @@ public class TattooConnectionManager {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void connectionStateChanged(GattManager.ConnectionStateChangedBundle bundle) {
+    public void connectionStateChanged(GATTConnectionChangedEvent event) {
         for (BLEDevice device : mConnectedDevices) {
-            if (device.getAddress().equals(bundle.mAddress)) {
-                if (bundle.mNewState == BluetoothProfile.STATE_DISCONNECTED || bundle.mNewState == 133) {
+            if (device.getAddress().equals(event.getAddress())) {
+                if (event.getNewState() == BluetoothProfile.STATE_DISCONNECTED || event.getNewState() == 133) {
                     device.setConnected(false);
                     //L.i("Disconnected from " + bundle.mAddress + ". Removing from subscribed list.");
                     //mConnectedDevices.remove(device);
-                } else if (bundle.mNewState == BluetoothProfile.STATE_CONNECTED) {
+                } else if (event.getNewState() == BluetoothProfile.STATE_CONNECTED) {
                     device.setConnected(true);
                 }
             }

@@ -1,0 +1,81 @@
+<merge xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/ble_scan_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF">
+
+        <ImageView
+            android:id="@+id/ble_scan_icon_highlight"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/pulse"
+            android:tint="#FFEB3B"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <ImageView
+            android:id="@+id/ble_scan_icon_highlight2"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/pulse"
+            android:tint="#FF0000"
+            app:layout_constraintBottom_toBottomOf="@+id/ble_scan_icon_button"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/ble_scan_icon_button" />
+
+        <ImageButton
+            android:id="@+id/ble_scan_icon_button"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:adjustViewBounds="true"
+            android:background="@android:color/transparent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ble_icon"
+            app:layout_constraintBottom_toBottomOf="@+id/ble_scan_icon_highlight"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/ble_scan_icon_highlight" />
+
+        <TextView
+            android:id="@+id/ble_scan_icon_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test"
+            android:textColor="#ffffff"
+            android:textSize="15sp"
+            android:maxLines="1"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ble_scan_icon_highlight" />
+
+        <TextView
+            android:id="@+id/ble_scan_icon_address"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FF:FF:FF:FF:FF:FF"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:textColor="#ffffff"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ble_scan_icon_name" />
+
+        <TextView
+            android:id="@+id/ble_scan_icon_rssi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="RSSI"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:textColor="#ffffff"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ble_scan_icon_address" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</merge>

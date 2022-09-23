@@ -29,7 +29,7 @@ import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
-    private static final String WEB_SOCKET_URL = "http://192.168.1.97:3000";
+    private static final String WEB_SOCKET_URL = "http://192.168.50.147:3001";
     private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
     private final String bedName = "BED012";
@@ -134,6 +134,8 @@ public class SickbayPushService extends Service {
 
              */
 
+            IO.Options options = new IO.Options();
+            SocketSSL.set(options);
             mSocket = IO.socket(WEB_SOCKET_URL);
             Log.d(TAG, "Socket object created.");
         } catch (URISyntaxException e) {
@@ -167,7 +169,7 @@ public class SickbayPushService extends Service {
         }
 
         if (mSocket.connected()) {
-            mSocket.emit("NewData", message);
+            mSocket.emit("NewDataVICU", message);
         }
     }
 

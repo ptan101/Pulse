@@ -1,0 +1,41 @@
+<merge xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <LinearLayout
+        android:id="@+id/digital_display"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:layout_margin="20dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/digital_display_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF">
+
+            <TextView
+                android:id="@+id/digital_display_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="@id/digital_display_container"
+                app:layout_constraintTop_toTopOf="@id/digital_display_container"
+                app:layout_constraintStart_toEndOf="@id/digital_display_icon"
+                app:layout_constraintEnd_toEndOf="@id/digital_display_container"
+                ></TextView>
+
+            <ImageView
+                android:id="@+id/digital_display_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="@id/digital_display_container"
+                app:layout_constraintTop_toTopOf="@id/digital_display_container"
+                app:layout_constraintStart_toStartOf="@id/digital_display_container"
+                app:layout_constraintEnd_toStartOf="@id/digital_display_label"
+                ></ImageView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+</merge>

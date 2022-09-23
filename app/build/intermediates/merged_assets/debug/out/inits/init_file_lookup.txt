@@ -1,0 +1,4 @@
+Debug Mode, debug.init
+PPG Tattoo v3.2, ppg_max86141.init
+EEG-Test, eeg_tattoo.init
+Pneumonia_v2.0, pneumonia_v2.init

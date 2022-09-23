@@ -1,0 +1,120 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="tan.philip.nrf_ble"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+8-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml
+9        android:targetSdkVersion="29" />
+9-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml
+10
+11    <uses-permission android:name="android.permission.BLUETOOTH" />
+11-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:5:5-68
+11-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:5:22-65
+12    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+12-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:6:5-74
+12-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:6:22-71
+13    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+13-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:7:5-79
+13-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:7:22-76
+14    <uses-permission android:name="android.permission.VIBRATE" />
+14-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:8:5-66
+14-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:8:22-63
+15    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+15-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:9:5-81
+15-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:9:22-78
+16    <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+16-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:10:5-81
+16-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:10:22-78
+17    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+17-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:11:5-78
+17-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:11:22-75
+18    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+18-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:12:5-77
+18-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:12:22-74
+19    <uses-permission android:name="android.permission.INTERNET" />
+19-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:13:5-67
+19-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:13:22-64
+20
+21    <uses-feature
+21-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:15:5-17:35
+22        android:name="android.hardware.bluetooth_le"
+22-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:16:9-53
+23        android:required="true" />
+23-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:17:9-32
+24
+25    <application
+25-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:19:5-51:19
+26        android:allowBackup="true"
+26-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:20:9-35
+27        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+27-->[androidx.core:core:1.0.1] C:\Users\User\.gradle\caches\transforms-2\files-2.1\bd3439c13c118ec0d73da42d8af76d68\core-1.0.1\AndroidManifest.xml:22:18-86
+28        android:debuggable="true"
+29        android:extractNativeLibs="false"
+30        android:icon="@drawable/heartrate"
+30-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:21:9-43
+31        android:label="@string/app_name"
+31-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:22:9-41
+32        android:requestLegacyExternalStorage="true"
+32-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:23:9-52
+33        android:roundIcon="@mipmap/ic_launcher_round"
+33-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:24:9-54
+34        android:supportsRtl="true"
+34-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:25:9-35
+35        android:testOnly="true"
+36        android:theme="@style/AppTheme"
+36-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:27:9-40
+37        android:usesCleartextTraffic="true" >
+37-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:26:9-44
+38        <service
+38-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:28:9-32:19
+39            android:name="tan.philip.nrf_ble.SickbayPush.SickbayPushService"
+39-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:29:13-59
+40            android:enabled="true"
+40-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:30:13-35
+41            android:exported="true" >
+41-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:31:13-36
+42        </service>
+43
+44        <activity
+44-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:33:9-38:59
+45            android:name="tan.philip.nrf_ble.GraphScreen.GraphActivity"
+45-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:34:13-54
+46            android:configChanges="keyboardHidden|orientation|screenSize"
+46-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:35:13-74
+47            android:label="GraphActivity"
+47-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:36:13-42
+48            android:screenOrientation="portrait"
+48-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:37:13-49
+49            android:theme="@style/AppTheme.NoActionBar" />
+49-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:38:13-56
+50        <activity
+50-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:39:9-49:20
+51            android:name="tan.philip.nrf_ble.ScanScreen.ScanningActivity"
+51-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:40:13-56
+52            android:configChanges="keyboardHidden|orientation|screenSize"
+52-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:41:13-74
+53            android:screenOrientation="portrait"
+53-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:42:13-49
+54            android:theme="@style/AppTheme.NoActionBar" >
+54-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:43:13-56
+55            <intent-filter>
+55-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:44:13-48:29
+56                <action android:name="android.intent.action.MAIN" />
+56-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:45:17-69
+56-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:45:25-66
+57
+58                <category android:name="android.intent.category.LAUNCHER" />
+58-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:47:17-77
+58-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:47:27-74
+59            </intent-filter>
+60        </activity>
+61
+62        <service android:name="tan.philip.nrf_ble.BLE.BLEHandlerService" />
+62-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:50:9-58
+62-->C:\baylor_work\research\Etatoo_Project\code\app\src\main\AndroidManifest.xml:50:18-55
+63    </application>
+64
+65</manifest>

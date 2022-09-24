@@ -162,8 +162,14 @@ tan/philip/nrf_ble/BLE/Gatt/operations/GattOperation.java
 tan/philip/nrf_ble/GraphScreen/UIComponents/DigitalDisplayManager.java
  tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager
  tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager$1
-tan/philip/nrf_ble/Algorithms/BiometricsSet.java
- tan.philip.nrf_ble.Algorithms.BiometricsSet
+tan/philip/nrf_ble/SickbayPush/SickbayPushService.java
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$1
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$1$1
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$2
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$3
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$4
+ tan.philip.nrf_ble.SickbayPush.SickbayPushService$LocalBinder
 tan/philip/nrf_ble/BLE/BLEDevices/BLETattooDevice.java
  tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice
 tan/philip/nrf_ble/Events/Sickbay/SickbayQueueEvent.java
@@ -174,17 +180,11 @@ tan/philip/nrf_ble/databinding/ActivityScanningBinding.java
  tan.philip.nrf_ble.databinding.ActivityScanningBinding
 tan/philip/nrf_ble/Events/UIRequests/RequestSendTMSEvent.java
  tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent
-tan/philip/nrf_ble/Events/UIRequests/RequestStartScanEvent.java
- tan.philip.nrf_ble.Events.UIRequests.RequestStartScanEvent
-tan/philip/nrf_ble/BLE/Gatt/operations/GattCharacteristicReadOperation.java
- tan.philip.nrf_ble.BLE.Gatt.operations.GattCharacteristicReadOperation
 tan/philip/nrf_ble/SickbayPush/SickbayQueue.java
  tan.philip.nrf_ble.SickbayPush.SickbayQueue
-tan/philip/nrf_ble/SickbayPush/SickbayPushService.java
- tan.philip.nrf_ble.SickbayPush.SickbayPushService
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$1
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$1$1
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$2
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$3
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$4
- tan.philip.nrf_ble.SickbayPush.SickbayPushService$LocalBinder
+tan/philip/nrf_ble/BLE/Gatt/operations/GattCharacteristicReadOperation.java
+ tan.philip.nrf_ble.BLE.Gatt.operations.GattCharacteristicReadOperation
+tan/philip/nrf_ble/Algorithms/BiometricsSet.java
+ tan.philip.nrf_ble.Algorithms.BiometricsSet
+tan/philip/nrf_ble/Events/UIRequests/RequestStartScanEvent.java
+ tan.philip.nrf_ble.Events.UIRequests.RequestStartScanEvent

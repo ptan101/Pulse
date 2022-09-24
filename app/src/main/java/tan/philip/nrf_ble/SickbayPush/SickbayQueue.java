@@ -48,7 +48,7 @@ public class SickbayQueue {
         try {
             obj.put("channel", bedName);
             obj.put("ns", namespace);
-            obj.put("t0", ((double) timestamp) / 10000);
+            obj.put("t0", ((double) timestamp));
             obj.put("dt", dt/1000);
             obj.put("VIZ", new Integer(0));
             obj.put("Z", new Integer(0));

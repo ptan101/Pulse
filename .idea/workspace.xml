@@ -15,11 +15,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="When the device disconnects and reconnects, the time interval (calculated with the phone's system clock) will be saved as an event marker.">
-      <change afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/SickbayPush/SocketSSL.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/SickbayPush/SickbayPushService.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/SickbayPush/SickbayPushService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/SickbayPush/SickbayQueue.java" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/SickbayPush/SickbayQueue.java" afterDir="false" />
-    </list>
+    <list default="true" id="5df13e26-bc2b-4de7-95c1-652c0545a7a4" name="Default Changelist" comment="When the device disconnects and reconnects, the time interval (calculated with the phone's system clock) will be saved as an event marker." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -356,7 +352,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/tan/philip/nrf_ble/GraphScreen/GraphActivity.java</url>
-          <line>214</line>
+          <line>228</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="java-line">

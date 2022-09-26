@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -20,9 +21,11 @@ public class DebugBLEDevice extends BLETattooDevice {
     public static final String DEBUG_MODE_ADDRESS = "00:00:00:00:00:00d";
     public static final String DEBUG_MODE_BT_ID = "Debug Mode";
 
-    private int debugModeTime;
+    private float debugModeTime;
     private final Handler debugNotificationHandler;
     private final Handler debugConnectionHandler;
+    private long lastRunTime = 0;
+
 
 
     public DebugBLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
@@ -31,7 +34,7 @@ public class DebugBLEDevice extends BLETattooDevice {
         debugNotificationHandler = new Handler();
         debugConnectionHandler = new Handler();
         debugNotifier.run();
-        debugConnectionHandler.postDelayed(debugOnConnectionChanged, 1000);
+        debugConnectionHandler.postDelayed(debugOnConnectionChanged, 5000);
     }
 
     public void endDebugMode() {
@@ -80,11 +83,17 @@ public class DebugBLEDevice extends BLETattooDevice {
                     }
                     numSamples[i] ++;
                 }
-                debugModeTime += mBLEParser.getNotificationFrequency();
+                debugModeTime += 1/mBLEParser.getNotificationFrequency();
+
+                long curTime = System.currentTimeMillis();
+//                if(lastRunTime != 0)
+//                    Log.d("Debug", "Run (dt = " + (curTime - lastRunTime) + " ms)");
+                lastRunTime = curTime;
+
 
                 processNUSPacket(data);
             } finally {
-                debugNotificationHandler.postDelayed(debugNotifier, (long) (mBLEParser.getNotificationFrequency() * 1000));
+                debugNotificationHandler.postDelayed(debugNotifier, (long) (1000 / mBLEParser.getNotificationFrequency()));
             }
         }
     };

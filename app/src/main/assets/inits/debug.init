@@ -1,5 +1,5 @@
 Packet Information
-1, 60
+5, 12
 end
 Signals Information
 0, Sine, 1, 20, 8, signed
@@ -33,54 +33,6 @@ end
 Biometric Settings
 end
 Packet Structure
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
-0
-1
-2
 0
 1
 2

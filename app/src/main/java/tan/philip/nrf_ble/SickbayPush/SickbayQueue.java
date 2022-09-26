@@ -18,12 +18,15 @@ public class SickbayQueue {
     private String namespace;
     private int instanceID;
     private final Map<Integer, ArrayList<Integer>> dataQueue;
+    private final float notificationFrequency;
+    private int numPacketsInQueue = 0;
 
-    public SickbayQueue(String bedName, String namespace, int instanceID) {
+    public SickbayQueue(String bedName, String namespace, int instanceID, float notificationFrequency) {
         dataQueue = new ConcurrentHashMap<>();
         this.bedName = bedName;
         this.namespace = namespace;
         this.instanceID = instanceID;
+        this.notificationFrequency = notificationFrequency;
     }
 
     public synchronized void addToQueue(HashMap<Integer, ArrayList<Integer>> dataIn) {
@@ -34,26 +37,17 @@ public class SickbayQueue {
             else
                 dataQueue.get(i).addAll(dataIn.get(i));
         }
+
+        numPacketsInQueue ++;
     }
 
     /**
      * Converts the queue into a single data frame JSON String.
-     * @param dt Interval between pushes, in ms.
      * @return The JSON string. If no data is available to send, returns null.
      */
-    public synchronized JSONObject convertQueueToJSONString(long timestamp, float dt) {
-
-
+    public synchronized JSONObject convertQueueToJSONString(long timestamp) {
         JSONObject obj = new JSONObject();
         try {
-            obj.put("CH", bedName);
-            obj.put("NS", namespace);
-            obj.put("T", ((double) timestamp) / 10000);
-            obj.put("DT", dt);
-            obj.put("VIZ", new Integer(0));
-            obj.put("Z", new Integer(0));
-            obj.put("InstanceID", instanceID);
-
             String dataString = "[{";
             ArrayList<String> signalStrings = new ArrayList<>();
             boolean signalsNeedPushing = false;
@@ -83,6 +77,17 @@ public class SickbayQueue {
             if (!signalsNeedPushing)
                 return null;
 
+            float dt = 1000 * numPacketsInQueue / notificationFrequency;
+            //Log.d(TAG, "dt: " + dt + ", num packets: " + numPacketsInQueue);
+            numPacketsInQueue = 0;  //I think this is thread safe, if not change this
+
+            obj.put("CH", bedName);
+            obj.put("NS", namespace);
+            obj.put("T", ((double) timestamp) / 10000);
+            obj.put("DT", dt);
+            obj.put("VIZ", new Integer(0));
+            obj.put("Z", new Integer(0));
+            obj.put("InstanceID", instanceID);
             obj.put("DATA", dataString);
         } catch (JSONException e) {
             Log.e(TAG, "Unable to put data into JSONObject (" + e.getMessage() + ")");

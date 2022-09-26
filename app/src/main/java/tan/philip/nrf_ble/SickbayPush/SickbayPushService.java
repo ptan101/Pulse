@@ -41,6 +41,8 @@ public class SickbayPushService extends Service {
     private final HashMap<Integer, SickbayQueue> dataQueues = new HashMap<>();
     private Handler mHandler;
 
+    private long lastPushTime = 0;
+
     public class LocalBinder extends Binder {
         public SickbayPushService getService() {
             // Return this instance of SickbayPushService so clients can call public methods
@@ -82,7 +84,7 @@ public class SickbayPushService extends Service {
     public void initializeQueues(ArrayList<BLEDevice> devices) {
         for (BLEDevice d : devices) {
             //To do: Unique namespace
-            dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId()));
+            dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId(), d.getNotificationFrequency()));
         }
     }
 
@@ -93,7 +95,7 @@ public class SickbayPushService extends Service {
         for (int instanceID : dataQueues.keySet()) {
             SickbayQueue q = dataQueues.get(instanceID);
             //Reformat data in queue into string.
-            JSONObject message = q.convertQueueToJSONString(timestamp, (float) PUSH_INTERVAL_MS);
+            JSONObject message = q.convertQueueToJSONString(timestamp);
 
             //Attempt to send the data
             attemptSend(message);
@@ -165,6 +167,12 @@ public class SickbayPushService extends Service {
         if (message == null) {
             return;
         }
+
+        Long curTime = System.currentTimeMillis();
+//        if(lastPushTime != 0)
+//            Log.d(TAG, "Push (dt = " + (curTime - lastPushTime) + " ms)");
+        lastPushTime = curTime;
+
 
         if (mSocket.connected()) {
             mSocket.emit("NewData", message);

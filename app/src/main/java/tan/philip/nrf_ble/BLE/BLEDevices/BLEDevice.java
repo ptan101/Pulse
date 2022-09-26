@@ -221,5 +221,7 @@ public class BLEDevice {
     public int getUniqueId() {
         return uniqueID;
     }
+
+    public float getNotificationFrequency() {return mBLEParser.getNotificationFrequency(); }
 }
 

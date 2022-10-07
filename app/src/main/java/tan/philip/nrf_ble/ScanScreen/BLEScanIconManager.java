@@ -99,7 +99,7 @@ public class BLEScanIconManager {
     public void removeIcon(String address) {
         BLEScanIcon icon = icons.get(address);
         icon.fadeOut();
-        icons.remove(icon);
+        icons.remove(address);
         mLayout.removeView(icon);
         selectedAddresses.remove(icon.getAddress());
         EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));

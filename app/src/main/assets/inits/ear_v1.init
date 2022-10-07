@@ -1,0 +1,37 @@
+Packet Information
+10, 44
+end
+Signals Information
+0, PPG-R, 4, 50, 22, unsigned
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
+..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..gain: 8
+1, PPG-IR, 4, 50, 22, unsigned
+.graphable
+..color: 0 0 250 255
+.filter
+..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
+..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..gain: 8
+2, num, 2, 6, 16, unsigned
+3, TEMP, 2, 6, 16, signed
+end
+Biometric Settings
+end
+Packet Structure
+2
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+3
+end

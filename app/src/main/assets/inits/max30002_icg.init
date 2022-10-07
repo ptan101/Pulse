@@ -1,0 +1,24 @@
+Packet Information
+8, 24
+end
+Signals Information
+0, RES, 3, 64, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+Biometric Settings
+end
+Packet Structure
+0
+0
+0
+0
+0
+0
+0
+0
+end

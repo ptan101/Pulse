@@ -1,30 +1,26 @@
-Packet Information
-6, 132
+6, 84
 end
-Signals Information
-0, PPG-1, 4, 30, 20, signed
+0, PPG, 4, 30, 20, unsigned
+.graphable
+..color: 0 250 0 255
+.filter
+..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
+..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..gain: 8
 1, ECG, 3, 120, 18, signed
 .graphable
 ..color: 250 0 0 255
 .filter
 ..b: 1.0
 ..a: 1.0
-..gain: 35
-.sickbayID 1050
-.sickbayNS TATTOOWAVE
+..gain: 5
 2, num, 2, 6, 16, unsigned
-3, LIS-X, 2, 6, 14, signed
-4, LIS-Y, 2, 6, 14, signed
-5, LIS-Z, 2, 6, 14, signed
-6, Temperature, 2, 6, 16, signed
-.digdisplay
-..DecimalFormat: ###.#
-..conversion: x*0.0078125
-..suffix: \u00B0C
+3, Ac-X, 2, 6, 14, signed
+4, Ac-Y, 2, 6, 14, signed
+5, Ac-Z, 2, 6, 14, signed
+6, TEMP, 2, 6, 16, signed
 end
-Biometric Settings
 end
-Packet Structure
 2
 1
 1
@@ -51,29 +47,5 @@ Packet Structure
 0
 0
 0
-3
-4
-5
-3
-4
-5
-3
-4
-5
-3
-4
-5
-3
-4
-5
-3
-4
-5
-3
-4
-5
-3
-4
-5
 6
 end

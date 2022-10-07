@@ -45,14 +45,14 @@ public class DigitalDisplayManager {
                 set.connect(display.getId(), ConstraintSet.END, layout.getId(), ConstraintSet.END);
             } else {
                 set.connect(lastDisplay.getId(), ConstraintSet.START, layout.getId(), ConstraintSet.START);
-                set.connect(lastDisplay.getId(), ConstraintSet.END, display.getId(), ConstraintSet.END);
+                set.connect(lastDisplay.getId(), ConstraintSet.END, display.getId(), ConstraintSet.START);
 
                 set.connect(display.getId(), ConstraintSet.TOP, lastDisplay.getId(), ConstraintSet.TOP);
                 set.connect(display.getId(), ConstraintSet.START, lastDisplay.getId(), ConstraintSet.END);
                 set.connect(display.getId(), ConstraintSet.END, layout.getId(), ConstraintSet.END);
             }
         }
-
+        digitalDisplays.add(display);
         set.applyTo(layout);
     }
 

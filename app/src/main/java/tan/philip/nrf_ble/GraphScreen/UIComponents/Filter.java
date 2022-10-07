@@ -36,6 +36,9 @@ public class Filter implements Serializable {
         //Set the current input
         x[len] = newX * gain;
 
+        if(len == 0)
+            return (float) x[len];
+
         //Start calculating the new output.
         y[len] = b[0] * x[len];
 

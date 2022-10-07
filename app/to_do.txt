@@ -4,3 +4,15 @@ Sometimes there is a bug when the device tries to connect and nothing happens
 SickbayPush
 - Let the IP address be setable
 - Turn on/off Sickbay push
+
+Graphing
+- No graphable only DD does not allocate space correctly
+
+Returning to scan screen does not remove all icons
+Set a default color
+
+Remove sync for single device?
+Remove menu for devices without TMS
+Conversion for DD is incorrect when there is scientific notation
+If no sickbay push, stop trying to add to queue. Currently, getting tons of errors
+since the SickbayPushService is dead

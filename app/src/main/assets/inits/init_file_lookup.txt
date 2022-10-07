@@ -2,3 +2,9 @@ Debug Mode, debug.init
 PPG Tattoo v3.2, ppg_max86141.init
 EEG-Test, eeg_tattoo.init
 Pneumonia_v2.0, pneumonia_v2.init
+MAX30102 Test, ppg_max30102.init
+ADXL355_1KHz, adxl355_test_1khz.init
+core-hydration, max30002.init
+MAX30002_ICG, max30002_icg.init
+Chest_v3.1, ecg_scg_v2_5.init
+Ear_Tattoo_v1.0, ear_v1.init

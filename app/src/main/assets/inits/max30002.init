@@ -1,0 +1,41 @@
+Packet Information
+1, 14
+end
+Signals Information
+0, RES, 4, 1, 20, signed
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.01856301062689718, 0.0, -0.07425204250758873, 0.0, 0.1113780637613831, 0.0, -0.07425204250758873, 0.0, 0.01856301062689718
+..a: 1.0, -5.381191122920366, 12.756735008986512, -17.605766754829023, 15.62779824541153, -9.169030300274237, 3.4576491641358897, -0.762385439483564, 0.07619706461033243
+..gain: -150
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x*0.00212+2.27
+..suffix: \u03A9
+1, REX, 4, 1, 20, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x*0.00281-0.57
+..suffix: \u03A9
+2, TEMP1, 2, 1, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x*0.0078125
+..suffix: \u00B0C
+3, TEMP2, 2, 1, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x*0.0078125
+..suffix: \u00B0C
+4, num, 2, 1, 16, unsigned
+end
+Biometric Settings
+end
+Packet Structure
+4
+0
+1
+2
+3
+end

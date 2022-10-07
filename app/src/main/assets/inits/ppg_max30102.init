@@ -1,0 +1,95 @@
+Packet Information
+3.33333, 92
+end
+Signals Information
+0, Red PPG, 3, 50, 18, unsigned
+.big
+.graphable
+..color: 255 0 0 255
+.filter
+..b: 0.01856301062689718, 0.0, -0.07425204250758873, 0.0, 0.1113780637613831, 0.0, -0.07425204250758873, 0.0, 0.01856301062689718
+..a: 1.0, -5.381191122920366, 12.756735008986512, -17.605766754829023, 15.62779824541153, -9.169030300274237, 3.4576491641358897, -0.762385439483564, 0.07619706461033243
+..gain: -50
+.digdisplay
+.sickbayID 1000
+.sickbayNS TATTOOWAVE
+1, IR PPG, 3, 50, 18, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.01856301062689718, 0.0, -0.07425204250758873, 0.0, 0.1113780637613831, 0.0, -0.07425204250758873, 0.0, 0.01856301062689718
+..a: 1.0, -5.381191122920366, 12.756735008986512, -17.605766754829023, 15.62779824541153, -9.169030300274237, 3.4576491641358897, -0.762385439483564, 0.07619706461033243
+..gain: -150
+.digdisplay
+.sickbayID 1002
+.sickbayNS TATTOOWAVE
+2, FSR, 2, 3, 14, signed
+.big
+.graphable
+..color: 0 0 0 255
+.filter
+..b: 1.0
+..a: 0
+..gain: 3
+.digdisplay
+..DecimalFormat: ###.#
+..suffix: \u00B0C
+end
+Biometric Settings
+heartrate, 0
+spo2, 0, 0, 0, 0
+pwv, 0, 0
+end
+Packet Structure
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+0
+1
+2
+end
+RX Messages
+Tattoo is in a normal operating state
+.alertDialog false
+Tattoo sensors are currently turned off.
+.brief shut off.
+.sendTX 1
+Tattoo detected an overtemperature condition and automatically shut off. To restart, turn the tattoo battery off and on. (ID = 0x01)
+.brief overheated and shut off.
+end
+TX Messages
+Shutdown tattoo
+.brief shut off.
+.alternate 2
+Turn on tattoo
+.alternate 1
+.isAlternate true
+Request tattoo state
+.isAlternate true
+end

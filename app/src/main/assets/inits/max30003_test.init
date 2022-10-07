@@ -1,0 +1,37 @@
+Packet Information
+10, 60
+end
+Signals Information
+0, ECG, 3, 200, 18, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+end
+Biometric Settings
+heartrate, 0
+end
+Packet Structure
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+end

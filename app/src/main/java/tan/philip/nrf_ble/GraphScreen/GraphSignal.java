@@ -15,6 +15,7 @@ import com.jjoe64.graphview.series.DataPointInterface;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.PointsGraphSeries;
 
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -157,7 +158,7 @@ public class  GraphSignal {
         //Convert the signal packet into the desired format
 
         //First, replace 'x' in the string with actual data
-        String func = settings.conversion.replace("x", Float.toString(data));
+        String func = settings.conversion.replace("x", new BigDecimal(data).toPlainString());
 
         //Now, evaluate the function
         Double evaluation = DigitalDisplayManager.eval(func);

@@ -1,0 +1,98 @@
+Packet Information
+13, 242
+end
+Signals Information
+0, Z, 3, 1000, 20, signed
+.graphable
+..color: 0 0 250 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, num, 2, 13, 16, unsigned
+end
+Biometric Settings
+end
+Packet Structure
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+end

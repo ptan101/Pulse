@@ -174,7 +174,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         numDevicesFound = 0;
         EventBus.getDefault().post(new RequestBLEClearScanListEvent());
         EventBus.getDefault().post(new RequestEndBLEForegroundEvent());
-        mIconManager.deselectAllIcons();
+        mIconManager.clearAllIcons();
     }
 
     @Override

@@ -12,7 +12,6 @@ Returning to scan screen does not remove all icons
 Set a default color
 
 Remove sync for single device?
-Remove menu for devices without TMS
-Conversion for DD is incorrect when there is scientific notation
+The same device scanned will increment in position when not required
 If no sickbay push, stop trying to add to queue. Currently, getting tons of errors
 since the SickbayPushService is dead

@@ -351,7 +351,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d("Permission", "onRequestPermissionsResult: "+ grantResults[0] + grantResults[1]);
+        //Log.d("Permission", "onRequestPermissionsResult: "+ grantResults[0] + grantResults[1]);
         switch(requestCode) {
             case REQUEST_ENABLE_BT:
                 if(grantResults.length==2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)

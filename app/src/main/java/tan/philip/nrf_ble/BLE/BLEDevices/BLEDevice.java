@@ -156,8 +156,8 @@ public class BLEDevice {
     public void startRecord(String fileName) {
         recordTime = 0;
         String fileDisplayName = displayName;
-        if(instanceId > 0)
-            fileDisplayName += "_" + instanceId;
+        //if(instanceId > 0)
+        fileDisplayName += "_" + mBluetoothDevice.getAddress().replace(":", ".");
 
         TattooFile.createFolder(fileName);
         TattooFile.createFolder(fileName + File.separator + fileDisplayName);

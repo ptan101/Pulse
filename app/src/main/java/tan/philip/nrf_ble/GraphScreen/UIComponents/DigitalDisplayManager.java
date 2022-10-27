@@ -37,7 +37,7 @@ public class DigitalDisplayManager {
             set.connect(display.getId(), ConstraintSet.START, layout.getId(), ConstraintSet.START);
             set.connect(display.getId(), ConstraintSet.END, layout.getId(), ConstraintSet.END);
         } else {
-            DigitalDisplay lastDisplay = digitalDisplays.get(0);
+            DigitalDisplay lastDisplay = digitalDisplays.get(digitalDisplays.size() - 1);
 
             if(digitalDisplays.size() % 2 == 0) {
                 set.connect(display.getId(), ConstraintSet.TOP, lastDisplay.getId(), ConstraintSet.BOTTOM);

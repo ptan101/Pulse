@@ -383,7 +383,11 @@ public class BLEPacketParser {
                 case "color":
                     int[] color = new int[4];
                     String[] color_s = options[1].split(" ");
-                    for (int i = 0; i < color_s.length; i++) {
+
+                    if(color_s.length != 4)
+                        Log.e(TAG, "Color " + options[1] + " needs to be RGBA.");
+
+                    for (int i = 0; i < 4; i++) {
                         color[i] = Integer.parseInt(color_s[i]);
                     }
                     signalSetting.color = color;

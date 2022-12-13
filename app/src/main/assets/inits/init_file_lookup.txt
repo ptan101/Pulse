@@ -8,3 +8,4 @@ core-hydration, max30002.init
 MAX30002_ICG, max30002_icg.init
 Chest_v3.1, ecg_scg_v2_5.init
 Ear_Tattoo_v1.0, ear_v1.init
+Radial Oximeter V1.0, radial_ox_max86141.init

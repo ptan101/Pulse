@@ -152,8 +152,24 @@ Packet Structure
 7
 end
 RX Messages
-Tattoo detected an overtemperature condition and automatically shut off. To restart, turn the tattoo battery off and on.
+Tattoo is in a normal operating state
+.alertDialog false
+Tattoo sensors are currently turned off.
+.brief shut off.
+.sendTX 1
+Tattoo detected an overtemperature condition and automatically shut off. To restart, turn the tattoo battery off and on. (ID = 0x01)
+.brief overheated and shut off.
+Tattoo finished calibrating.
 end
 TX Messages
 Shutdown tattoo
+.brief shut off.
+.alternate 2
+Turn on tattoo
+.alternate 1
+.isAlternate true
+Request tattoo state
+.isAlternate true
+Calibrate
+.brief calibrating...
 end

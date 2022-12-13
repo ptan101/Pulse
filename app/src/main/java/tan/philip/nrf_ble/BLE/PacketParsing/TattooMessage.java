@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class TattooMessage implements Serializable {
     String message;
+    //Set a short descriptor for the device's current state. E.g., "calibrating."
     String brief = null;
     //Set the ID of the RX message that will be swapped after this message is sent.
     //For example, shut off should be swapped with turn on.

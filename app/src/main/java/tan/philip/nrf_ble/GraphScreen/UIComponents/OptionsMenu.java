@@ -202,8 +202,8 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
                 .setPositiveButton("Mark Event", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Log.d("", "Event marked!");
                         String label = input.getText().toString();
+                        Toast.makeText(ctx, "Event " + label + "marked.", Toast.LENGTH_SHORT).show();
                         fileManager.markEvent(label);
                     }
                 })

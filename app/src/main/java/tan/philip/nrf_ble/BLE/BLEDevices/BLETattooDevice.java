@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.BLE.BLEDevices;
 
+import static tan.philip.nrf_ble.Constants.bytesToHex;
+
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import java.util.HashMap;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
+import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
 import tan.philip.nrf_ble.FileWriting.MarkerFile;
 import tan.philip.nrf_ble.FileWriting.TattooFile;
 import tan.philip.nrf_ble.GraphScreen.GraphSignal;
@@ -52,6 +55,16 @@ public class BLETattooDevice extends BLEDevice {
 
         //Send the data to the UI for display
         EventBus.getDefault().post(new PlotDataEvent(getAddress(), convertPacketForDisplay(packaged_data)));
+    }
 
+    public void processCUSPacket(byte[] messageBytes) {
+        //Save the message as an event marker
+        if(mRecording) {
+            markEvent("TMS message received: " + bytesToHex(messageBytes));
+            recordTime += (1.0f / mBLEParser.getNotificationFrequency());
+        }
+
+        //Send the message to the UI for display
+        EventBus.getDefault().post(new TMSMessageReceivedEvent(this.getAddress(), this.getTMSMessage(messageBytes[0])));
     }
 }

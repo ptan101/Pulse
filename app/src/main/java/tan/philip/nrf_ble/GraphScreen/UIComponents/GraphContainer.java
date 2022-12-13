@@ -9,9 +9,11 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -33,6 +35,7 @@ public class GraphContainer extends LinearLayout {
     private Context context;
     private float range = 1;
     private int seekbarProgress = 50;
+    private boolean autoscale = false;
 
 
     public GraphContainer(Context context, GraphSignal signal) {
@@ -97,7 +100,7 @@ public class GraphContainer extends LinearLayout {
 
     private void setupGraphView() {
         //Set the GraphView y axis limites
-        graphView.getViewport().setYAxisBoundsManual(true);
+        graphView.getViewport().setYAxisBoundsManual(!autoscale);
         graphView.getViewport().setMinY(-range/2);
         graphView.getViewport().setMaxY(range/2);
 
@@ -113,6 +116,9 @@ public class GraphContainer extends LinearLayout {
         graphView.getGridLabelRenderer().setGridStyle( GridLabelRenderer.GridStyle.NONE );
     }
 
+    /**
+     * Popup window that displays the amplification bar.
+     */
     private void showPopupWindow() {
         // inflate the layout of the popup window
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
@@ -125,6 +131,7 @@ public class GraphContainer extends LinearLayout {
         final PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
 
         SeekBar seekBar = popupView.findViewById(R.id.amplifcation_seek_bar);
+        seekBar.setEnabled(!autoscale);
         seekBar.setProgress(seekbarProgress);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -142,6 +149,25 @@ public class GraphContainer extends LinearLayout {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        //Autoscale switch
+        Switch autoscaleSwitch = popupView.findViewById(R.id.switch_autoscale);
+        autoscaleSwitch.setChecked(autoscale);
+        autoscaleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                autoscale = isChecked;
+                graphView.getViewport().setYAxisBoundsManual(!autoscale);
+                seekBar.setEnabled(!autoscale);
+
+                if(!autoscale){
+                    range = 1 / (float)Math.pow(10f, (float) seekbarProgress / 50f - 1);
+                    graphView.getViewport().setMinY(-range/2);
+                    graphView.getViewport().setMaxY(range/2);
+                }
 
             }
         });

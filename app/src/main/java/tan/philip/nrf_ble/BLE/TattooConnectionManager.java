@@ -32,7 +32,6 @@ import tan.philip.nrf_ble.BLE.Gatt.operations.GattDisconnectOperation;
 import tan.philip.nrf_ble.BLE.Gatt.operations.GattSetNotificationOperation;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
-import tan.philip.nrf_ble.Events.TMSPacketRecievedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 
 public class TattooConnectionManager {
@@ -53,6 +52,29 @@ public class TattooConnectionManager {
         //Register on EventBus
         EventBus.getDefault().register(this);
 
+        mGattManager.addCharacteristicChangeListener( TMS_TX_UUID,
+                new CharacteristicChangeListener() {
+                    @Override
+                    public void onCharacteristicChanged(String deviceAddress, BluetoothGattCharacteristic characteristic) {
+                        BLEDevice device = null;
+                        for (BLEDevice t : mConnectedDevices) {
+                            if (t.getAddress().equals(deviceAddress)) {
+                                device = t;
+                                break;
+                            }
+                        }
+
+                        if (device == null) {
+                            return;
+                        }
+
+                        byte[] messageBytes = characteristic.getValue();
+
+                        ((BLETattooDevice) device).processCUSPacket(messageBytes);
+                    }
+                }
+        );
+
         mGattManager.addCharacteristicChangeListener( NUS_TX_UUID,
                 new CharacteristicChangeListener() {
                     @Override
@@ -71,13 +93,7 @@ public class TattooConnectionManager {
 
                         byte[] messageBytes = characteristic.getValue();
 
-                        //Data is sensor data (from NUS)
-                        //Unfortunately switch case does not work with objects
-                        if(characteristic.getUuid().equals(NUS_TX_UUID)) {
-                            ((BLETattooDevice) device).processNUSPacket(messageBytes);
-                        } else if (characteristic.getUuid().equals(TMS_TX_UUID)) {
-                            EventBus.getDefault().post(new TMSPacketRecievedEvent(device.getTMSMessage(messageBytes[0])));
-                        }
+                        ((BLETattooDevice) device).processNUSPacket(messageBytes);
                     }
                 }
         );

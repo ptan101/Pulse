@@ -80,7 +80,7 @@ public class SickbayPushService extends Service {
 
     @Subscribe
     public void addToQueueEvent(SickbayQueueEvent event) {
-        if(queuesInitialized)
+        if(queuesInitialized && dataQueues != null)
             dataQueues.get(event.getInstanceId()).addToQueue(event.getData());
     }
 

@@ -1,5 +1,7 @@
+Packet Information
 6, 84
 end
+Signals Information
 0, PPG, 4, 30, 20, unsigned
 .graphable
 ..color: 0 250 0 255
@@ -15,12 +17,15 @@ end
 ..a: 1.0
 ..gain: 5
 2, num, 2, 6, 16, unsigned
+.digdisplay
 3, Ac-X, 2, 6, 14, signed
 4, Ac-Y, 2, 6, 14, signed
 5, Ac-Z, 2, 6, 14, signed
 6, TEMP, 2, 6, 16, signed
 end
+Biometric Settings
 end
+Packet Structure
 2
 1
 1

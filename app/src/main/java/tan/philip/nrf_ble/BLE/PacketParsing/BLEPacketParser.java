@@ -392,6 +392,9 @@ public class BLEPacketParser {
                     }
                     signalSetting.color = color;
                     break;
+                case "graphHeight":
+                    signalSetting.graphHeight = Integer.parseInt(options[1]);
+                    break;
                 default:
                     break;
             }

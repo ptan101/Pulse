@@ -2,12 +2,13 @@ package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 
+import static tan.philip.nrf_ble.Constants.convertDpToPixel;
+
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
@@ -17,19 +18,17 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
-import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.GridLabelRenderer;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
-import com.jjoe64.graphview.series.Series;
 
 import tan.philip.nrf_ble.GraphScreen.GraphSignal;
 import tan.philip.nrf_ble.R;
 
 public class GraphContainer extends LinearLayout {
     GraphView graphView;
+    GraphSignal graphSignal;
     private float minX = 0;
     private float maxX = 10;
     private Context context;
@@ -37,12 +36,12 @@ public class GraphContainer extends LinearLayout {
     private int seekbarProgress = 50;
     private boolean autoscale = false;
 
-
     public GraphContainer(Context context, GraphSignal signal) {
         super(context);
         this.context = context;
+        this.graphSignal = signal;
 
-        initializeViews(context, signal);
+        initializeViews(context);
     }
 
     public GraphContainer(Context context, @Nullable AttributeSet attrs, GraphSignal signal) {
@@ -72,7 +71,7 @@ public class GraphContainer extends LinearLayout {
         graphView.getViewport().setMaxX(maxX);
     }
 
-    private void initializeViews(Context context, GraphSignal signal) {
+    private void initializeViews(Context context) {
         LayoutInflater inflater = (LayoutInflater) context
                 .getSystemService(LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.graph_layout, this);
@@ -83,12 +82,12 @@ public class GraphContainer extends LinearLayout {
 
         //Set the display name
         TextView signalName = (TextView)this.findViewById(R.id.signal_name_display);
-        signalName.setText(signal.getName());
-        signalName.setTextColor(signal.getColorARGB());
+        signalName.setText(graphSignal.getName());
+        signalName.setTextColor(graphSignal.getColorARGB());
 
         //Attach the data series to the graph
-        graphView.addSeries(signal.getMonitor_series());
-        graphView.addSeries(signal.getMonitor_mask());
+        graphView.addSeries(graphSignal.getMonitor_series());
+        graphView.addSeries(graphSignal.getMonitor_mask());
 
         graphView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,6 +113,11 @@ public class GraphContainer extends LinearLayout {
 
         //No grid lines
         graphView.getGridLabelRenderer().setGridStyle( GridLabelRenderer.GridStyle.NONE );
+
+        //Set the layout height
+        //NOTE: This seems to be very slow. TO DO: look into speeding up
+        graphView.setLayoutParams(new ConstraintLayout.LayoutParams(LayoutParams.MATCH_PARENT,
+                (int) convertDpToPixel(graphSignal.getLayoutHeight(), context)));
     }
 
     /**
@@ -159,20 +163,24 @@ public class GraphContainer extends LinearLayout {
         autoscaleSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                autoscale = isChecked;
-                graphView.getViewport().setYAxisBoundsManual(!autoscale);
+                setAutoscale(isChecked);
                 seekBar.setEnabled(!autoscale);
-
-                if(!autoscale){
-                    range = 1 / (float)Math.pow(10f, (float) seekbarProgress / 50f - 1);
-                    graphView.getViewport().setMinY(-range/2);
-                    graphView.getViewport().setMaxY(range/2);
-                }
-
             }
         });
 
         popupWindow.showAsDropDown(this, 0, -height, Gravity.TOP | Gravity.LEFT);
+    }
+
+    public void setAutoscale(boolean autoscale) {
+        this.autoscale = autoscale;
+        graphView.getViewport().setYAxisBoundsManual(!autoscale);
+        if(!autoscale){
+            range = 1 / (float)Math.pow(10f, (float) seekbarProgress / 50f - 1);
+            graphView.getViewport().setMinY(-range/2);
+            graphView.getViewport().setMaxY(range/2);
+        }
+
+
     }
 
     @Override

@@ -5,9 +5,13 @@
     <item android:id ="@+id/record"
         android:title="Record"/>
 
+    <item android:id ="@+id/enable_all_autoscale"
+        android:title="Autoscale all plots"/>
+
+    <item android:id ="@+id/disable_all_autoscale"
+        android:title="Manual scale all plots"/>
+
     <item android:id ="@+id/help"
         android:title="Help"/>
-
-
 
 </menu>

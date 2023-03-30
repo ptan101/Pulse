@@ -19,6 +19,8 @@ public class SignalSetting implements Serializable {
     //Graph settings
     public boolean graphable = false;
     public int[] color = null;
+    public int graphHeight = 150;
+
     //Filter settings
     public Filter filter = null;
     //Digital display settings

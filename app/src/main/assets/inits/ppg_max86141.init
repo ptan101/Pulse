@@ -217,4 +217,10 @@ Turn on tattoo
 .isAlternate true
 Request tattoo state
 .isAlternate true
+Decrease LED 1
+Decrease LED 2
+Decrease LED 3
+Increase LED 1
+Increase LED 2
+Increase LED 3
 end

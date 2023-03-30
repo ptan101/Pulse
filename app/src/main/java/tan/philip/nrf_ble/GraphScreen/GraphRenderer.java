@@ -24,6 +24,7 @@ import java.util.Queue;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAll;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
@@ -172,6 +173,14 @@ public class GraphRenderer {
             recordTimer.setText("Record length: " + String.format("%02d:%02d:%02d", hours, minutes, seconds));
         }
 
+    }
+
+    @Subscribe(threadMode =  ThreadMode.MAIN)
+    public void toggleAllAutoscale(RequestChangeAutoScaleAll event) {
+        for(String i: signals.keySet()) {
+            for(Integer j : signals.get(i).keySet())
+                signals.get(i).get(j).setAutoscale(event.getAutoscale());
+        }
     }
 
     private void dequeueDataPoint(GraphSignal signal) {

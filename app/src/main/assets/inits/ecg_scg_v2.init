@@ -1,0 +1,79 @@
+Packet Information
+10, 160
+end
+Signals Information
+0, SCG-X, 3, 125, 20, signed
+1, SCG-Y, 3, 125, 20, signed
+2, SCG-Z, 3, 125, 20, signed
+3, ECG, 3, 125, 18, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 5
+4, num, 2, 10, 16, unsigned
+5, HR, 2, 10, 16, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: 7500/x
+..suffix: bpm
+end
+Biometric Settings
+end
+Packet Structure
+4
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+0
+1
+2
+5
+end

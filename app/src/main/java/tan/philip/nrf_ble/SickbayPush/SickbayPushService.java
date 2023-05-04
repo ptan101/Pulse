@@ -38,8 +38,10 @@ public class SickbayPushService extends Service {
     private final IBinder binder = new LocalBinder();
 
     //Might be better to be a hashmap. However, there are 2 keys (NS and instanceID), which is messy.
+    //Key is the instanceID.
     private final HashMap<Integer, SickbayQueue> dataQueues = new HashMap<>();
     private Handler mHandler;
+    private boolean queuesInitialized = false;
 
     private long lastPushTime = 0;
 
@@ -78,7 +80,8 @@ public class SickbayPushService extends Service {
 
     @Subscribe
     public void addToQueueEvent(SickbayQueueEvent event) {
-        dataQueues.get(event.getInstanceId()).addToQueue(event.getData());
+        if(queuesInitialized && dataQueues != null)
+            dataQueues.get(event.getInstanceId()).addToQueue(event.getData());
     }
 
     public void initializeQueues(ArrayList<BLEDevice> devices) {
@@ -86,6 +89,7 @@ public class SickbayPushService extends Service {
             //To do: Unique namespace
             dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId(), d.getNotificationFrequency()));
         }
+        queuesInitialized = true;
     }
 
     private synchronized void pushQueue(long timestamp) {

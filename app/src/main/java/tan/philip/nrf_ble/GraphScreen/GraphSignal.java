@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.GraphScreen;
 
+import static tan.philip.nrf_ble.Constants.convertPixelsToDp;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -85,6 +87,10 @@ public class  GraphSignal {
             monitor_series.resetData(monitor_buffer);
             setColor(settings.color);
         }
+    }
+
+    public void setAutoscale(boolean autoscale) {
+        graphContainer.setAutoscale(autoscale);
     }
 
     /**
@@ -186,7 +192,6 @@ public class  GraphSignal {
         });
     }
 
-
     /////////////////////////////////////////////Getters///////////////////////////////////////////
 
     public int getFs() {
@@ -247,6 +252,9 @@ public class  GraphSignal {
         return digitalDisplay;
     }
 
+    public int getLayoutHeight() {
+        return settings.graphHeight;
+    }
     ///////////////////////////////////////Setters/////////////////////////////////////////////////
 
     public void setDigitalDisplay(DigitalDisplay digitalDisplay) {

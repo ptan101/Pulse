@@ -21,6 +21,7 @@ import java.util.Calendar;
 
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAll;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestTMSSendEvent;
@@ -89,6 +90,12 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
             case R.id.record:
                 toggleRecord();
                 return true;
+            case R.id.enable_all_autoscale:
+                EventBus.getDefault().post(new RequestChangeAutoScaleAll(true));
+                return true;
+            case R.id.disable_all_autoscale:
+                EventBus.getDefault().post(new RequestChangeAutoScaleAll(false));
+                return true;
             case R.id.help:
                 showHelp();
                 return true;
@@ -122,6 +129,8 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
         if(device.connected()) {
             EventBus.getDefault().post(new RequestSendTMSEvent(device.getBluetoothDevice(),
                     new byte[] {(byte) msgId}));
+
+            Toast.makeText(ctx, "Message sent.", Toast.LENGTH_SHORT).show();
 
             //TO DO: May need to display the message. Eg.m if the brief or alert dialog needs display.
             //displayTMSMessage(msg);
@@ -202,8 +211,8 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
                 .setPositiveButton("Mark Event", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Log.d("", "Event marked!");
                         String label = input.getText().toString();
+                        Toast.makeText(ctx, "Event " + label + " marked.", Toast.LENGTH_SHORT).show();
                         fileManager.markEvent(label);
                     }
                 })

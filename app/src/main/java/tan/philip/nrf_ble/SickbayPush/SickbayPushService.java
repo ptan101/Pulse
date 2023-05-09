@@ -32,7 +32,7 @@ public class SickbayPushService extends Service {
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
     private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
-    private final String DEFAULT_BED_NAME = "BED012";
+    private final String DEFAULT_BED_NAME = "BED001";
     private String bedName = DEFAULT_BED_NAME;
 
     // Binder given to clients
@@ -60,7 +60,9 @@ public class SickbayPushService extends Service {
 
     @Override
     public void onCreate() {
-        readSickbaySettings();
+        readSickbaySettings(); //TO DO: Check if the IP address and Bed names are valid
+
+        initializeSocket();
 
         mHandler = new Handler();
         connectSocket();
@@ -95,7 +97,7 @@ public class SickbayPushService extends Service {
             }
             Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
 
-            webSocketURL = sickbayIP;
+            webSocketURL = "https://" + sickbayIP + ":3001";
 
             fileReader.close();
         }
@@ -136,7 +138,9 @@ public class SickbayPushService extends Service {
     public void initializeQueues(ArrayList<BLEDevice> devices) {
         for (BLEDevice d : devices) {
             //To do: Unique namespace
-            dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId(), d.getNotificationFrequency()));
+            //WARNING. UNIQUE ID IS HARD CODED
+            //dataQueues.put(d.getUniqueId(), new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId(), d.getNotificationFrequency()));
+            dataQueues.put(0, new SickbayQueue(bedName, "TATTOOWAVE", d.getUniqueId(), d.getNotificationFrequency()));
         }
         queuesInitialized = true;
     }
@@ -158,40 +162,13 @@ public class SickbayPushService extends Service {
     ///////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////Functions for sockets/////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////////////////////////
-    private final Socket mSocket;
-    {
+    private Socket mSocket;
+
+    void initializeSocket() {
         try {
-            /* Available options for the socket. Needs newer version of SocketIO to run.
-            IO.Options options = IO.Options.builder()
-                // IO factory options
-                .setForceNew(false)
-                .setMultiplex(true)
-
-                // low-level engine options
-                .setTransports(new String[] { Polling.NAME, WebSocket.NAME })
-                .setUpgrade(true)
-                .setRememberUpgrade(false)
-                .setPath("/socket.io/")
-                .setQuery(null)
-                .setExtraHeaders(null)
-
-                // Manager options
-                .setReconnection(true)
-                .setReconnectionAttempts(Integer.MAX_VALUE)
-                .setReconnectionDelay(1_000)
-                .setReconnectionDelayMax(5_000)
-                .setRandomizationFactor(0.5)
-                .setTimeout(20_000)
-
-                // Socket options
-                .setAuth(null)
-                .build();
-
-             */
-
             IO.Options options = new IO.Options();
             SocketSSL.set(options);
-            mSocket = IO.socket(webSocketURL);
+            mSocket = IO.socket(webSocketURL, options);
             Log.d(TAG, "Socket object created.");
         } catch (URISyntaxException e) {
             Log.e("Error URI", String.valueOf(e));
@@ -302,57 +279,3 @@ public class SickbayPushService extends Service {
     }
 }
 
-//Build infrastructure, not up to JSON formatting
-//Create a string called CRF frame, make it empty.
-//Dr. Rusin will do the conversion.
-
-//private connectionToWebServer() { }
-//Connection to the web socket
-//https://github.com/socketio/socket.io-client-java
-
-//Every 250 ms, send the queue
-//Reformat the data in the queue to be a single JSON string
-//Push the data over the web socket connection
-
-//1 Timestamp (64 bit int UTC)
-//2 List of signals and signal IDs that they represent
-//  array of short ints where each element represents a single signal
-//  array of bytes/samples included in that data segment
-//
-//Recognize if there is an error and reestablish connection
-
-// TO DO: option to set URL
-// TO DO: option to disable SickbayPush
-
-//This is called a data frame
-//{
-//"CH": "BED012", //Bed name (need to put in manually in the mobile app)
-//"NS": "GEVITAL", //Name space (Every signal needs a unique ID, given by Craig, ETATTOOVITAL for num, ETATTOOWAVE for waveforms)
-//"T": 1657310006119.1106, //Time\
-//
-//tamp (int64_t UTC 100ns intervals) of the first element entering the queue. Javascript handles time in 1000ms. Use the Javascript time instead of android java time. 64 bit int divided by 10000. Units ms
-//"DT": 2, // Dt of the data frame, num samples * period (seconds, float). E.g., 0.250. Better to do num_samples * time interval per sample.
-//"VIZ": 0, // Always 0
-//"Z": 0, //Always 0
-//"InstanceID": 0, //Probably going to be 0. But may change with multiple tattoos.
-//"DATA": [
-//    {
-//        "s1": [
-//            162, 100
-//        ],
-//        "s99": [
-//            72
-//        ],
-//        "s100": [
-//            76
-//        ],
-//        "s101": [
-//            162
-//        ],
-//        "s112": [
-//            -1.3
-//        ]
-//    }
-//]
-//
-//}

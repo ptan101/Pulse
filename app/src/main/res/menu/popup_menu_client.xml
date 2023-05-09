@@ -5,6 +5,12 @@
     <item android:id ="@+id/enterDebugMode"
         android:title="Debug Mode"/>
 
+    <item android:id ="@+id/enterSickbayIP"
+        android:title="Enter Sickbay IP Address"/>
+
+    <item android:id ="@+id/enterSickbayBedID"
+        android:title="Enter Sickbay Bed ID"/>
+
     <item android:id ="@+id/clearScan"
         android:title="Clear Scan"/>
 

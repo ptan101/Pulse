@@ -3,6 +3,7 @@ package tan.philip.nrf_ble.SickbayPush;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -12,14 +13,11 @@ import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
+import java.io.File;
+import java.io.FileReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import io.socket.client.IO;
 import io.socket.client.Socket;
@@ -29,10 +27,13 @@ import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
-    private static final String WEB_SOCKET_URL = "http://192.168.50.147:3001";
+
+    private static final String DEFAULT_WEB_SOCKET_URL = "http://192.168.50.147:3001";
+    private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
     private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
-    private final String bedName = "BED012";
+    private final String DEFAULT_BED_NAME = "BED012";
+    private String bedName = DEFAULT_BED_NAME;
 
     // Binder given to clients
     private final IBinder binder = new LocalBinder();
@@ -59,6 +60,8 @@ public class SickbayPushService extends Service {
 
     @Override
     public void onCreate() {
+        readSickbaySettings();
+
         mHandler = new Handler();
         connectSocket();
         startPushingPackets();
@@ -76,7 +79,53 @@ public class SickbayPushService extends Service {
         EventBus.getDefault().unregister(this);
     }
 
-    ////////////////////////////////////Queue Functions////////////////////////////////////////////
+    //Reads the sickbay settings from local memory
+    private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private void readSickbaySettings() {
+        //Read the sickbay IP first
+        String filePath = BASE_DIR_PATH + File.separator + "sickbayIP.txt";
+
+        try {
+            FileReader fileReader = new FileReader(filePath);
+
+            String sickbayIP = "";
+            int i;
+            while ((i = fileReader.read()) != -1) {
+                sickbayIP += (char)i;
+            }
+            Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
+
+            webSocketURL = sickbayIP;
+
+            fileReader.close();
+        }
+        catch (Exception e) {
+            Log.e(TAG, "exception", e);
+        }
+
+        //Read the sickbay bed ID
+        filePath = BASE_DIR_PATH + File.separator + "sickbayBedID.txt";
+
+        try {
+            FileReader fileReader = new FileReader(filePath);
+
+            String bedID = "";
+            int i;
+            while ((i = fileReader.read()) != -1) {
+                bedID += (char)i;
+            }
+            Log.d(TAG, "Sickbay Bed ID set to:" + bedID);
+
+            bedName = bedID;
+
+            fileReader.close();
+        }
+        catch (Exception e) {
+            Log.e(TAG, "exception", e);
+        }
+    }
+
+    // ////////////////////////////////Queue Functions////////////////////////////////////////////
 
     @Subscribe
     public void addToQueueEvent(SickbayQueueEvent event) {
@@ -142,7 +191,7 @@ public class SickbayPushService extends Service {
 
             IO.Options options = new IO.Options();
             SocketSSL.set(options);
-            mSocket = IO.socket(WEB_SOCKET_URL);
+            mSocket = IO.socket(webSocketURL);
             Log.d(TAG, "Socket object created.");
         } catch (URISyntaxException e) {
             Log.e("Error URI", String.valueOf(e));

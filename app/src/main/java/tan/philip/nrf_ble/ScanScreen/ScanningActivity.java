@@ -4,19 +4,24 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.text.InputType;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
@@ -27,6 +32,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,6 +55,8 @@ import tan.philip.nrf_ble.databinding.ActivityScanningBinding;
 import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
 import static tan.philip.nrf_ble.NotificationHandler.createNotificationChannel;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
+
+import com.opencsv.CSVWriter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -203,6 +212,12 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
             case R.id.enterDebugMode:
                 startDebugMode();
                 return true;
+            case R.id.enterSickbayIP:
+                enterSickbayIP();
+                return true;
+            case R.id.enterSickbayBedID:
+                enterSickbayBedID();
+                return true;
             case R.id.clearScan:
                 clearScan();
                 return true;
@@ -226,6 +241,90 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void connectToDevices(ArrayList<String> addresses) {
         EventBus.getDefault().post(new RequestBLEConnectEvent(addresses));
         startGraphActivity();
+    }
+
+    private String sickbayIP = "";
+    private String sickbayBedID = "";
+    private void enterSickbayIP() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(input);
+
+        builder.setTitle("Set Sickbay IP");
+        builder.setMessage("Enter the IP address of the Sickbay server to connect to.");
+        builder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                sickbayIP = input.getText().toString();
+
+                Log.d(TAG, "Sickbay IP set to " + sickbayIP);
+
+                //Write to file
+                writeSickbaySettings("sickbayIP", sickbayIP);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+        builder.show();
+
+
+    }
+
+    private void enterSickbayBedID() {
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(input);
+
+        builder.setTitle("Set Sickbay Bed ID");
+        builder.setMessage("Enter the Sickbay Bed ID.");
+        builder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                sickbayBedID = input.getText().toString();
+
+                Log.d(TAG, "Sickbay Bed ID set to " + sickbayBedID);
+
+                //Write to file
+                writeSickbaySettings("sickbayBedID", sickbayBedID);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+        builder.show();
+    }
+
+    //Very bad, doesn't check if number or if folder exists
+    private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private void writeSickbaySettings(String fileName, String data) {
+        Log.d(TAG, "Writing Sickbay setting " + fileName + " " + data);
+        String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
+
+        java.io.FileWriter mFileWriter;
+
+        try {
+            mFileWriter = new java.io.FileWriter(filePath, false);
+            mFileWriter.write(data);
+            mFileWriter.close();
+            Log.d(TAG, "SUCCESSFUL WRITE");
+        } catch (IOException e) {
+            Log.d(TAG, e.toString());
+        } finally {
+
+        }
     }
 
     private void startGraphActivity() {

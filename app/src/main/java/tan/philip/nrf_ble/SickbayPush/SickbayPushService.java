@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.SickbayPush;
 
+import static tan.philip.nrf_ble.SickbayPush.SickbayMessage.convertPacketToJSONString;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
@@ -24,13 +26,13 @@ import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
+import tan.philip.nrf_ble.Events.Sickbay.SickbaySendFloatsEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
 
     private static final String DEFAULT_WEB_SOCKET_URL = "http://192.168.50.147:3001";
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
-    private static final int PUSH_INTERVAL_MS = 250;        //every _ ms the queue will be pushed
 
     private final String DEFAULT_BED_NAME = "BED001";
     private String bedName = DEFAULT_BED_NAME;
@@ -40,7 +42,7 @@ public class SickbayPushService extends Service {
 
     //Might be better to be a hashmap. However, there are 2 keys (NS and instanceID), which is messy.
     //Key is the instanceID.
-    private final HashMap<Integer, SickbayQueue> dataQueues = new HashMap<>();
+    //private final HashMap<Integer, SickbayQueue> dataQueues = new HashMap<>();
     private Handler mHandler;
     private boolean queuesInitialized = false;
 
@@ -66,7 +68,6 @@ public class SickbayPushService extends Service {
 
         mHandler = new Handler();
         connectSocket();
-        startPushingPackets();
 
         //Register on EventBus
         EventBus.getDefault().register(this);
@@ -75,7 +76,6 @@ public class SickbayPushService extends Service {
     @Override
     public void onDestroy() {
         disconnectSocket();
-        stopPushingPackets();
 
         //Unregister from EventBus
         EventBus.getDefault().unregister(this);
@@ -130,6 +130,17 @@ public class SickbayPushService extends Service {
     // ////////////////////////////////Queue Functions////////////////////////////////////////////
 
     @Subscribe
+    public void sendSickbayFrameEvent(SickbaySendFloatsEvent event) {
+        Long curTime = System.currentTimeMillis();
+
+        JSONObject message = convertPacketToJSONString(curTime, event.getData(), event.getBLEDevice(), bedName);
+
+        //Attempt to send the data
+        attemptSend(message);
+    }
+
+    /*
+    @Subscribe
     public void addToQueueEvent(SickbayQueueEvent event) {
         if(queuesInitialized && dataQueues != null)
             dataQueues.get(event.getInstanceId()).addToQueue(event.getData());
@@ -158,6 +169,8 @@ public class SickbayPushService extends Service {
             attemptSend(message);
         }
     }
+
+     */
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     /////////////////////Functions for sockets/////////////////////////////////////////////////////
@@ -249,33 +262,5 @@ public class SickbayPushService extends Service {
         }
     };
 
-
-    //////////////////////////////////Repeated Task (Pushing)//////////////////////////////////////
-    Runnable packetPusher = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                //Log.d(TAG, "Socket connected: " + mSocket.connected());
-                // Should be 64 bit UTC. One thing to note is that it operates off the phone clock.
-                // Therefore, if the phone clock is wrong, the timestamp will also be wrong.
-                long timestamp = System.currentTimeMillis();
-
-                // Push queue to Sickbay
-                pushQueue(timestamp);
-
-                //Log.d(TAG, "Queue pushed!");
-            } finally {
-                mHandler.postDelayed(packetPusher, PUSH_INTERVAL_MS);
-            }
-        }
-    };
-
-    void startPushingPackets() {
-        packetPusher.run();
-    }
-
-    void stopPushingPackets() {
-        mHandler.removeCallbacks(packetPusher);
-    }
 }
 

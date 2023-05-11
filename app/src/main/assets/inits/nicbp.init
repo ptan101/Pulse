@@ -1,14 +1,15 @@
 Packet Information
-6, 144
+6.25, 174
 end
 Signals Information
 0, SCG-Z, 3, 120, 20, signed
 .graphable
-..color: 125 125 125 255
+..color: 0 0 250 255
 .filter
 ..b: 0.87685389, -3.50741556,  5.26112334, -3.50741556,  0.87685389
 ..a: 1.0, -3.73735339,  5.24600331, -3.27743279,  0.76887274
 ..gain: 5
+.sickbayID 1000
 1, ECG, 3, 120, 18, signed
 .graphable
 ..color: 250 0 0 255
@@ -16,6 +17,7 @@ Signals Information
 ..b: 1.0
 ..a: 1.0
 ..gain: 5
+.sickbayID 1001
 2, PPG, 4, 30, 20, unsigned
 .graphable
 ..color: 0 250 0 255
@@ -23,14 +25,32 @@ Signals Information
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 5
+.sickbayID 1002
 3, num, 2, 6, 16, unsigned
+.sickbayID 1003
 4, TEMP, 2, 6, 16, signed
 .digdisplay
 ..DecimalFormat: ##.##
 ..conversion: x*0.0078125
 ..suffix: \u00B0C
+.sickbayID 1004
+5, ACCX, 2, 30, 12, signed
+.sickbayID 1005
+6, ACCY, 2, 30, 12, signed
+.sickbayID 1006
+7, ACCZ, 2, 30, 12, signed
+.sickbayID 1007
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
+..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..gain: 1
 end
 Biometric Settings
+end
+Sickbay Settings
+.sickbayNS TATTOOWAVE
 end
 Packet Structure
 3
@@ -79,5 +99,20 @@ Packet Structure
 2
 2
 2
+5
+6
+7
+5
+6
+7
+5
+6
+7
+5
+6
+7
+5
+6
+7
 4
 end

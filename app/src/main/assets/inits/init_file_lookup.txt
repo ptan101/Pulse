@@ -14,3 +14,4 @@ Radial Oximeter V1.1, adpd1080.init
 Radu_b1, ecg_scg_v2.init
 Radu_b2, ecg_scg_v2.init
 Radu_b3, ecg_scg_v2.init
+NICBP, nicbp.init

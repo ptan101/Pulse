@@ -27,6 +27,9 @@ public class BLEPacketParser {
     ArrayList<TattooMessage> txMessages;
     BiometricsSet biometrics = new BiometricsSet();
 
+    //Sickbay settings
+    public String sickbayNS = null;
+
     //Use this to instantiate a new BLEPackageParser object
     public BLEPacketParser(Context context, String deviceName) throws FileNotFoundException {
         signalSettings = new HashMap<>();
@@ -95,8 +98,8 @@ public class BLEPacketParser {
         return parsedData;
     }
 
-    public HashMap<Integer, ArrayList<Integer>> convertToSickbayHashMap(HashMap<Integer, ArrayList<Integer>> signals) {
-        HashMap<Integer, ArrayList<Integer>> sickbayQueue = new HashMap<>();
+    public HashMap<Integer, ArrayList<Float>> convertToSickbayHashMap(HashMap<Integer, ArrayList<Float>> signals) {
+        HashMap<Integer, ArrayList<Float>> sickbayQueue = new HashMap<>();
 
         for (Integer i : signalSettings.keySet()) {
             int sickbayID = signalSettings.get(i).sickbayID;
@@ -216,6 +219,17 @@ public class BLEPacketParser {
                         i++;
                     }
                     break;
+                case "Sickbay Settings":
+                    i++;
+                    while(true) {
+                        cur_line = lines.get(i);
+                        if (cur_line.equals("end"))
+                            break;
+                        if (cur_line.charAt(0) == '.') {
+                            parseSickbayOptions(cur_line);
+                        }
+                        i++;
+                    }
                 default:
                     Log.e(TAG, "Unknown header: " + cur_line);
                     break;
@@ -308,9 +322,6 @@ public class BLEPacketParser {
             case "sickbayID":
                 signalSetting.sickbayID = Integer.parseInt(mainOption[1]);
                 break;
-            case "sickbayNS":
-                signalSetting.sickbayNS = mainOption[1];
-                break;
             default:
                 break;
         }
@@ -355,6 +366,23 @@ public class BLEPacketParser {
                 break;
             case "pwv":
                 biometrics.addPWVSignals(Integer.parseInt(settings[1]), Integer.parseInt(settings[2]));
+                break;
+            default:
+                break;
+        }
+
+    }
+
+    private void parseSickbayOptions(String pLine) {
+        //Cut out the initial period
+        pLine = pLine.substring(1);
+
+        //Look at first word
+        String[] sickbaySettings = pLine.split(" ");
+
+        switch (sickbaySettings[0]) {
+            case "sickbayNS":
+                sickbayNS = sickbaySettings[1];
                 break;
             default:
                 break;

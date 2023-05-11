@@ -5,10 +5,6 @@ import static tan.philip.nrf_ble.Constants.NUS_UUID;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -18,7 +14,6 @@ import java.util.UUID;
 import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
-import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.FileWriting.MarkerFile;
 import tan.philip.nrf_ble.FileWriting.TattooFile;
 
@@ -119,7 +114,7 @@ public class BLEDevice {
         return mBLEParser.parsePacket(data);
     }
 
-    public HashMap<Integer, ArrayList<Integer>> convertPacketForSickbayPush(HashMap<Integer, ArrayList<Integer>> packaged_data) {
+    public HashMap<Integer, ArrayList<Float>> convertPacketForSickbayPush(HashMap<Integer, ArrayList<Float>> packaged_data) {
         //Sometimes a packet arrives before app can disconnect when BLE device not recognized.
         if (mBLEParser == null)
             return null;
@@ -223,5 +218,7 @@ public class BLEDevice {
     }
 
     public float getNotificationFrequency() {return mBLEParser.getNotificationFrequency(); }
+
+    public String getSickbayNS() { return mBLEParser.sickbayNS; }
 }
 

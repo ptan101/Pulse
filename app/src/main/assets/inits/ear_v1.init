@@ -9,6 +9,7 @@ Signals Information
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 20
+.sickbayID 2000
 1, PPG-IR, 4, 50, 18, unsigned
 .graphable
 ..color: 0 0 250 255
@@ -16,10 +17,16 @@ Signals Information
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 20
+.sickbayID 2001
 2, num, 2, 6, 16, unsigned
+.sickbayID 2002
 3, TEMP, 2, 6, 16, signed
+.sickbayID 2003
 end
 Biometric Settings
+end
+Sickbay Settings
+.sickbayNS TATTOOWAVE
 end
 Packet Structure
 2

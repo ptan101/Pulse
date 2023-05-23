@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.BLE.Gatt;
 
+import static android.bluetooth.BluetoothGatt.CONNECTION_PRIORITY_HIGH;
+
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -135,6 +137,8 @@ public class GattManager {
                             mGatts.put(device.getAddress(), gatt);
 
                         gatt.discoverServices();
+                        gatt.requestConnectionPriority(CONNECTION_PRIORITY_HIGH);
+
                     } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                         Log.i(TAG, "Disconnected from gatt server " + device.getAddress() + ", newState: " + newState);
                         setCurrentOperation(null);

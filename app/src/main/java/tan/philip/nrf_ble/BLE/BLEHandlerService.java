@@ -165,7 +165,7 @@ public class BLEHandlerService extends Service {
             sickbayPushService = binder.getService();
             mIsBound = true;
 
-            sickbayPushService.initializeQueues(mConnectionManager.getBLEDevices());
+            //sickbayPushService.initializeQueues(mConnectionManager.getBLEDevices());
         }
 
         @Override

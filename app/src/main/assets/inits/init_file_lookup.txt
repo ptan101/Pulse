@@ -16,3 +16,4 @@ Radu_b1, ecg_scg_v2.init
 Radu_b2, ecg_scg_v2.init
 Radu_b3, ecg_scg_v2.init
 Dual_SCG, dualSCG.init
+NICBP, nicbp.init

@@ -29,9 +29,9 @@ Signals Information
 ..DecimalFormat: ##.##
 ..conversion: x*0.0078125
 ..suffix: \u00B0C
-5, ACCX, 2, 25, 12, signed
-6, ACCY, 2, 25, 12, signed
-7, ACCZ, 2, 25, 12, signed
+5, ACCX, 2, 30, 12, signed
+6, ACCY, 2, 30, 12, signed
+7, ACCZ, 2, 30, 12, signed
 .graphable
 ..color: 125 125 125 255
 .filter

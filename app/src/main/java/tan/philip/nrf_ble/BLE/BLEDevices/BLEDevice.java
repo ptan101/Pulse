@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
+import tan.philip.nrf_ble.Algorithms.Biometric;
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
@@ -219,6 +221,8 @@ public class BLEDevice {
 
     public float getNotificationFrequency() {return mBLEParser.getNotificationFrequency(); }
 
-    public String getSickbayNS() { return mBLEParser.sickbayNS; }
+    public String getSickbayNS() { return mBLEParser.sickbaySettings.getNamespace(); }
+
+    public BiometricsSet getBiometrics() { return mBLEParser.getBiometrics(); }
 }
 

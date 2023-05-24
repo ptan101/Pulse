@@ -13,8 +13,8 @@ Signals Information
 .graphable
 ..color: 250 0 0 255
 .filter
-..b: 1.0
-..a: 1.0
+..b: 0.5365885311136984, 0.0, -2.1463541244547937, 0.0, 3.2195311866821905, 0.0, -2.1463541244547937, 0.0, 0.5365885311136984
+..a: 1.0, -0.4121554390755492, -2.694838729987918, 0.7592290897292722, 2.9336465200712283, -0.508403607035584, -1.4785220120175717, 0.11865500458231906, 0.2879304294211396
 ..gain: 5
 2, num, 2, 6, 16, unsigned
 .digdisplay
@@ -24,6 +24,16 @@ Signals Information
 6, TEMP, 2, 6, 16, signed
 end
 Biometric Settings
+pan-tompkins: 3
+.digdisplay
+.displayName: HR
+..DecimalFormat: ###.#
+..suffix: _BPM
+..icon: heartrate
+.valueAlert
+..title: High heart rate detected
+..message: Heart rate exceeded 180 BPM!
+..threshold: 180
 end
 Packet Structure
 2

@@ -3,26 +3,8 @@ Packet Information
 end
 Signals Information
 0, SCG-X, 3, 125, 20, signed
-.graphable
-..color: 125 125 125 255
-.filter
-..b: 1.0
-..a: 1.0
-..gain: 5
 1, SCG-Y, 3, 125, 20, signed
-.graphable
-..color: 125 125 125 255
-.filter
-..b: 1.0
-..a: 1.0
-..gain: 5
 2, SCG-Z, 3, 125, 20, signed
-.graphable
-..color: 125 125 125 255
-.filter
-..b: 1.0
-..a: 1.0
-..gain: 5
 3, ECG, 3, 125, 18, signed
 .graphable
 ..color: 250 0 0 255
@@ -31,9 +13,31 @@ Signals Information
 ..a: 1.0
 ..gain: 5
 4, num, 2, 10, 16, unsigned
-5, TEMP, 2, 10, 16, signed
+5, HR, 2, 10, 16, signed
+.digdisplay
+..displayName: HR MAX
+..DecimalFormat: ###.#
+..conversion: 7500/x
+..suffix: _BPM
 end
 Biometric Settings
+pan-tompkins: 3
+.digdisplay
+..displayName: HR PT
+..DecimalFormat: ###.0
+..suffix: _BPM
+..icon: heartrate
+.valueAlert
+..title: High heart rate detected
+..message: Heart rate exceeded 180 BPM!
+..threshold: 180
+.additionalParam
+..0.204301
+..0
+..-0.204301
+..1
+..-1.43979
+..0.591398
 end
 Packet Structure
 4

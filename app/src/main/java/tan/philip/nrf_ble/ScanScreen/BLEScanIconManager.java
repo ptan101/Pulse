@@ -148,4 +148,9 @@ public class BLEScanIconManager {
         newIcon.setVisibility(View.VISIBLE);
         newIcon.fadeIn();
     }
+
+    public boolean iconSelected(String address) {
+        boolean iconSelected = icons.get(address).isIconSelected();
+        return iconSelected;
+    }
 }

@@ -1,16 +1,10 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-import static tan.philip.nrf_ble.Constants.convertPixelsToDp;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.text.Html;
-import android.view.View;
-import android.widget.TextView;
-
-import androidx.constraintlayout.widget.ConstraintSet;
 
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.DataPointInterface;
@@ -23,7 +17,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
-import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplaySettings;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 
@@ -40,7 +35,6 @@ public class  GraphSignal {
 
     //For Digital Display
     private DigitalDisplay digitalDisplay;
-    private DecimalFormat decimalFormat = new DecimalFormat("###.#");   //Default format in case user doesn't define one
     private final float samplePeriod;
 
     //For rendering
@@ -50,9 +44,6 @@ public class  GraphSignal {
 
     public GraphSignal(SignalSetting settings) {
         this.settings = settings;
-
-        if(settings.decimalFormat != null)
-            this.decimalFormat = new DecimalFormat(settings.decimalFormat);
 
         samplePeriod = 1000 /  settings.fs;
 
@@ -138,7 +129,7 @@ public class  GraphSignal {
         }
 
         //Display on the Digital Display, if necessary
-        if(settings.digitalDisplay)
+        if(settings.ddSettings != null)
             this.setDigitalDisplayText(newData[newData.length - 1]);
     }
 
@@ -164,13 +155,13 @@ public class  GraphSignal {
         //Convert the signal packet into the desired format
 
         //First, replace 'x' in the string with actual data
-        String func = settings.conversion.replace("x", new BigDecimal(data).toPlainString());
+        String func = settings.ddSettings.conversion.replace("x", new BigDecimal(data).toPlainString());
 
         //Now, evaluate the function
-        Double evaluation = DigitalDisplayManager.eval(func);
+        double evaluation = DigitalDisplayManager.eval(func);
 
         //Format text and display
-        this.digitalDisplay.label.setText(Html.fromHtml(settings.prefix + decimalFormat.format(evaluation) + settings.suffix));
+        this.digitalDisplay.changeValue((float) evaluation);
     }
 
     private void setSeriesPaint(int a, int r, int g, int b, int strokeWidth, LineGraphSeries<DataPoint> series) {
@@ -219,7 +210,7 @@ public class  GraphSignal {
     }
 
     public boolean useDigitalDisplay() {
-        return settings.digitalDisplay;
+        return settings.ddSettings != null;
     }
 
     public GraphContainer getGraphContainer() {
@@ -255,6 +246,9 @@ public class  GraphSignal {
     public int getLayoutHeight() {
         return settings.graphHeight;
     }
+
+    public DigitalDisplaySettings getDigitalDisplaySettings() { return settings.ddSettings; }
+
     ///////////////////////////////////////Setters/////////////////////////////////////////////////
 
     public void setDigitalDisplay(DigitalDisplay digitalDisplay) {

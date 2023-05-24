@@ -48,12 +48,14 @@ public class BLETattooDevice extends BLEDevice {
             recordTime += (1.0f / mBLEParser.getNotificationFrequency());
 
             //Save timestamps of each packet
+            /*
             timestamps[n] = System.currentTimeMillis();
             n++;
             if (n == 1000) {
                 n = 0;
                 dumpTimestamps();
             }
+            */
         }
 
         HashMap<Integer, ArrayList<Integer>> packaged_data = convertPacketToHashMap(messageBytes);
@@ -70,6 +72,8 @@ public class BLETattooDevice extends BLEDevice {
             EventBus.getDefault().post(new SickbaySendFloatsEvent(sickbayPush, this));
         }
 
+        runBiometricAlgorithms(packaged_data);
+
         //Send the data to the UI for display
         EventBus.getDefault().post(new PlotDataEvent(getAddress(), filtered_data));
     }
@@ -83,6 +87,10 @@ public class BLETattooDevice extends BLEDevice {
 
         //Send the message to the UI for display
         EventBus.getDefault().post(new TMSMessageReceivedEvent(this.getAddress(), this.getTMSMessage(messageBytes[0])));
+    }
+
+    private void runBiometricAlgorithms(HashMap<Integer, ArrayList<Integer>> filteredData) {
+        mBLEParser.getBiometrics().computeAndDisplay(filteredData);
     }
 
     private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";

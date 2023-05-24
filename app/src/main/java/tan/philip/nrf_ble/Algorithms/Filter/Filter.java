@@ -1,8 +1,11 @@
-package tan.philip.nrf_ble.GraphScreen.UIComponents;
+package tan.philip.nrf_ble.Algorithms.Filter;
+
+import android.util.Log;
 
 import java.io.Serializable;
 
 public class Filter implements Serializable {
+
 
     int len;
     double[] b;
@@ -36,11 +39,11 @@ public class Filter implements Serializable {
         //Set the current input
         x[len] = newX * gain;
 
-        if(len == 0)
-            return (float) x[len];
-
         //Start calculating the new output.
         y[len] = b[0] * x[len];
+
+        if(len == 0)
+            return (float) y[len];
 
         //Calculate the new output based on previous inputs and outputs
         for(int i = 1; i < len + 1; i ++) {

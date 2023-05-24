@@ -4,33 +4,47 @@ end
 Signals Information
 0, Sine, 1, 20, 8, signed
 .graphable
-..gain: 1
 ..color: 255 0 0 255
 .filter
 ..b: 1
 ..a: 1
-.sickbayID 1000
+..gain: 1
+.sickbayID: 1000
 1, Square, 1, 20, 8, signed
 .graphable
-..gain: 1
 ..color: 0 0 0 255
 .filter
 ..b: 1
 ..a: 1
-.sickbayID 1001
+..gain: 1
+.sickbayID: 1001
 2, Sawtooth, 1, 20, 8, signed
 .graphable
-..gain: 1
 ..color: 150 150 150 255
 .filter
 ..b: 1
 ..a: 1
-.sickbayID 1002
+..gain: 1
+.sickbayID: 1002
 end
 Sickbay Settings
-.sickbayNS TATTOOWAVE
+.sickbayNS: TATTOOWAVE
 end
 Biometric Settings
+pan-tompkins: 0
+.digdisplay
+.displayName: HR
+..DecimalFormat: ###.#
+..suffix: _BPM
+..icon: heartrate
+.valueAlert
+..title: High heart rate detected
+..message: Heart rate exceeded 210 BPM!
+..threshold: 15
+.additionalParam
+..100
+..200
+..200
 end
 Packet Structure
 0

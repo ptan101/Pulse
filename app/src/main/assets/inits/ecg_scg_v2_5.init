@@ -37,6 +37,16 @@ Signals Information
 8, LIS-Z, 2, 10, 14, signed
 end
 Biometric Settings
+pan-tompkins: 3
+.digdisplay
+.displayName: HR
+..DecimalFormat: ###.#
+..suffix: _BPM
+..icon: heartrate
+.valueAlert
+..title: High heart rate detected
+..message: Heart rate exceeded 180 BPM!
+..threshold: 180
 end
 Packet Structure
 4

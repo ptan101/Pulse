@@ -58,4 +58,32 @@ public class TattooMessage implements Serializable {
     public void setMenuID(int menuId) {
         this.menuId = menuId;
     }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setBrief(String brief) {
+        this.brief = brief;
+    }
+
+    public void setAlternate(int alternate) {
+        this.alternate = alternate;
+    }
+
+    public void setAlertDialog(boolean alertDialog) {
+        this.alertDialog = alertDialog;
+    }
+
+    public void setAlternate(boolean alternate) {
+        isAlternate = alternate;
+    }
+
+    public void setIdTXMessage(int idTXMessage) {
+        this.idTXMessage = idTXMessage;
+    }
+
+    public void setMenuId(int menuId) {
+        this.menuId = menuId;
+    }
 }

@@ -340,8 +340,8 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         Map<String, Boolean> isInitialized = event.getIsInitialized();
 
         for(String address : scanResults.keySet()) {
-            //If no longer available, remove.
-            if(!scanList.containsKey(address)) {
+            //If no longer available, remove. Don't remove if the user has selected it.
+            if(!scanList.containsKey(address) && !mIconManager.iconSelected(address)) {
                 scanResults.remove(address);
                 mIconManager.removeIcon(address);
             }

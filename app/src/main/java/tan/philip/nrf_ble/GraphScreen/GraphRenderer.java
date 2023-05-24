@@ -1,11 +1,11 @@
 package tan.philip.nrf_ble.GraphScreen;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -14,19 +14,17 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.lang.reflect.Array;
-import java.text.DecimalFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Queue;
 
+import tan.philip.nrf_ble.Algorithms.Biometric;
+import tan.philip.nrf_ble.Algorithms.BiometricsSet;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAll;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
-import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplay;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
 
@@ -42,10 +40,18 @@ public class GraphRenderer {
     private long startRecordTime;
     private final DigitalDisplayManager displayManager;
 
+    private AlertDialog alertDialog;
+
     public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices, TextView recordTimer, ConstraintLayout layout) {
         this.signals = new HashMap<>();
         this.recordTimer = recordTimer;
         this.displayManager = new DigitalDisplayManager(ctx, layout);
+        this.alertDialog = new AlertDialog.Builder(ctx)
+                .setTitle("Alert Triggered")
+                .setMessage("")
+                .setNegativeButton(android.R.string.no, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .create();
 
         setupGraphSignals(bleDevices, ctx);
         setupRenderer();
@@ -124,14 +130,26 @@ public class GraphRenderer {
                         signalsInDevice.put((int) setting.index, newSignal);
                     if (newSignal.useDigitalDisplay()) {
                         signalsInDevice.put((int) setting.index, newSignal);
-                        DigitalDisplay display = new DigitalDisplay(ctx, newSignal.getName(), "temperature");
+                        DigitalDisplay display = new DigitalDisplay(ctx, newSignal.getDigitalDisplaySettings());
                         displayManager.addToDigitalDisplay(display);
                         newSignal.setDigitalDisplay(display);
                     }
-
                 }
 
                 signals.put(bleDevice.getAddress(), signalsInDevice);
+            }
+
+            //Add digital displays for Biometrics
+            //Initialize ValueAlerts
+            ArrayList<Biometric> biometrics = bleDevice.getBiometrics().getBiometrics();
+            for(Biometric biometric : biometrics) {
+                if(biometric.hasDigitalDisplay()) {
+                    DigitalDisplay display = new DigitalDisplay(ctx, biometric.ddSettings);
+                    displayManager.addToDigitalDisplay(display);
+                    biometric.setDigitalDisplay(display);
+                }
+
+                biometric.initValueAlerts(ctx, alertDialog);
             }
         }
 

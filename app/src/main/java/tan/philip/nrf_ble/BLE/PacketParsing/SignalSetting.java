@@ -2,7 +2,8 @@ package tan.philip.nrf_ble.BLE.PacketParsing;
 
 import java.io.Serializable;
 
-import tan.philip.nrf_ble.GraphScreen.UIComponents.Filter;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplaySettings;
+import tan.philip.nrf_ble.Algorithms.Filter.Filter;
 
 //Definitely rename this once I have a better idea of what it does lol
 //Should I combine this with GraphSignal?
@@ -24,11 +25,7 @@ public class SignalSetting implements Serializable {
     //Filter settings
     public Filter filter = null;
     //Digital display settings
-    public boolean digitalDisplay = false;
-    public String decimalFormat = null;
-    public String conversion = "x";
-    public String prefix = "";
-    public String suffix = "";
+    public DigitalDisplaySettings ddSettings;
 
     //Sickbay ID
     public int sickbayID = -1;

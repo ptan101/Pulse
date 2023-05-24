@@ -1,5 +1,10 @@
 package tan.philip.nrf_ble.BLE.PacketParsing;
 
+import static tan.philip.nrf_ble.BLE.PacketParsing.SubheaderParsing.MainSettingsParser.importPacketStructure;
+import static tan.philip.nrf_ble.BLE.PacketParsing.SubheaderParsing.MainSettingsParser.importSignalSettings;
+import static tan.philip.nrf_ble.BLE.PacketParsing.SubheaderParsing.SickbaySettingsParser.parseSickbayOptions;
+import static tan.philip.nrf_ble.BLE.PacketParsing.SubheaderParsing.TattooMessagesParser.importMessages;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -7,13 +12,12 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Properties;
 
 import tan.philip.nrf_ble.Algorithms.BiometricsSet;
-import tan.philip.nrf_ble.GraphScreen.UIComponents.Filter;
+import tan.philip.nrf_ble.BLE.PacketParsing.SubheaderParsing.BiometricSettingsParser;
+import tan.philip.nrf_ble.SickbayPush.SickbayImportSettings;
 
 public class BLEPacketParser {
     private static final String TAG = "BLEPacketParser";
@@ -25,16 +29,22 @@ public class BLEPacketParser {
     ArrayList<Byte> signalOrder;
     ArrayList<TattooMessage> rxMessages;
     ArrayList<TattooMessage> txMessages;
+
+    //Biometrics
+    BiometricSettingsParser bmParser;
     BiometricsSet biometrics = new BiometricsSet();
 
     //Sickbay settings
-    public String sickbayNS = null;
+    public SickbayImportSettings sickbaySettings;
+
+    private boolean initFileGood = true;
 
     //Use this to instantiate a new BLEPackageParser object
     public BLEPacketParser(Context context, String deviceName) throws FileNotFoundException {
         signalSettings = new HashMap<>();
         signalOrder = new ArrayList<>();
         rxMessages = new ArrayList<>();
+        bmParser = new BiometricSettingsParser(signalSettings);
         rxMessages.add(null);   //Message ID 0 should be an empty message (i.e., no messsage)
         txMessages = new ArrayList<>();
         txMessages.add(null);   //Message ID 0 should be an empty message (i.e., no messsage)
@@ -138,133 +148,27 @@ public class BLEPacketParser {
         int i = 0;
         String cur_line;
 
-        while (true) {
-            cur_line = lines.get(i);
-            switch(cur_line) {
-                case "Packet Information":
-                    i++;
-                    cur_line = lines.get(i);
-                    String[] packet_data = cur_line.split(", ");
-                    notificationFrequency = Float.parseFloat(packet_data[0]);
-                    packageSizeBytes = Integer.parseInt(packet_data[1]);
-                    i++;
-                    break;
-                case "Signals Information":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        //If main heading, add a new signal setting
-                        if (cur_line.equals("end"))
-                            break;
-                        i++;
-                        if(cur_line.charAt(0) != '.') {
-                            String[] signal_info = cur_line.split(", ");
-                            SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
-                                    Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
-                                    Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
-                            signalSettings.put((int) cur_setting.index, cur_setting);
-                        } else if (cur_line.charAt(0) == '.' && !cur_line.startsWith("..")) {
-                            parseSignalMainOptions(signalSettings.get(signalSettings.size() - 1),
-                                    cur_line, gatherSubHeadings(lines, i));
-                        }
-                    }
-                    break;
-                case "Biometric Settings":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        if (cur_line.equals("end"))
-                            break;
-                        parseBiometricsOptions(biometrics, cur_line);
-                        i++;
-                    }
-                    break;
-                case "Packet Structure":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        if (cur_line.equals("end"))
-                            break;
-                        signalOrder.add(Byte.parseByte(cur_line));
-                        i++;
-                    }
-                    break;
-                case "RX Messages":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        if (cur_line.equals("end"))
-                            break;
-                        if(cur_line.charAt(0) != '.') {
-                            TattooMessage cur_mesg = new TattooMessage(cur_line, true);
-                            rxMessages.add(cur_mesg);
-                        } else if (cur_line.charAt(0) == '.') {
-                            parseMessageData(rxMessages.get(rxMessages.size() - 1), cur_line);
-                        }
-                        i++;
-                    }
-                    break;
-                case "TX Messages":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        if (cur_line.equals("end"))
-                            break;
-                        if(cur_line.charAt(0) != '.') {
-                            TattooMessage cur_mesg = new TattooMessage(cur_line, false);
-                            txMessages.add(cur_mesg);
-                        } else if (cur_line.charAt(0) == '.') {
-                            parseMessageData(txMessages.get(txMessages.size() - 1), cur_line);
-                        }
-                        i++;
-                    }
-                    break;
-                case "Sickbay Settings":
-                    i++;
-                    while(true) {
-                        cur_line = lines.get(i);
-                        if (cur_line.equals("end"))
-                            break;
-                        if (cur_line.charAt(0) == '.') {
-                            parseSickbayOptions(cur_line);
-                        }
-                        i++;
-                    }
-                default:
-                    Log.e(TAG, "Unknown header: " + cur_line);
-                    break;
-            }
-            i++;
-            if (i >= lines.size())
-                break;
-        }
+        //Read the packet information
+        parsePacketInformation(lines);
+
+        //Read the signal settings
+        initFileGood = importSignalSettings(lines, signalSettings);
+
+        //Check the packet structure
+        initFileGood = importPacketStructure(lines, signalOrder);
+
+        //Load in Tattoo Messaging Service messages
+        importMessages(lines, rxMessages, "RX Messages");
+        importMessages(lines, txMessages, "TX Messages");
+
+        //Load in Biometric settings
+        bmParser.importBiometrics(lines, biometrics);
+
+        //Load in Sickbay settings
+        sickbaySettings = parseSickbayOptions(lines);
+
+        Log.d(TAG, "Init file successfully loaded in.");
     }
-
-    public HashMap<Integer, SignalSetting> getSignalSettings() {
-        return signalSettings;
-    }
-
-    public BiometricsSet getBiometricsSettings() {
-        return biometrics;
-    }
-
-    public ArrayList<Byte> getSignalOrder() {
-        return signalOrder;
-    }
-
-    public ArrayList<TattooMessage> getRxMessages() {
-        return rxMessages;
-    }
-
-    public ArrayList<TattooMessage> getTxMessages() {
-        return txMessages;
-    }
-
-    public float getNotificationFrequency() { return notificationFrequency; }
-
-    public int getPackageSizeBytes() { return packageSizeBytes; }
-
-    public BiometricsSet getBiometrics() { return biometrics; }
 
     ////////////////////////Helper Methods to Parse Init file/////////////////////////////////////
 
@@ -297,214 +201,47 @@ public class BLEPacketParser {
         return lines;
     }
 
-    private void parseSignalMainOptions(SignalSetting signalSetting, String pLine, ArrayList<String> subheadings) {
-        //Cut out the initial period
-        pLine = pLine.substring(1);
-
-        //Look at first word
-        String[] mainOption = pLine.split(" ");
-
-        switch (mainOption[0]) {
-            case "graphable":
-                signalSetting.graphable = true;
-                importGraphableSubSettings(signalSetting, subheadings);
-                break;
-            case "digdisplay":
-                signalSetting.digitalDisplay = true;
-                importDigitalDisplaySubSettings(signalSetting, subheadings);
-                break;
-            case "filter":
-                importFilterSubSettings(signalSetting, subheadings);
-                break;
-            case "big":
-                signalSetting.littleEndian = false;
-                break;
-            case "sickbayID":
-                signalSetting.sickbayID = Integer.parseInt(mainOption[1]);
-                break;
-            default:
-                break;
-        }
-
-    }
-
-    private void parseMessageData(TattooMessage message, String pLine) {
-        //Cut out the initial period
-        String option = pLine.substring(1, pLine.indexOf(" "));
-        String setting = pLine.substring(pLine.indexOf(" ") + 1);
-
-        switch (option) {
-            case "brief":
-                message.brief = setting;
-                break;
-            case "alternate":
-                message.alternate = Integer.parseInt(setting);
-                break;
-            case "isAlternate":
-                message.isAlternate = Boolean.parseBoolean(setting);
-                break;
-            case "alertDialog":
-                message.alertDialog = Boolean.parseBoolean(setting);
-                break;
-            case "sendTX":
-                message.idTXMessage = Integer.parseInt(setting);
-                break;
-            default:
-                break;
+    private void parsePacketInformation(ArrayList<String> initFileLines) {
+        try {
+            ArrayList<String> lines = getInitFileSection(initFileLines, "Packet Information");
+            String cur_line = lines.get(0);
+            String[] packet_data = cur_line.split(", ");
+            notificationFrequency = Float.parseFloat(packet_data[0]);
+            packageSizeBytes = Integer.parseInt(packet_data[1]);
+        } catch (IndexOutOfBoundsException e) {
+            Log.e(TAG, "Unable to read .init file Packet Information.");
+            initFileGood = false;
         }
     }
 
-    private void parseBiometricsOptions(BiometricsSet biometrics, String mLine) {
-        String[] settings = mLine.split(", ");
+    /**
+     * Truncates an .init file to just a desired section.
+     * @param lines Entire .init file
+     * @param sectionName Desired section to truncate to
+     * @return The truncated section
+     */
+    public static ArrayList<String> getInitFileSection(ArrayList<String> lines,String sectionName) {
+        //Find the starting index of the section by using the section name.
+        int startIndex = lines.indexOf(sectionName) + 1;
+        int endIndex = lines.subList(startIndex, lines.size()).indexOf("end");
 
-        switch (settings[0]) {
-            case "heartrate":
-                biometrics.addHRSignals(Integer.parseInt(settings[1]));
-                break;
-            case "spo2":
-                biometrics.addSpO2Signals(Integer.parseInt(settings[1]), Integer.parseInt(settings[2]), Integer.parseInt(settings[3]), Integer.parseInt(settings[4]));
-                break;
-            case "pwv":
-                biometrics.addPWVSignals(Integer.parseInt(settings[1]), Integer.parseInt(settings[2]));
-                break;
-            default:
-                break;
-        }
+        ArrayList<String> section = new ArrayList<String>(lines.subList(startIndex, endIndex + startIndex));
 
-    }
-
-    private void parseSickbayOptions(String pLine) {
-        //Cut out the initial period
-        pLine = pLine.substring(1);
-
-        //Look at first word
-        String[] sickbaySettings = pLine.split(" ");
-
-        switch (sickbaySettings[0]) {
-            case "sickbayNS":
-                sickbayNS = sickbaySettings[1];
-                break;
-            default:
-                break;
-        }
-
+        return section;
     }
     
-    private ArrayList<String> gatherSubHeadings(ArrayList<String> lines, int curLine) {
+    public static ArrayList<String> gatherSubHeadings(ArrayList<String> lines, int curLine) {
         ArrayList<String> out = new ArrayList<String>();
-        for(int i = curLine; i < lines.size(); i ++) {
+        for(int i = curLine + 1; i < lines.size(); i ++) {
             if(!lines.get(i).startsWith(".."))
                 break;
 
-            out.add(lines.get(i));
+            out.add(lines.get(i).substring(2));
         }
         
         return out;
     }
 
-    private void importGraphableSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
-        for(String s: subsettings) {
-            s = s.substring(2);
-            String[] options = s.split(": ");
-
-            switch (options[0]) {
-                case "color":
-                    int[] color = new int[4];
-                    String[] color_s = options[1].split(" ");
-
-                    if(color_s.length != 4)
-                        Log.e(TAG, "Color " + options[1] + " needs to be RGBA.");
-
-                    for (int i = 0; i < 4; i++) {
-                        color[i] = Integer.parseInt(color_s[i]);
-                    }
-                    signalSetting.color = color;
-                    break;
-                case "graphHeight":
-                    signalSetting.graphHeight = Integer.parseInt(options[1]);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    private void importFilterSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
-        double[] b = new double[0];
-        double[] a = new double[0];
-        float gain = 1;
-
-        for(String s: subsettings) {
-            s = s.substring(2);
-            String[] options = s.split(": ");
-
-            switch (options[0]) {
-                case "b":
-                    String[] b_s = options[1].split(", ");
-                    double[] b_f = new double[b_s.length];
-
-                    for (int i = 0; i < b_s.length; i++) {
-                        b_f[i] = Double.parseDouble(b_s[i]);
-                    }
-                    b = b_f;
-                    break;
-                case "a":
-                    String[] a_s = options[1].split(", ");
-                    double[] a_f = new double[a_s.length];
-
-                    for (int i = 0; i < a_s.length; i++) {
-                        a_f[i] = Double.parseDouble(a_s[i]);
-                    }
-                    a = a_f;
-                    break;
-                case "gain":
-                    gain = Float.parseFloat(options[1]);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        signalSetting.filter = new Filter(b, a, gain);
-    }
-
-
-
-    private void importDigitalDisplaySubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
-        for(String s: subsettings) {
-            s = s.substring(2);
-            String[] options = s.split(": ");
-
-            switch (options[0]) {
-                case "DecimalFormat":
-                    signalSetting.decimalFormat = options[1];
-                    break;
-                case "conversion":
-                    signalSetting.conversion = options[1];
-                    break;
-                case "prefix":
-                    Properties p = new Properties();
-                    try {
-                        p.load(new StringReader("key="+options[1]));
-                    } catch (IOException e) {
-                        Log.e(TAG, "Unable to convert escape sequence" + options[1]);
-                    }
-                    signalSetting.prefix = p.getProperty("key");
-                    break;
-                case "suffix":
-                    p = new Properties();
-                    try {
-                        p.load(new StringReader("key="+options[1]));
-                    } catch (IOException e) {
-                        Log.e(TAG, "Unable to convert escape sequence" + options[1]);
-                    }
-                    signalSetting.suffix = p.getProperty("key");
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
 
     //////////////////Helper Method for loading in init file lookup table
     public static String lookupInitFile(String deviceName, Context context) {
@@ -535,6 +272,34 @@ public class BLEPacketParser {
         }
         return null;
     }
+
+    /////////////GETTERS AND SETTERS////////////////////////
+
+    public HashMap<Integer, SignalSetting> getSignalSettings() {
+        return signalSettings;
+    }
+
+    public BiometricsSet getBiometricsSettings() {
+        return biometrics;
+    }
+
+    public ArrayList<Byte> getSignalOrder() {
+        return signalOrder;
+    }
+
+    public ArrayList<TattooMessage> getRxMessages() {
+        return rxMessages;
+    }
+
+    public ArrayList<TattooMessage> getTxMessages() {
+        return txMessages;
+    }
+
+    public float getNotificationFrequency() { return notificationFrequency; }
+
+    public int getPackageSizeBytes() { return packageSizeBytes; }
+
+    public BiometricsSet getBiometrics() { return biometrics; }
 
 }
 

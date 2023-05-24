@@ -2,8 +2,6 @@ package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
 import android.content.Context;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TableLayout;
 import android.widget.TableRow;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -11,7 +9,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 
 import java.util.ArrayList;
 
-import tan.philip.nrf_ble.GraphScreen.GraphSignal;
+import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplay;
 
 public class DigitalDisplayManager {
     private final ConstraintLayout layout;
@@ -31,6 +29,8 @@ public class DigitalDisplayManager {
         ConstraintSet set = new ConstraintSet();
         layout.addView(display);
         set.clone(layout);
+
+        set.constrainWidth(display.getId(), 0);
 
         if(digitalDisplays.size() == 0) {
             set.connect(display.getId(), ConstraintSet.TOP, layout.getId(), ConstraintSet.TOP);

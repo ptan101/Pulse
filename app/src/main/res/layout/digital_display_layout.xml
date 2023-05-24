@@ -8,11 +8,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
+        android:gravity="center"
         android:layout_margin="20dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/digital_display_container"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#FFFFFF">
 
@@ -20,19 +21,20 @@
                 android:id="@+id/digital_display_label"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
                 app:layout_constraintBottom_toBottomOf="@id/digital_display_container"
                 app:layout_constraintTop_toTopOf="@id/digital_display_container"
-                app:layout_constraintStart_toEndOf="@id/digital_display_icon"
-                app:layout_constraintEnd_toEndOf="@id/digital_display_container"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
                 ></TextView>
 
             <ImageView
                 android:id="@+id/digital_display_icon"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="5dp"
                 app:layout_constraintBottom_toBottomOf="@id/digital_display_container"
                 app:layout_constraintTop_toTopOf="@id/digital_display_container"
-                app:layout_constraintStart_toStartOf="@id/digital_display_container"
                 app:layout_constraintEnd_toStartOf="@id/digital_display_label"
                 ></ImageView>
 

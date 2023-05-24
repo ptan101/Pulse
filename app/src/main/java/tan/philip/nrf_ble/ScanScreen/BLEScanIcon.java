@@ -173,4 +173,6 @@ public class BLEScanIcon extends LinearLayout {
     public void setIsInitialized(boolean isInitialized) {
         this.isInitialized = isInitialized;
     }
+
+    public boolean isIconSelected() { return mSelected; }
 }

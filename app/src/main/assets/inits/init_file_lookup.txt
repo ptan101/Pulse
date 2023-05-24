@@ -8,7 +8,7 @@ MAX30102 Test, ppg_max30102.init
 ADXL355_1KHz, adxl355_test_1khz.init
 core-hydration, max30002.init
 MAX30002_ICG, max30002_icg.init
-Chest_v3.1, ecg_scg_v2_5.init
+Chest_HR, ecg_scg_v2.init
 Ear_Tattoo_v1.0, ear_v1.init
 Radial Oximeter V1.1, adpd1080.init
 Radu_b1, ecg_scg_v2.init

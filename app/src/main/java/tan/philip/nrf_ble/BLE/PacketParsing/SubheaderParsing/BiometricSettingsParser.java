@@ -97,6 +97,11 @@ public class BiometricSettingsParser {
                 ValueAlert alert = new ValueAlert();
                 biometric.addAlert(alert);
                 importValueAlertSettings(alert, subheadings);
+                break;
+            case "log":
+                if(mainOption[1].equals("True") || mainOption[1].equals("true"))
+                    biometric.logData = true;
+                break;
             default:
                 break;
         }

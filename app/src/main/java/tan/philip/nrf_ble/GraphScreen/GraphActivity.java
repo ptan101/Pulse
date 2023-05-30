@@ -1,9 +1,5 @@
 package tan.philip.nrf_ble.GraphScreen;
 
-import static tan.philip.nrf_ble.Constants.NUS_TX_UUID;
-import static tan.philip.nrf_ble.Constants.NUS_UUID;
-import static tan.philip.nrf_ble.Constants.TMS_TX_UUID;
-import static tan.philip.nrf_ble.Constants.TMS_UUID;
 import static tan.philip.nrf_ble.Constants.convertDpToPixel;
 
 import android.bluetooth.BluetoothProfile;
@@ -39,6 +35,7 @@ import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.Events.GATTConnectionChangedEvent;
 import tan.philip.nrf_ble.Events.GATTServicesDiscoveredEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
+import tan.philip.nrf_ble.Events.Rendering.ThrowValueAlertEvent;
 import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
@@ -55,6 +52,7 @@ public class GraphActivity extends AppCompatActivity {
     private OptionsMenu menu;
     private ActivityGraphBinding mBinding;
     private FileManager fileManager;
+    private android.app.AlertDialog valueAlertDialog;
 
 
     @Override
@@ -68,6 +66,14 @@ public class GraphActivity extends AppCompatActivity {
 
         //Register activity on EventBus
         EventBus.getDefault().register(this);
+
+        //Prepare an AlertDialog for ValueAlerts
+        this.valueAlertDialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("Alert Triggered")
+                .setMessage("")
+                .setNegativeButton(android.R.string.no, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .create();
     }
 
     @Override
@@ -248,5 +254,15 @@ public class GraphActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public synchronized void onValueAlert(ThrowValueAlertEvent event) {
+        valueAlertDialog.setTitle(event.getMsgTitle());
+        valueAlertDialog.setMessage(event.getMsg());
+
+        if(!valueAlertDialog.isShowing())
+            valueAlertDialog.show();
+
     }
 }

@@ -28,9 +28,17 @@ pan-tompkins: 3
 ..suffix: _BPM
 ..icon: heartrate
 .valueAlert
-..title: High heart rate detected
-..message: Heart rate exceeded 180 BPM!
-..threshold: 180
+..title: Tachycardia detected
+..message: Heart rate exceeded 210 BPM!
+..threshold: 210
+..average: 3
+.valueAlert
+..title: Bradycardia detected
+..message: Heart rate below 30 BPM!
+..threshold: 30
+..average: 3
+..belowAlert
+.log true
 .additionalParam
 ..0.204301
 ..0

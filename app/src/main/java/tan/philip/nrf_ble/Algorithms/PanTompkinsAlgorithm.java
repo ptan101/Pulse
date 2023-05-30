@@ -17,21 +17,21 @@ public class PanTompkinsAlgorithm extends Biometric {
     private final int signalID;
     private Filter bandpassFilter;
 
-    private final double SAMPLING_RATE;
-    private final double WINDOW_SIZE;
-    private final double RR_INTERVAL_FACTOR = 1.66;
-    private final double MIN_DISTANCE;
-    private final double REFRACTORY_PERIOD;
+    private final float SAMPLING_RATE;
+    private final int REFRACTORY_PERIOD;
+    private final int THRESHOLD_RESET_TIME;
 
     private float lastSample = 0;
 
-    private List<Integer> signalPeaks;
+    //private List<Integer> signalPeaks;
+    private int[] signalPeaks = new int[9];
+    private int numSignalPeaksDetected = 0;
 
-    private double SPKI;
-    private double NPKI;
+    private float SPKI;
+    private float NPKI;
 
-    private double threshold_I1;
-    private double threshold_I2;
+    private float threshold_I1;
+    private float threshold_I2;
 
     private int rrMissedLimit;
     private int index;
@@ -60,22 +60,21 @@ public class PanTompkinsAlgorithm extends Biometric {
         this.signalID = firstSignal.getKey();
 
         this.SAMPLING_RATE = firstSignal.getValue().fs;
-        this.WINDOW_SIZE = 0.15 * SAMPLING_RATE;
-        this.MIN_DISTANCE = 0.25 * SAMPLING_RATE;
-        this.REFRACTORY_PERIOD = 0.3 * SAMPLING_RATE;
+        this.REFRACTORY_PERIOD = (int) (0.3f * SAMPLING_RATE);
+        this.THRESHOLD_RESET_TIME = (int) (2f * SAMPLING_RATE);
 
         this.movingAverageLength = (int) (MAX_QRS_DURATION * SAMPLING_RATE);
         this.movingAverageValues = new float[movingAverageLength];
 
-        signalPeaks = new ArrayList<>();
+        //signalPeaks = new ArrayList<>();
         noisePeakLocations = new ArrayList();
         noisePeakVals = new ArrayList();
 
-        SPKI = 0.0;
-        NPKI = 0.0;
+        SPKI = 0.0f;
+        NPKI = 0.0f;
 
-        threshold_I1 = 0.0;
-        threshold_I2 = 0.0;
+        threshold_I1 = 0.0f;
+        threshold_I2 = 0.0f;
 
         rrMissedLimit = 0;
         index = 0;
@@ -141,7 +140,11 @@ public class PanTompkinsAlgorithm extends Biometric {
             //If there aren't any signal peaks yet don't check the time
             if(candidatePeakVal > threshold_I1 && sufficientDistance(peakLocation)) {
                 //Add the candidate peak as a signal peak
-                signalPeaks.add(peakLocation);
+                //signalPeaks.add(peakLocation);
+                signalPeaks[numSignalPeaksDetected % 9] = peakLocation;
+                numSignalPeaksDetected ++;
+
+
                 Log.d(TAG, "Beat detected, peak at " + ((float) peakLocation / SAMPLING_RATE) + "s");
                 //??
 
@@ -152,7 +155,8 @@ public class PanTompkinsAlgorithm extends Biometric {
                 //If the time between peaks has exceeded this limit...
                 //Search between the last two established signal peaks
                 //The largest amplitude peak between these points is considered a QRS candidate
-                if(rrMissedLimit != 0 && (signalPeaks.get(signalPeaks.size() - 2) - signalPeaks.get(signalPeaks.size() - 1)) > rrMissedLimit) {
+                if(rrMissedLimit != 0 && (lastPeakLocation() - lastLastPeakLocation()) > rrMissedLimit) {
+                //if(rrMissedLimit != 0 && (signalPeaks.get(signalPeaks.size() - 2) - signalPeaks.get(signalPeaks.size() - 1)) > rrMissedLimit) {
                     //Check all recent noise peaks to see if they have enough distance from the current signal peak
                     //Also check if the noise peak value is of sufficient amplitude
                     //If the peak qualifies, keep track of the amplitude and location
@@ -172,14 +176,16 @@ public class PanTompkinsAlgorithm extends Biometric {
                     if(largestNoisePeakLocation != -1) {
 
                         //Move the most recent signal peak to the end
-                        signalPeaks.add(peakLocation);
+                        //signalPeaks.add(peakLocation);
+                        signalPeaks[numSignalPeaksDetected % 9] = peakLocation;
+                        numSignalPeaksDetected ++;
 
                         //Add the missed peak before the last peak
-                        signalPeaks.set(signalPeaks.size() - 2, largestNoisePeakLocation);
+                        //signalPeaks.set(signalPeaks.size() - 2, largestNoisePeakLocation);
+                        signalPeaks[(numSignalPeaksDetected - 2) % 9] = peakLocation;
 
                         Log.d(TAG, "Missed beat detected at " + ((float) peakLocation / SAMPLING_RATE) + "s");
                     }
-
                 }
 
                 //Reset the noise peak QRS candidates
@@ -187,20 +193,20 @@ public class PanTompkinsAlgorithm extends Biometric {
                 noisePeakVals.clear();
 
                 //Log the IBI
-                if(signalPeaks.size() >= 2) {
-                    double ibi = (60f * (signalPeaks.get(signalPeaks.size() - 1) - signalPeaks.get(signalPeaks.size() - 2)) / SAMPLING_RATE);
+                if(numSignalPeaksDetected >= 2) {
+                    float ibi = (60f * (lastPeakLocation() - lastLastPeakLocation()) / SAMPLING_RATE);
                     Log.d(TAG, "HR: " + ibi + "bpm");
 
-                    this.digitalDisplay.changeValue((float) ibi);
+                    this.digitalDisplay.changeValue(ibi);
 
                     for(ValueAlert alert : alerts)
-                        alert.checkValue((float) ibi);
+                        alert.checkValue(ibi);
                 }
             }
             //If the peak value is NOT above threshold 1 or the time between peaks is not sufficient,
             //we consider this peak to be a noise peak
             else {
-                NPKI = 0.125 * candidatePeakVal + 0.875 * NPKI;
+                NPKI = 0.125f * candidatePeakVal + 0.875f * NPKI;
 
                 //Update the largest noise peak in case we need to consider it as a candidate
                 //QRS complex.
@@ -209,14 +215,24 @@ public class PanTompkinsAlgorithm extends Biometric {
                     noisePeakLocations.add(peakLocation);
                     noisePeakVals.add(candidatePeakVal);
                 }
+
+                //If it's been a long time since a signal peak was detected, reset the thresholds.
+                //A motion peak could have thrown off the thresholds and therefore needs recovery.
+                if (peakLocation - lastPeakLocation() > THRESHOLD_RESET_TIME) {
+                    SPKI = 0.0f;
+                    NPKI = 0.0f;
+                    noisePeakLocations.clear();
+                    noisePeakVals.clear();
+                    Log.d(TAG, "Pan-Tompkins threshold reset.");
+                }
             }
 
             //Update both thresholds based on the signal and noise levels
-            threshold_I1 = NPKI + 0.25 * (SPKI-NPKI);
-            threshold_I2 = 0.5 * threshold_I1;
+            threshold_I1 = NPKI + 0.25f * (SPKI-NPKI);
+            threshold_I2 = 0.5f * threshold_I1;
 
             //Update the RR missed limit
-            if (signalPeaks.size() > 8) {
+            if (numSignalPeaksDetected > 8) {
                 int rr_avg = getLastEightRRsAvg();         //RR AVERAGE 2
                 rrMissedLimit = (int) (1.66 * rr_avg);     //RR MISSED LIMIT
             }
@@ -224,18 +240,6 @@ public class PanTompkinsAlgorithm extends Biometric {
 
         numSamples++;
 
-    }
-
-    private int argmax(double[] arr) {
-        int indexMax = 0;
-        double max = arr[0];
-        for (int i = 1; i < arr.length; i++) {
-            if (arr[i] > max) {
-                max = arr[i];
-                indexMax = i;
-            }
-        }
-        return indexMax;
     }
 
     private int mean(int[] arr) {
@@ -270,13 +274,11 @@ public class PanTompkinsAlgorithm extends Biometric {
     }
 
     private int getLastEightRRsAvg() {
-        //Get last 9 peaks
-        ArrayList<Integer> lastPeaks = new ArrayList(signalPeaks.subList(signalPeaks.size() - 9, signalPeaks.size()));
         int[] rrs = new int[8];
 
         //Calculate the 8 RR intervals from the last 9 peaks
         for(int i = 0; i < 8; i ++) {
-            rrs[i] = lastPeaks.get(i + 1) - lastPeaks.get(i);
+            rrs[i] = signalPeaks[i + 1] - signalPeaks[i];
         }
 
         //Calculate the average RR interval
@@ -286,7 +288,15 @@ public class PanTompkinsAlgorithm extends Biometric {
     }
 
     private boolean sufficientDistance(int peakLocation) {
-        return (signalPeaks.isEmpty() || (peakLocation - signalPeaks.get(signalPeaks.size() - 1)) > REFRACTORY_PERIOD);
+        return (numSignalPeaksDetected == 0 || (peakLocation - lastPeakLocation()) > REFRACTORY_PERIOD);
+    }
+
+    private int lastPeakLocation() {
+        return signalPeaks[(numSignalPeaksDetected - 1) % 9];
+    }
+
+    private int lastLastPeakLocation() {
+        return signalPeaks[(numSignalPeaksDetected - 2) % 9];
     }
 }
 

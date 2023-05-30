@@ -249,13 +249,18 @@ public class MainSettingsParser {
                 case "belowAlert":
                     valueAlert.aboveAlert = false;
                     break;
-                case "theshold":
+                case "threshold":
                     valueAlert.threshold = Float.parseFloat(options[1]);
                     break;
                 case "title":
                     valueAlert.title = options[1];
+                    break;
                 case "message":
                     valueAlert.message = options[1];
+                    break;
+                case "average":
+                    valueAlert.setSamplesToAverage(Integer.parseInt(options[1]));
+                    break;
                 default:
                     break;
             }

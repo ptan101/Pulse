@@ -40,18 +40,10 @@ public class GraphRenderer {
     private long startRecordTime;
     private final DigitalDisplayManager displayManager;
 
-    private AlertDialog alertDialog;
-
     public GraphRenderer(Context ctx, ArrayList<BLEDevice> bleDevices, TextView recordTimer, ConstraintLayout layout) {
         this.signals = new HashMap<>();
         this.recordTimer = recordTimer;
         this.displayManager = new DigitalDisplayManager(ctx, layout);
-        this.alertDialog = new AlertDialog.Builder(ctx)
-                .setTitle("Alert Triggered")
-                .setMessage("")
-                .setNegativeButton(android.R.string.no, null)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .create();
 
         setupGraphSignals(bleDevices, ctx);
         setupRenderer();
@@ -148,8 +140,6 @@ public class GraphRenderer {
                     displayManager.addToDigitalDisplay(display);
                     biometric.setDigitalDisplay(display);
                 }
-
-                biometric.initValueAlerts(ctx, alertDialog);
             }
         }
 

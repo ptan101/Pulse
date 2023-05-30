@@ -2,8 +2,12 @@ package tan.philip.nrf_ble.GraphScreen.UIComponents;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.util.Log;
+
+import org.greenrobot.eventbus.EventBus;
+
+import tan.philip.nrf_ble.Events.Rendering.ThrowValueAlertEvent;
+import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
 
 public class ValueAlert {
     private static String TAG = "ValueALert";
@@ -12,11 +16,11 @@ public class ValueAlert {
     public boolean aboveAlert = true;
     public String message = "Default alert message";
     public String title = "Default alert title";
-
-    private Context context;
-
-    private AlertDialog alertDialog;
+    private int samplesToAverage = 1;
     private boolean thresholdReset = true; //If the value went below threshold
+
+    private float[] averagedValues = new float[1];
+    private int numSamplesAveraged = 0;
 
     //TO DO:
     //Moving average
@@ -26,24 +30,24 @@ public class ValueAlert {
 
     }
 
-    public void initialize(Context context, AlertDialog alertDialog) {
-        this.context = context;
-        this.alertDialog = alertDialog;
-    }
-
-    public boolean initialized() {
-        return context != null;
-    }
-
     public void checkValue(float value) {
-        if(!this.initialized()) {
-            Log.e(TAG, "ValueAlert not initialized, will not check value.");
+        averagedValues[numSamplesAveraged % samplesToAverage] = value;
+        numSamplesAveraged ++;
+
+        if(numSamplesAveraged < samplesToAverage)
             return;
+
+        float averagedValue = 0;
+
+        for(float x : averagedValues) {
+            averagedValue += x;
         }
 
-        if(aboveAlert && value > threshold) {
+        averagedValue /= samplesToAverage;
+
+        if(aboveAlert && averagedValue > threshold) {
             throwAlert();
-        } else if (!aboveAlert && value < threshold) {
+        } else if (!aboveAlert && averagedValue < threshold) {
             throwAlert();
         } else {
             thresholdReset = true;
@@ -51,12 +55,15 @@ public class ValueAlert {
     }
 
     private void throwAlert() {
-        alertDialog.setTitle(title);
-        alertDialog.setMessage(message);
-
-        if(!alertDialog.isShowing() && thresholdReset) {
-            alertDialog.show();
+        if(thresholdReset) {
+            EventBus.getDefault().post(new ThrowValueAlertEvent(title, message));
             thresholdReset = false;
         }
+
+    }
+
+    public void setSamplesToAverage(int num) {
+        samplesToAverage = num;
+        averagedValues = new float[num];
     }
  }

@@ -21,6 +21,8 @@ public class Biometric implements Serializable {
     public DigitalDisplaySettings ddSettings;
     public DigitalDisplay digitalDisplay;
 
+    public boolean logData = false;
+
     protected boolean algorithmReady = false;
 
     public ArrayList<ValueAlert> alerts = new ArrayList<>();
@@ -66,14 +68,8 @@ public class Biometric implements Serializable {
      */
     public boolean hasDigitalDisplay() { return ddSettings != null; }
 
-    public void initValueAlerts(Context ctx, AlertDialog alertDialog) {
-        for(ValueAlert alert : alerts) {
-            alert.initialize(ctx, alertDialog);
-        }
-
-    }
-
     public void addAlert(ValueAlert alert) {
         alerts.add(alert);
     }
+
 }

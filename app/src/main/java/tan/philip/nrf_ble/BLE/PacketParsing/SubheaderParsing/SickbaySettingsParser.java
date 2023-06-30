@@ -16,7 +16,7 @@ public class SickbaySettingsParser {
         SickbayImportSettings sickbaySettings= new SickbayImportSettings();
 
         try {
-            ArrayList<String> lines = getInitFileSection(initFileLines, "Signals Information");
+            ArrayList<String> lines = getInitFileSection(initFileLines, "Sickbay Settings");
 
             String cur_line;
 
@@ -26,7 +26,7 @@ public class SickbaySettingsParser {
 
                 if (cur_line.charAt(0) == '.') {
                     //Look at first word
-                    String[] settings = cur_line.split(": ");
+                    String[] settings = cur_line.substring(1).split(": ");
 
                     switch (settings[0]) {
                         case "sickbayNS":

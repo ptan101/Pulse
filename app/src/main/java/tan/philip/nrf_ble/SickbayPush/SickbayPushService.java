@@ -220,7 +220,7 @@ public class SickbayPushService extends Service {
 
 
         if (mSocket.connected()) {
-            mSocket.emit("NewDataVICU", message);
+            mSocket.emit("NewWebsocketData_serverside_timestamp", message);
         }
     }
 

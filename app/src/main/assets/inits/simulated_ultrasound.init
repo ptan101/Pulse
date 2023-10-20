@@ -1,0 +1,40 @@
+Packet Information
+3.125, 242
+end
+Signals Information
+0, Ultrasound ToFs, 3, 50, 1, unsigned
+.big
+1, Calibration 1, 3, 50, 1, unsigned
+.big
+.digdisplay
+2, Calibration 2, 3, 50, 1, unsigned
+.big
+.digdisplay
+3, Time1, 3, 50, 1, unsigned
+.big
+.digdisplay
+end
+Biometric Settings
+tofs: 0, 1, 2, 3
+.image
+..graphHeight: 150
+end
+Packet Structure
+3
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+2
+end
+RX Messages
+end
+TX Messages
+end

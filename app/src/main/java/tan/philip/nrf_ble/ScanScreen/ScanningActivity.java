@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -13,6 +14,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
@@ -78,7 +80,6 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private boolean connectButtonVisible = false;
     private boolean mScanning = false;
     private int numDevicesFound = 0;
-    private final Map<String, BluetoothDevice> scanResults = new HashMap<>();
     BLEScanIconManager mIconManager;
 
     //Color scan background
@@ -117,7 +118,6 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         createNotificationChannel(this);
 
         //Request permissions
-        requestBluetoothEnable();
         PulseFile.isStoragePermissionGranted(ScanningActivity.this);
 
         //Start the BLEHandlerService
@@ -233,7 +233,6 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     private void clearScan() {
-        scanResults.clear();
         mIconManager.clearAllIcons();
         EventBus.getDefault().post(new RequestBLEClearScanListEvent());
     }
@@ -333,23 +332,23 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         startActivity(intent);
     }
 
+    @SuppressLint("MissingPermission")
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void updateScanList(ScanListUpdatedEvent event) {
         Map<String, BluetoothDevice> scanList = event.getScanResults();
         Map<String, Integer> rssis = event.getRSSIs();
         Map<String, Boolean> isInitialized = event.getIsInitialized();
 
-        for(String address : scanResults.keySet()) {
+
+        for(String address : mIconManager.getIcons().keySet()) {
             //If no longer available, remove. Don't remove if the user has selected it.
             if(!scanList.containsKey(address) && !mIconManager.iconSelected(address)) {
-                scanResults.remove(address);
                 mIconManager.removeIcon(address);
             }
         }
         for(String address : scanList.keySet()) {
             //If not already in the local scan results, add it
-            if (!scanResults.containsKey(address)) {
-                scanResults.put(address, scanList.get(address));
+            if (!mIconManager.getIcons().containsKey(address)) {
                 mIconManager.generateNewIcon(this,
                         scanList.get(address).getName(),
                         address,
@@ -420,13 +419,15 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void startScan() {
         mBinding.layout1.getBackground().setAlpha(0);
 
-        EventBus.getDefault().post(new RequestBLEStartScanEvent());
-
         if (!hasPermissions() || mScanning) {
             return;
         }
 
+
+        EventBus.getDefault().post(new RequestBLEStartScanEvent());
+
         //mBinding.btnListDevices.setVisibility(View.GONE);
+
 
         //Display message
         Toast toast = Toast.makeText(getApplicationContext(), "Scanning for BLE devices...", Toast.LENGTH_SHORT);
@@ -451,9 +452,10 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         //Log.d("Permission", "onRequestPermissionsResult: "+ grantResults[0] + grantResults[1]);
-        switch(requestCode) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
             case REQUEST_ENABLE_BT:
-                if(grantResults.length==2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
+                if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
                 else {
                     Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
@@ -467,25 +469,53 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     private boolean hasPermissions() {
+        boolean hasPermission = true;
         if(bleHandlerService != null && !bleHandlerService.hasBLEPermissions()) {
-            requestBluetoothEnable();
-            return false;
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            hasPermission = false;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) ==
+                PackageManager.PERMISSION_DENIED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH_CONNECT},
+                        2);
+            }
+            hasPermission = false;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) ==
+                PackageManager.PERMISSION_DENIED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.BLUETOOTH_SCAN},
+                        2);
+            }
+            hasPermission = false;
         }
 
         int write_external_storage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int location_access = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        return (write_external_storage == PackageManager.PERMISSION_GRANTED) && (location_access == PackageManager.PERMISSION_GRANTED);
+
+
+        hasPermission &= write_external_storage == PackageManager.PERMISSION_GRANTED;
+
+        return hasPermission;
     }
 
+    @SuppressLint("MissingPermission")
     private void requestBluetoothEnable() {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        Log.d(TAG, "Requested user enabled Bluetooth. Try starting the scan again.");
+
+
     }
 
     private void getPermissions() {
         ActivityCompat.requestPermissions(this, new String[]{
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
         }, REQUEST_PERMISSION_CODE);
     }

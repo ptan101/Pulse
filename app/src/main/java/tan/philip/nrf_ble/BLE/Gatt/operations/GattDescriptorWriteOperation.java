@@ -1,5 +1,6 @@
 package tan.philip.nrf_ble.BLE.Gatt.operations;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -21,6 +22,7 @@ public class GattDescriptorWriteOperation extends GattOperation {
         mDescriptor = descriptor;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void execute(BluetoothGatt gatt) {
         //L.d("Writing to " + mDescriptor);

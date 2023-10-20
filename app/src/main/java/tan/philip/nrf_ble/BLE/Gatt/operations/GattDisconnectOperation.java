@@ -1,5 +1,6 @@
 package tan.philip.nrf_ble.BLE.Gatt.operations;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattDescriptor;
@@ -12,6 +13,7 @@ public class GattDisconnectOperation extends GattOperation {
         super(device);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void execute(BluetoothGatt gatt) {
         gatt.disconnect();

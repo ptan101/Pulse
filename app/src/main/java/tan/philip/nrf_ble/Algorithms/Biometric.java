@@ -4,32 +4,41 @@ import android.app.AlertDialog;
 import android.content.Context;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
+import tan.philip.nrf_ble.GraphScreen.GraphSeries.GraphSeries;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplay;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplaySettings;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.ValueAlert;
 
-public class Biometric implements Serializable {
-    public SignalSetting biometricSignal;
-
+public abstract class Biometric implements Serializable {
+    private static final int BIOMETRIC_DISPLAY_RATE = 1000;
     public HashMap<Integer, SignalSetting> signalsInAlgorithm;
     public ArrayList<Float> inputParameters;
 
     public DigitalDisplaySettings ddSettings;
     public DigitalDisplay digitalDisplay;
 
+    public SignalSetting setting;
+    public ArrayList<GraphSeries> graphSeries = new ArrayList<>();
+
     public boolean logData = false;
 
     protected boolean algorithmReady = false;
 
+    public ArrayList<GraphSeries> getGraphSeries() {
+        return graphSeries;
+    }
+
     public ArrayList<ValueAlert> alerts = new ArrayList<>();
 
-    public Biometric (HashMap<Integer, SignalSetting> signalsInAlgorithm) {
+    public Biometric (HashMap<Integer, SignalSetting> signalsInAlgorithm, byte index, String name) {
         this.signalsInAlgorithm = new HashMap(signalsInAlgorithm);
         inputParameters = new ArrayList();
+        setting = new SignalSetting(index, name, (byte)0, BIOMETRIC_DISPLAY_RATE, (byte) 0, true);
     }
 
     public void initializeDigitalDisplaySettings() {

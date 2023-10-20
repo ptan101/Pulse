@@ -102,6 +102,10 @@ public class MainSettingsParser {
                 signalSetting.ddSettings = new DigitalDisplaySettings(signalSetting.name);
                 importDigitalDisplaySubSettings(signalSetting.ddSettings, subheadings);
                 break;
+            case "image":
+                signalSetting.image = true;
+                importImageSubSettings(signalSetting, subheadings);
+                break;
             case "valueAlert":
                 //To Do
                 break;
@@ -192,6 +196,20 @@ public class MainSettingsParser {
         }
 
         signalSetting.filter = new Filter(b, a, gain);
+    }
+
+    public static void importImageSubSettings(SignalSetting signalSetting, ArrayList<String> subsettings) {
+        for(String s: subsettings) {
+            String[] options = s.split(": ");
+
+            switch (options[0]) {
+                case "graphHeight":
+                    signalSetting.graphHeight = Integer.parseInt(options[1]);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     /**

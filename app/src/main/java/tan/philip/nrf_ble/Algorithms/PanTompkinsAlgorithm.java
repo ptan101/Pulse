@@ -49,8 +49,8 @@ public class PanTompkinsAlgorithm extends Biometric {
     private float[] localMaxValues = new float[2];
     private int numSamples = 0;
 
-    public PanTompkinsAlgorithm(HashMap<Integer, SignalSetting> signalsInAlgorithm) {
-        super(signalsInAlgorithm);
+    public PanTompkinsAlgorithm(HashMap<Integer, SignalSetting> signalsInAlgorithm, byte index) {
+        super(signalsInAlgorithm, index, "Pan-Tompkins");
 
         if (signalsInAlgorithm.size() > 1)
             Log.e(TAG, "Pan Tompkins Algorithm received an unexpected number ("+ signalsInAlgorithm.size() +") of signals.");

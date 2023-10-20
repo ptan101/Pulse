@@ -19,13 +19,20 @@ public class SignalSetting implements Serializable {
     //Optional settings
     //Graph settings
     public boolean graphable = false;
-    public int[] color = null;
+    public int[] color = {0, 0, 0, 255};
     public int graphHeight = 150;
 
     //Filter settings
     public Filter filter = null;
     //Digital display settings
     public DigitalDisplaySettings ddSettings;
+
+    //Imaging settings
+    public boolean image = false;
+    public int c1_index = 1; //Signal index of Calibration 1
+    public int c2_index = 2; //Signal index of Calibration 2
+    public int t1_index = 3; //Signal index of Time 1
+    public int nImageLines = 320;
 
     //Sickbay ID
     public int sickbayID = -1;

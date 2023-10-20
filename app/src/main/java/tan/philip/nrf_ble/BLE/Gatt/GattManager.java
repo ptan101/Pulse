@@ -2,6 +2,7 @@ package tan.philip.nrf_ble.BLE.Gatt;
 
 import static android.bluetooth.BluetoothGatt.CONNECTION_PRIORITY_HIGH;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
@@ -68,6 +69,7 @@ public class GattManager {
         drive();
     }
 
+    @SuppressLint("MissingPermission")
     private synchronized void drive() {
         if(mCurrentOperation != null) {
             Log.e(TAG, "tried to drive, but currentOperation was not null, " + mCurrentOperation);

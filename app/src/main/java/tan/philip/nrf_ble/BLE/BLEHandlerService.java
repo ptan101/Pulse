@@ -1,5 +1,7 @@
 package tan.philip.nrf_ble.BLE;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -14,6 +16,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -22,6 +25,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -118,7 +122,7 @@ public class BLEHandlerService extends Service {
 
         //Foreground Service - keep it running. Just set up here, need to call startForeground to actually make it run in foreground
         Intent notificationIntent = new Intent(this, BLEHandlerService.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Attempting BLE connection...")
@@ -204,8 +208,14 @@ public class BLEHandlerService extends Service {
         return true;
     }
 
+    @SuppressLint("MissingPermission")
     @Subscribe(threadMode =  ThreadMode.MAIN)
     public void startScan(RequestBLEStartScanEvent event) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) ==
+                PackageManager.PERMISSION_DENIED) {
+            Log.e(TAG, "Permissions not enabled for BLE scan!");
+        }
+
         //BLE code
         //Return all broadcasting Bluetooth devices
         List<ScanFilter> filters = new ArrayList<>();
@@ -259,6 +269,7 @@ public class BLEHandlerService extends Service {
         }, 00);
     }
 
+    @SuppressLint("MissingPermission")
     @Subscribe(threadMode =  ThreadMode.MAIN)
     public void stopScan(RequestBLEStopScanEvent event) {
         //valueAnimator.cancel();
@@ -378,6 +389,7 @@ public class BLEHandlerService extends Service {
      *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
+    @SuppressLint("MissingPermission")
     private void connectDevice(final String address) {
         notificationBuilder.setContentTitle("Attempting BLE connection...");
         startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());

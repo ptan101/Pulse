@@ -15,3 +15,4 @@ Radu_b1, ecg_scg_v2.init
 Radu_b2, ecg_scg_v2.init
 Radu_b3, ecg_scg_v2.init
 NICBP, nicbp.init
+Simulated Ultrasound, simulated_ultrasound.init

@@ -1,5 +1,6 @@
 package tan.philip.nrf_ble.BLE.Gatt.operations;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -20,6 +21,7 @@ public class GattCharacteristicReadOperation extends GattOperation {
         mCallback = callback;
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void execute(BluetoothGatt gatt) {
         //L.d("writing to " + mCharacteristic);

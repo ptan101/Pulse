@@ -1,9 +1,12 @@
 package tan.philip.nrf_ble.SickbayPush;
 
+import static android.net.wifi.WifiManager.WIFI_MODE_FULL_LOW_LATENCY;
 import static tan.philip.nrf_ble.SickbayPush.SickbayMessage.convertPacketToJSONString;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,6 +33,7 @@ import tan.philip.nrf_ble.Events.Sickbay.SickbaySendFloatsEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
+    private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
     private static final String DEFAULT_WEB_SOCKET_URL = "http://192.168.50.147:3001";
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
@@ -48,6 +52,10 @@ public class SickbayPushService extends Service {
 
     private long lastPushTime = 0;
 
+    //Wifi Manager. Used for WiFi Lock, may be good to have in separate service dedicated for
+    //handling WiFi.
+    WifiManager mWifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+    WifiManager.WifiLock mWifiLock = mWifiManager.createWifiLock(WIFI_MODE_FULL_LOW_LATENCY, WIFI_TAG);
     public class LocalBinder extends Binder {
         public SickbayPushService getService() {
             // Return this instance of SickbayPushService so clients can call public methods
@@ -69,6 +77,9 @@ public class SickbayPushService extends Service {
         mHandler = new Handler();
         connectSocket();
 
+        //No need to have WiFi lock on to start probably
+        releaseWifiLock();
+
         //Register on EventBus
         EventBus.getDefault().register(this);
     }
@@ -76,6 +87,7 @@ public class SickbayPushService extends Service {
     @Override
     public void onDestroy() {
         disconnectSocket();
+        releaseWifiLock();
 
         //Unregister from EventBus
         EventBus.getDefault().unregister(this);
@@ -205,6 +217,7 @@ public class SickbayPushService extends Service {
         mSocket.off("new message", onNewMessage);
         mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.off(Socket.EVENT_CONNECT, onConnection);
+        releaseWifiLock();
     }
 
     private void attemptSend(JSONObject message) {
@@ -259,8 +272,20 @@ public class SickbayPushService extends Service {
         @Override
         public void call(Object... args) {
             Log.d(TAG, "Socket connected!");
+
+            acquireWifiLock();
         }
     };
+
+    private void releaseWifiLock() {
+        if(mWifiLock != null)
+            mWifiLock.release();
+    }
+
+    private void acquireWifiLock() {
+        if(mWifiLock != null)
+            mWifiLock.acquire();
+    }
 
 }
 

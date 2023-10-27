@@ -19,6 +19,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Log;
 import android.view.MenuItem;
@@ -35,6 +36,9 @@ import androidx.core.content.ContextCompat;
 import androidx.databinding.DataBindingUtil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -134,6 +138,15 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
         //setupBLE();
 
+        //Check if Sickbay settings files exist
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Toast.makeText(this, "Please allow file access.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+            }
+        }
+        checkSickbaySettingFileExists("sickbayIP", "192.168.1.1");
+        checkSickbaySettingFileExists("sickbayBedID", "BED001");
 
         //CheckIfServiceIsRunning();
     }
@@ -247,6 +260,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void enterSickbayIP() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(readSickbaySetting("sickbayIP"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(input);
@@ -279,6 +293,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void enterSickbayBedID() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(readSickbaySetting("sickbayBedID"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(input);
@@ -308,6 +323,47 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     //Very bad, doesn't check if number or if folder exists
     private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+
+    /**
+     * Checks if the file exists and if not creates it
+     * @param fileName Name of file to check if exists
+     * @param defaultText What to put in the file if creating new one
+     */
+    private void checkSickbaySettingFileExists(String fileName, String defaultText) {
+        String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
+
+        File sickbayIPFile = new File(filePath);
+        try {
+            if (sickbayIPFile.length() == 0) {
+                FileOutputStream oFile = new FileOutputStream(sickbayIPFile, false);
+                writeSickbaySettings(fileName, defaultText);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, ""+e);
+        }
+    }
+
+    private String readSickbaySetting(String fileName) {
+        String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(filePath);
+
+            String out = "";
+            int i;
+            while ((i = fileReader.read()) != -1) {
+                out += (char)i;
+            }
+
+            return out;
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, ""+e);
+        } catch (IOException e) {
+            Log.e(TAG, ""+e);        }
+
+        return null;
+    }
+
     private void writeSickbaySettings(String fileName, String data) {
         Log.d(TAG, "Writing Sickbay setting " + fileName + " " + data);
         String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
@@ -320,7 +376,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
             mFileWriter.close();
             Log.d(TAG, "SUCCESSFUL WRITE");
         } catch (IOException e) {
-            Log.d(TAG, e.toString());
+            Log.e(TAG, e.toString());
         } finally {
 
         }

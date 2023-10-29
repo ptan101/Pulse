@@ -38,7 +38,7 @@ public class SickbayPushService extends Service {
     private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
     private static final String DEFAULT_WEB_SOCKET_PORT = "3001";
-    private static final String DEFAULT_WEB_SOCKET_URL = "http://192.168.50.147:3001";
+    private static final String DEFAULT_WEB_SOCKET_URL = "https://192.168.50.147:3001";
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
 
     private final String DEFAULT_BED_NAME = "BED001";
@@ -114,6 +114,7 @@ public class SickbayPushService extends Service {
             }
             Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
 
+            //On the test server socketListen, remove s in https
             webSocketURL = "https://" + sickbayIP;
             //If the port is set in the file, don't add the port.
             if (sickbayIP.length() >= 5 && sickbayIP.charAt(sickbayIP.length() - 5) != ':')

@@ -1,0 +1,23 @@
+Packet Information
+0.52, 8
+end
+Signals Information
+0, SV, 4, 1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x/2097152
+..suffix: ml
+1, num, 2, 1, 16, unsigned
+2, TEMP, 2, 1, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x/128
+..suffix: \u00B0C
+end
+Biometric Settings
+end
+Packet Structure
+1
+0
+2
+end

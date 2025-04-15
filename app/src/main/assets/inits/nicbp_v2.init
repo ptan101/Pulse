@@ -1,5 +1,5 @@
 Packet Information
-6.25, 174
+6.25, 194
 end
 Signals Information
 0, SCG-Z, 3, 125, 20, signed
@@ -16,7 +16,7 @@ Signals Information
 ..b: 1.0
 ..a: 1.0
 ..gain: 5
-2, PPG, 4, 31, 20, unsigned
+2, PPGG, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
 .filter
@@ -38,6 +38,13 @@ Signals Information
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 1
+8, PPGIR, 4, 31, 20, unsigned
+.graphable
+..color: 0 250 0 255
+.filter
+..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
+..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..gain: 5
 end
 Biometric Settings
 end
@@ -88,6 +95,11 @@ Packet Structure
 2
 2
 2
+8
+8
+8
+8
+8
 5
 6
 7

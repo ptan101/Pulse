@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdk 33
     defaultConfig {
         applicationId "tan.philip.nrf_ble"
         minSdkVersion 26
@@ -23,6 +23,7 @@ android {
         targetCompatibility 1.8
         sourceCompatibility 1.8
     }
+    namespace 'tan.philip.nrf_ble'
 }
 
 dependencies {

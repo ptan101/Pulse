@@ -12,6 +12,7 @@ ADXL355, adxl355_125.init
 Dual_SCG, dualSCG.init
 NICBP, nicbp_v2.init
 NICBPv2, nicbp.init
+NICBPv2_ncs, nicbp.init
 byteGuardPPG_v1.0, byteppg.init
 byteGuardPPG_v2.0, byteppg2.init
 byteGuardPPG_v3.0, byteppg2.init

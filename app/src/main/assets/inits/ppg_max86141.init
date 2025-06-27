@@ -1,0 +1,226 @@
+Packet Information
+3.125, 242
+end
+Signals Information
+0, IR Signal (P), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1000
+.sickbayNS TATTOOWAVE
+1, Red Signal (P), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1001
+.sickbayNS TATTOOWAVE
+2, Green Signal (P), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.graphable
+..color: 255 0 0 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1002
+.sickbayNS TATTOOWAVE
+3, Ambient (P), 3, 25, 19, unsigned
+.big
+.sickbayID 1003
+.sickbayNS TATTOOWAVE
+4, IR Signal (D), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.graphable
+..color: 75 75 75 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1004
+.sickbayNS TATTOOWAVE
+5, Red Signal (D), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 125 125 125 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1005
+.sickbayNS TATTOOWAVE
+6, Green Signal (D), 3, 25, 19, unsigned
+.big
+.graphable
+..color: 255 0 0 255
+.filter
+..b: 0.8209900772315502, 0.0, -3.2839603089262006, 0.0, 4.925940463389301, 0.0, -3.2839603089262006, 0.0, 0.8209900772315502
+..a: 1.0, 0.26271868379281216, -3.5724399276659917, -0.6846913014315921, 4.837832450082149, 0.6007005584634347, -2.937762906869016, -0.17707887640364633, 0.6740247076274198
+..gain: -50
+.sickbayID 1006
+.sickbayNS TATTOOWAVE
+7, Ambient (D), 3, 25, 19, unsigned
+.big
+.sickbayID 1007
+.sickbayNS TATTOOWAVE
+8, Acceleration (X), 2, 25, 10, unsigned
+.big
+.sickbayID 1008
+.sickbayNS TATTOOWAVE
+9, Acceleration (Y), 2, 25, 10, unsigned
+.big
+.sickbayID 1009
+.sickbayNS TATTOOWAVE
+10, Acceleration (Z), 2, 25, 10, unsigned
+.big
+.sickbayID 1010
+.sickbayNS TATTOOWAVE
+11, Temperature, 2, 2, 16, signed
+.big
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x*0.0078125
+..suffix: \u00B0C
+.sickbayID 1011
+.sickbayNS TATTOOVITAL
+end
+Biometric Settings
+heartrate, 0
+spo2, 0, 0, 0, 0
+pwv, 0, 0
+end
+Packet Structure
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+2
+6
+0
+4
+1
+5
+3
+7
+8
+9
+10
+8
+9
+10
+8
+9
+10
+8
+9
+10
+8
+9
+10
+8
+9
+10
+8
+9
+10
+8
+9
+10
+11
+end
+RX Messages
+Tattoo is in a normal operating state
+.alertDialog false
+Tattoo sensors are currently turned off.
+.brief shut off.
+.sendTX 1
+Tattoo detected an overtemperature condition and automatically shut off. To restart, turn the tattoo battery off and on. (ID = 0x01)
+.brief overheated and shut off.
+end
+TX Messages
+Shutdown tattoo
+.brief shut off.
+.alternate 2
+Turn on tattoo
+.alternate 1
+.isAlternate true
+Request tattoo state
+.isAlternate true
+Decrease LED 1
+Decrease LED 2
+Decrease LED 3
+Increase LED 1
+Increase LED 2
+Increase LED 3
+end

@@ -62,8 +62,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+
 public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnMenuItemClickListener {
     //private ImageButton btnScan;
+    private static final int REQUEST_BLUETOOTH_PERMISSIONS = 1;
 
     private static final String TAG = "ClientActivity";
     private static final int REQUEST_ENABLE_BT = 1;
@@ -96,11 +98,13 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
             BLEHandlerService.LocalBinder binder = (BLEHandlerService.LocalBinder) service;
             bleHandlerService = binder.getService();
             mIsBound = true;
-            if(!bleHandlerService.hasBLEPermissions())
+            if (!bleHandlerService.hasBLEPermissions())
                 getPermissions();
         }
 
-        public void onServiceDisconnected(ComponentName className) { mIsBound = false; }
+        public void onServiceDisconnected(ComponentName className) {
+            mIsBound = false;
+        }
     };
 
     /////////////////////////////Life cycle functions///////////////////////////////////////////////
@@ -130,7 +134,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         //Set up background color transition
         setupPulses();
         setupButtons();
-        mIconManager = new BLEScanIconManager((ConstraintLayout)findViewById(R.id.layout1), this);
+        mIconManager = new BLEScanIconManager((ConstraintLayout) findViewById(R.id.layout1), this);
 
         //setupBLE();
 
@@ -147,8 +151,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
         try {
             //doUnbindService();
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             Log.e(TAG, "Failed to unbind from the service", t);
         }
 
@@ -208,7 +211,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
-        switch(menuItem.getItemId()) {
+        switch (menuItem.getItemId()) {
             case R.id.enterDebugMode:
                 startDebugMode();
                 return true;
@@ -229,7 +232,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     //TO DO
     private void startDebugMode() {
         //Create a DebugMode object (extends BLETattooDevice?) that acts as BLE device
-        connectToDevices(new ArrayList<String> (Arrays.asList(DEBUG_MODE_ADDRESS)));
+        connectToDevices(new ArrayList<String>(Arrays.asList(DEBUG_MODE_ADDRESS)));
     }
 
     private void clearScan() {
@@ -245,6 +248,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     private String sickbayIP = "";
     private String sickbayBedID = "";
+
     private void enterSickbayIP() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -309,6 +313,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     //Very bad, doesn't check if number or if folder exists
     private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+
     private void writeSickbaySettings(String fileName, String data) {
         Log.d(TAG, "Writing Sickbay setting " + fileName + " " + data);
         String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
@@ -339,14 +344,14 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         Map<String, Integer> rssis = event.getRSSIs();
         Map<String, Boolean> isInitialized = event.getIsInitialized();
 
-        for(String address : scanResults.keySet()) {
+        for (String address : scanResults.keySet()) {
             //If no longer available, remove.
-            if(!scanList.containsKey(address)) {
+            if (!scanList.containsKey(address)) {
                 scanResults.remove(address);
                 mIconManager.removeIcon(address);
             }
         }
-        for(String address : scanList.keySet()) {
+        for (String address : scanList.keySet()) {
             //If not already in the local scan results, add it
             if (!scanResults.containsKey(address)) {
                 scanResults.put(address, scanList.get(address));
@@ -394,7 +399,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
             connectButtonVisible = false;
         } else {
-            if(!connectButtonVisible) {
+            if (!connectButtonVisible) {
                 mBinding.btnStartBleConnection.setVisibility(View.VISIBLE);
                 connectButtonVisible = true;
                 //Fade button in
@@ -432,7 +437,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         Toast toast = Toast.makeText(getApplicationContext(), "Scanning for BLE devices...", Toast.LENGTH_SHORT);
         toast.show();
 
-        for(Pulse currentPulse: pulses) {
+        for (Pulse currentPulse : pulses) {
             currentPulse.restart();
         }
 
@@ -443,7 +448,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         EventBus.getDefault().post(new RequestBLEStopScanEvent());
         //valueAnimator.cancel();
         mScanning = false;
-        for(Pulse pulse: pulses) {
+        for (Pulse pulse : pulses) {
             pulse.end();
         }
     }
@@ -451,9 +456,9 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         //Log.d("Permission", "onRequestPermissionsResult: "+ grantResults[0] + grantResults[1]);
-        switch(requestCode) {
+        switch (requestCode) {
             case REQUEST_ENABLE_BT:
-                if(grantResults.length==2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
+                if (grantResults.length == 2 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED)
                     Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
                 else {
                     Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
@@ -467,7 +472,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     private boolean hasPermissions() {
-        if(bleHandlerService != null && !bleHandlerService.hasBLEPermissions()) {
+        if (bleHandlerService != null && !bleHandlerService.hasBLEPermissions()) {
             requestBluetoothEnable();
             return false;
         }
@@ -479,6 +484,18 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     private void requestBluetoothEnable() {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            Manifest.permission.BLUETOOTH_CONNECT,
+                            Manifest.permission.BLUETOOTH_SCAN,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    },
+                    REQUEST_BLUETOOTH_PERMISSIONS);
+
+            return;
+        }
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         Log.d(TAG, "Requested user enabled Bluetooth. Try starting the scan again.");
     }

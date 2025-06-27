@@ -191,12 +191,12 @@ public class TattooConnectionManager {
                 // multiple Gatt services right after another.
                 // See: http://stackoverflow.com/questions/21237093/android-4-3-how-to-connect-to-multiple-bluetooth-low-energy-devices
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
-        }, 0);
+        }, 1500);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

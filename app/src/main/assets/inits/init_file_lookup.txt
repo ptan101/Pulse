@@ -21,3 +21,7 @@ byteGuardIMU_v1.0, byteimu.init
 Press_Pill, Nanohmics.init
 Tri_WNN, SV.init
 Tri_WNN_seg, WNN_seg.init
+DWN_SV, SV.init
+DWN_BP, BP.init
+DWN_SVBP, SVBP.init
+Tri_DWN_SVBP, nicbp_SVBP.init

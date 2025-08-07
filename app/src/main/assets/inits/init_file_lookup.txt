@@ -8,6 +8,10 @@ Chest_v3.1, ecg_scg_v2_5.init
 Chest_v3.2, ecg_scg_v1.init
 Chest_HR, ecg_scg_v2.init
 Ear_Tattoo_v1.0, ear_v1.init
+Radial Oximeter V1.1, adpd1080.init
+Radu_b1, ecg_scg_v2.init
+Radu_b2, ecg_scg_v2.init
+Radu_b3, ecg_scg_v2.init
 ADXL355, adxl355_125.init
 Dual_SCG, dualSCG.init
 NICBP, nicbp_v2.init
@@ -25,3 +29,9 @@ DWN_SV, SV.init
 DWN_BP, BP.init
 DWN_SVBP, SVBP.init
 Tri_DWN_SVBP, nicbp_SVBP.init
+Simulated Ultrasound, simulated_ultrasound.init
+Optical Array V1.0, optical_array_v1.init
+Optical Array V2.0, optical_array_v2.init
+Optical Array V2.0 SINGLE, optical_array_v2_SINGLE.init
+Max6 PPG v4, max6_ppg_v4.init
+Max6 PPG v4 36c, max6_ppg_v4_36chan.init

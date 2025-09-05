@@ -1,6 +1,6 @@
 Debug Mode, debug.init
 PPG Tattoo v3.2, ppg_max86141.init
-EEG-Test, eeg_tattoo.init
+EEG-Test, eeg_tattoo_ncs.init
 Pneumonia_v2.0, pneumonia_v2.init
 core-hydration, max30002.init
 MAX30002_ICG, max30002_icg.init
@@ -28,8 +28,10 @@ Tri_WNN_seg, WNN_seg.init
 DWN_SV, SV.init
 DWN_BP, BP.init
 DWN_SVBP, SVBP.init
-Tri_DWN_SVBP, old_nicbp_SVBP.init
+Tri_DWN_SVBP, nicbp_SVBP.init
 deploy_Tri_DWN_SVBP, nicbp_SVBP.init
+Tri_NEUTON_SVBP, nicbp_SVBP.init
+Tri_XGBOOST_SVBP, nicbp_SVBP.init
 Simulated Ultrasound, simulated_ultrasound.init
 Optical Array V1.0, optical_array_v1.init
 Optical Array V2.0, optical_array_v2.init

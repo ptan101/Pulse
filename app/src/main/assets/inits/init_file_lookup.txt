@@ -18,6 +18,7 @@ NICBP, nicbp_v2.init
 NICBPv2, nicbp.init
 NICBPv2_ncs, nicbp.init
 NICBP_v3, nicbp_v3.init
+NICBP_v3_ppgall, nicbp_v3_ppgall.init
 byteGuardPPG_v1.0, byteppg.init
 byteGuardPPG_v2.0, byteppg2.init
 byteGuardPPG_v3.0, byteppg2.init

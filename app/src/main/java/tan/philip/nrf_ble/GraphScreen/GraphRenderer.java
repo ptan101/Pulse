@@ -141,35 +141,6 @@ public class GraphRenderer {
 
                     if (setting.graphable || setting.image || newSignal.useDigitalDisplay())
                         signalsInDevice.put((int) setting.index, newSignal);
-                    DigitalDisplay display;
-                    if (newSignal.useDigitalDisplay()) {
-                        signalsInDevice.put((int) setting.index, newSignal);
-
-                        if (newSignal.getName().startsWith("TEMP")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "temperature");
-                        }
-                        else if (newSignal.getName().startsWith("RES")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "resistance");
-                        }
-                        else if (newSignal.getName().startsWith("REX")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "reactance");
-                        }
-                        else if (newSignal.getName().startsWith("SV")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "sv");
-                        }
-                        else if (newSignal.getName().startsWith("SBP")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "sbp");
-                        }
-                        else if (newSignal.getName().startsWith("DBP")) {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "dbp");
-                        }
-                        else {
-                            display = new DigitalDisplay(ctx, newSignal.getName(), "temperature");
-                        }
-                        displayManager.addToDigitalDisplay(display);
-                        newSignal.setDigitalDisplay(display);
-                    }
-
                 }
 
                 //Add digital displays for Biometrics

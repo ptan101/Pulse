@@ -26,6 +26,8 @@ import tan.philip.nrf_ble.GraphScreen.GraphSignal;
 
 public class BLETattooDevice extends BLEDevice {
     private final ArrayList<GraphSignal> graphSignals;
+    private long timestamps[] = new long[1000];
+    private int n = 0;
 
     public BLETattooDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
         super(context, bluetoothDevice);

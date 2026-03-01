@@ -26,8 +26,6 @@ import tan.philip.nrf_ble.GraphScreen.GraphSignal;
 
 public class BLETattooDevice extends BLEDevice {
     private final ArrayList<GraphSignal> graphSignals;
-    private long timestamps[] = new long[1000];
-    private int n = 0;
 
     public BLETattooDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
         super(context, bluetoothDevice);
@@ -46,14 +44,6 @@ public class BLETattooDevice extends BLEDevice {
         if(mRecording) {
             saveToFile(messageBytes);
             recordTime += (1.0f / mBLEParser.getNotificationFrequency());
-
-            //Save timestamps of each packet
-            timestamps[n] = System.currentTimeMillis();
-            n++;
-            if (n == 1000) {
-                n = 0;
-                dumpTimestamps();
-            }
         }
 
         HashMap<Integer, ArrayList<Integer>> packaged_data = convertPacketToHashMap(messageBytes);
@@ -85,38 +75,4 @@ public class BLETattooDevice extends BLEDevice {
         EventBus.getDefault().post(new TMSMessageReceivedEvent(this.getAddress(), this.getTMSMessage(messageBytes[0])));
     }
 
-    private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
-    private void dumpTimestamps() {
-        String filePath = BASE_DIR_PATH + File.separator + "timestamps.bin";
-
-        FileOutputStream fileOutputStream = null;
-
-        try {
-            File file = new File(filePath);
-            if (!file.exists()) {
-                if (!file.createNewFile()) {
-                    Log.e(TAG, "Error creating .bin file.");
-                    //Toast.makeText(getApplicationContext(), "Error creating file", Toast.LENGTH_SHORT).show();
-                }
-            }
-            fileOutputStream = new FileOutputStream(file, false);
-
-            ByteBuffer bb = ByteBuffer.allocate(timestamps.length * Long.BYTES);
-            bb.asLongBuffer().put(timestamps);
-            fileOutputStream.write(bb.array());
-
-        } catch (FileNotFoundException ex) {
-            Log.e(TAG, ex.getMessage());
-        } catch (IOException ex) {
-            Log.e(TAG, ex.getMessage());
-        } finally {
-            if (fileOutputStream != null) {
-                try {
-                    fileOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 }

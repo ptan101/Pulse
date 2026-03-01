@@ -1,5 +1,5 @@
 Packet Information
-6.25, 168
+6.25, 156
 end
 Signals Information
 0, SCG-Z, 3, 125, 20, signed
@@ -29,14 +29,21 @@ Signals Information
 ..DecimalFormat: ##.##
 ..conversion: x/128
 ..suffix: \u00B0C
-5, PPGIR, 4, 31, 20, unsigned
-.graphable
-..color: 0 250 0 255
-.filter
-..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
-..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
-..gain: 5
-6, Timestamp, 4, -1, 32, unsigned
+5, SV, 4, -1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: ml
+6, SBP, 4, -1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: mmHg
+7, DBP, 4, -1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: mmHg
 end
 Biometric Settings
 end
@@ -87,11 +94,8 @@ Packet Structure
 2
 2
 2
-5
-5
-5
-5
-5
 4
+5
 6
+7
 end

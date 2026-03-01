@@ -51,16 +51,33 @@ public class BLEScanIconManager {
         selectedAddresses.clear();
     }
 
+//    public void clearAllIcons() {
+//        for (String address : icons.keySet()) {
+//            BLEScanIcon icon = icons.get(address);
+//            icon.fadeOut();
+//            icons.remove(icon);
+//            mLayout.removeView(icon);
+//            selectedAddresses.remove(icon.getAddress());
+//        }
+//        EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
+//    }
+
     public void clearAllIcons() {
-        for (String address : icons.keySet()) {
+        // Create a copy of addresses to avoid ConcurrentModificationException
+        ArrayList<String> addressesToRemove = new ArrayList<>(icons.keySet());
+
+        for (String address : addressesToRemove) {
             BLEScanIcon icon = icons.get(address);
-            icon.fadeOut();
-            icons.remove(address);
-            mLayout.removeView(icon);
-            selectedAddresses.remove(icon.getAddress());
+            if (icon != null) {
+                icon.fadeOut();
+                mLayout.removeView(icon);
+                selectedAddresses.remove(address);
+            }
+            icons.remove(address); // Fixed: remove by address, not icon object
         }
         EventBus.getDefault().post(new BLEIconNumSelectedChangedEvent(selectedAddresses.size()));
     }
+
 
     public void register() {
         //Register on EventBus
@@ -94,9 +111,14 @@ public class BLEScanIconManager {
     public void updateRSSI(String address, int rssi) {
         BLEScanIcon icon = icons.get(address);
 
-        if(icon != null)
+        if (icon != null) {
             icon.setRSSI(rssi);
+        } else {
+            Log.w("BLEScanIconManager", "BLEScanIcon is null for device: " + address);
+            // Optionally recreate the icon or handle the missing icon case
+        }
     }
+
 
     public void removeIcon(String address) {
         BLEScanIcon icon = icons.get(address);

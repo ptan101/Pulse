@@ -1,0 +1,98 @@
+Packet Information
+6.25, 124
+end
+Signals Information
+0, SCG-Z, 2, 125, 16, signed
+.graphable
+..color: 0 0 250 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, ECG, 2, 125, 16, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+2, PPGG, 2, 125, 16, signed
+.graphable
+..color: 0 250 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+3, num, 2, 6, 16, unsigned
+4, TEMP, 2, 6, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x/128
+..suffix: \u00B0C
+end
+Biometric Settings
+end
+Packet Structure
+3
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+4
+end

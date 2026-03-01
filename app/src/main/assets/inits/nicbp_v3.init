@@ -1,5 +1,5 @@
 Packet Information
-6.25, 174
+6.25, 168
 end
 Signals Information
 0, SCG-Z, 3, 125, 20, signed
@@ -16,43 +16,29 @@ Signals Information
 ..b: 1.0
 ..a: 1.0
 ..gain: 5
-2, PPG, 4, 31, 20, unsigned
+2, PPGG, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 5
-.sickbayID: 1002
-3, num, 2, 6, 16, unsigned
-.sickbayID: 1003
 3, num, 2, 6, 16, unsigned
 4, TEMP, 2, 6, 16, signed
 .digdisplay
 ..DecimalFormat: ##.##
 ..conversion: x/128
 ..suffix: \u00B0C
-.sickbayID: 1004
-5, ACCX, 2, 30, 12, signed
-.sickbayID: 1005
-6, ACCY, 2, 30, 12, signed
-.sickbayID: 1006
-7, ACCZ, 2, 30, 12, signed
-.sickbayID: 1007
-5, ACCX, 2, 31, 12, signed
-6, ACCY, 2, 31, 12, signed
-7, ACCZ, 2, 31, 12, signed
+5, PPGIR, 4, 31, 20, unsigned
 .graphable
-..color: 125 125 125 255
+..color: 0 250 0 255
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
-..gain: 1
+..gain: 5
+6, Timestamp, 4, -1, 32, unsigned
 end
 Biometric Settings
-end
-Sickbay Settings
-.sickbayNS: TATTOOWAVE
 end
 Packet Structure
 3
@@ -102,19 +88,10 @@ Packet Structure
 2
 2
 5
-6
-7
 5
-6
-7
 5
-6
-7
 5
-6
-7
 5
-6
-7
 4
+6
 end

@@ -69,6 +69,21 @@ public class DigitalDisplay extends LinearLayout {
             case "temperature":
                 icon.setBackgroundResource(R.drawable.temp);
                 break;
+            case "resistance":
+                icon.setBackgroundResource(R.drawable.res);
+                break;
+            case "reactance":
+                icon.setBackgroundResource(R.drawable.xc);
+                break;
+            case "sv":
+                icon.setBackgroundResource(R.drawable.sv);
+                break;
+            case "sbp":
+                icon.setBackgroundResource(R.drawable.sbp);
+                break;
+            case "dbp":
+                icon.setBackgroundResource(R.drawable.dbp);
+                break;
             default:
                 icon.setBackgroundResource(R.drawable.heartrate);
                 break;

@@ -278,7 +278,7 @@ public class SickbayPushService extends Service {
         @Override
         public void call(Object... args) {
             mSocket.connect();
-            Log.e(TAG, "Socket connection had an error (" + args[0] +")");
+            Log.d(TAG, "Socket connection had an error (" + args[0] +")");
             toastToMain(""+ args[0]);
         }
     };

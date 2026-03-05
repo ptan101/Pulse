@@ -11,9 +11,7 @@ import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -22,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,14 +30,15 @@ import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.Events.Sickbay.SickbayQueueEvent;
+import tan.philip.nrf_ble.Events.Sickbay.SickbayReinitializeEvent;
 import tan.philip.nrf_ble.Events.Sickbay.SickbaySendFloatsEvent;
 
 public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
     private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
-    private static final String DEFAULT_WEB_SOCKET_PORT = "3001";
-    private static final String DEFAULT_WEB_SOCKET_URL = "https://192.168.50.147:3001";
+    private static final String DEFAULT_IP_ADDRESS = "192.168.50.147";
+    private static final String DEFAULT_WEB_SOCKET_URL = "http://" + DEFAULT_IP_ADDRESS + ":3001";
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
 
     private final String DEFAULT_BED_NAME = "BED001";
@@ -57,8 +57,8 @@ public class SickbayPushService extends Service {
 
     //Wifi Manager. Used for WiFi Lock, may be good to have in separate service dedicated for
     //handling WiFi.
-    WifiManager mWifiManager;
-    WifiManager.WifiLock mWifiLock;
+    WifiManager mWifiManager;// = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+    WifiManager.WifiLock mWifiLock;// = mWifiManager.createWifiLock(WIFI_MODE_FULL_LOW_LATENCY, WIFI_TAG);
     public class LocalBinder extends Binder {
         public SickbayPushService getService() {
             // Return this instance of SickbayPushService so clients can call public methods
@@ -73,17 +73,7 @@ public class SickbayPushService extends Service {
 
     @Override
     public void onCreate() {
-        readSickbaySettings(); //TO DO: Check if the IP address and Bed names are valid
-
-        initializeSocket();
-
-        mHandler = new Handler();
-        connectSocket();
-
-        //No need to have WiFi lock on to start probably
-        mWifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
-        mWifiLock = mWifiManager.createWifiLock(WIFI_MODE_FULL_LOW_LATENCY, WIFI_TAG);
-        releaseWifiLock();
+        initializeSickbaySettings();
 
         //Register on EventBus
         EventBus.getDefault().register(this);
@@ -96,6 +86,21 @@ public class SickbayPushService extends Service {
 
         //Unregister from EventBus
         EventBus.getDefault().unregister(this);
+    }
+
+    private void initializeSickbaySettings() {
+        readSickbaySettings(); //TO DO: Check if the IP address and Bed names are valid
+
+        Log.d(TAG, "Initializing Sockets.");
+        initializeSocket();
+
+        mHandler = new Handler();
+        connectSocket();
+
+        //No need to have WiFi lock on to start probably
+        mWifiManager = (WifiManager) this.getSystemService(Context.WIFI_SERVICE);
+        mWifiLock = mWifiManager.createWifiLock(WIFI_MODE_FULL_LOW_LATENCY, WIFI_TAG);
+        releaseWifiLock();
     }
 
     //Reads the sickbay settings from local memory
@@ -114,16 +119,23 @@ public class SickbayPushService extends Service {
             }
             Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
 
-            //On the test server socketListen, remove s in https
-            webSocketURL = "https://" + sickbayIP;
-            //If the port is set in the file, don't add the port.
-            if (sickbayIP.length() >= 5 && sickbayIP.charAt(sickbayIP.length() - 5) != ':')
-                webSocketURL += ':' + DEFAULT_WEB_SOCKET_PORT;
+            webSocketURL = "https://" + sickbayIP + ":3001";
 
             fileReader.close();
         }
         catch (Exception e) {
-            Log.e(TAG, "exception", e);
+            File file = new File(filePath);
+            try {
+                file.createNewFile();
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.write(DEFAULT_IP_ADDRESS);
+                fileWriter.close();
+
+                Log.e(TAG, "Made sickbay settings file.", e);
+
+            } catch(Exception f) {
+                Log.e(TAG, "Could not make sickbay settings files.", e);
+            }
         }
 
         //Read the sickbay bed ID
@@ -143,15 +155,26 @@ public class SickbayPushService extends Service {
 
             fileReader.close();
         }
-        catch (java.io.FileNotFoundException e) {
-            toastToMain("IP/ BedID file not found.");
-        }
         catch (Exception e) {
-            Log.e(TAG, "exception", e);
+            File file = new File(filePath);
+            try {
+                file.createNewFile();
+                FileWriter fileWriter = new FileWriter(file);
+                fileWriter.write(DEFAULT_BED_NAME);
+                fileWriter.close();
+                Log.e(TAG, "Made sickbay settings file.", e);
+
+            } catch(Exception f) {
+                Log.e(TAG, "Could not make sickbay settings files.", e);
+            }
         }
     }
 
     // ////////////////////////////////Queue Functions////////////////////////////////////////////
+    @Subscribe
+    public void reinitalizeSickbaySettings(SickbayReinitializeEvent event) {
+        initializeSickbaySettings();
+    }
 
     @Subscribe
     public void sendSickbayFrameEvent(SickbaySendFloatsEvent event) {
@@ -215,9 +238,6 @@ public class SickbayPushService extends Service {
 
     //Will need a recovery
     void connectSocket() {
-        //Update parameters
-        readSickbaySettings();
-
         //Listen for events using onNewMessage (Emitter.Listener)
         mSocket.on("new message", onNewMessage);
         mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
@@ -279,7 +299,6 @@ public class SickbayPushService extends Service {
         public void call(Object... args) {
             mSocket.connect();
             Log.e(TAG, "Socket connection had an error (" + args[0] +")");
-            toastToMain(""+ args[0]);
         }
     };
 
@@ -288,7 +307,6 @@ public class SickbayPushService extends Service {
         @Override
         public void call(Object... args) {
             Log.d(TAG, "Socket connected!");
-            toastToMain("Connected to Sickbay!");
 
             acquireWifiLock();
         }
@@ -304,14 +322,4 @@ public class SickbayPushService extends Service {
             mWifiLock.acquire();
     }
 
-    private void toastToMain(String text) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-
-            @Override
-            public void run() {
-                Toast.makeText(SickbayPushService.this.getApplicationContext(),text,Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
 }
-

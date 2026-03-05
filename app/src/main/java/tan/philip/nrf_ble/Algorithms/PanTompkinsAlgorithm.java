@@ -156,7 +156,7 @@ public class PanTompkinsAlgorithm extends Biometric {
                 //Search between the last two established signal peaks
                 //The largest amplitude peak between these points is considered a QRS candidate
                 if(rrMissedLimit != 0 && (lastPeakLocation() - lastLastPeakLocation()) > rrMissedLimit) {
-                //if(rrMissedLimit != 0 && (signalPeaks.get(signalPeaks.size() - 2) - signalPeaks.get(signalPeaks.size() - 1)) > rrMissedLimit) {
+                    //if(rrMissedLimit != 0 && (signalPeaks.get(signalPeaks.size() - 2) - signalPeaks.get(signalPeaks.size() - 1)) > rrMissedLimit) {
                     //Check all recent noise peaks to see if they have enough distance from the current signal peak
                     //Also check if the noise peak value is of sufficient amplitude
                     //If the peak qualifies, keep track of the amplitude and location
@@ -299,4 +299,3 @@ public class PanTompkinsAlgorithm extends Biometric {
         return signalPeaks[(numSignalPeaksDetected - 2) % 9];
     }
 }
-

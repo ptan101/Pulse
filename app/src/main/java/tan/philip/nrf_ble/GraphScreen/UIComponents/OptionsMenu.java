@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.text.Html;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
@@ -21,10 +20,9 @@ import java.util.Calendar;
 
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
-import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAll;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAllEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestSendTMSEvent;
-import tan.philip.nrf_ble.Events.UIRequests.RequestTMSSendEvent;
 import tan.philip.nrf_ble.FileWriting.FileManager;
 import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.R;
@@ -91,10 +89,10 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
                 toggleRecord();
                 return true;
             case R.id.enable_all_autoscale:
-                EventBus.getDefault().post(new RequestChangeAutoScaleAll(true));
+                EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(true));
                 return true;
             case R.id.disable_all_autoscale:
-                EventBus.getDefault().post(new RequestChangeAutoScaleAll(false));
+                EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(false));
                 return true;
             case R.id.help:
                 showHelp();

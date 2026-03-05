@@ -229,7 +229,7 @@ public class BLEPacketParser {
 
         return section;
     }
-    
+
     public static ArrayList<String> gatherSubHeadings(ArrayList<String> lines, int curLine) {
         ArrayList<String> out = new ArrayList<String>();
         for(int i = curLine + 1; i < lines.size(); i ++) {
@@ -238,7 +238,7 @@ public class BLEPacketParser {
 
             out.add(lines.get(i).substring(2));
         }
-        
+
         return out;
     }
 

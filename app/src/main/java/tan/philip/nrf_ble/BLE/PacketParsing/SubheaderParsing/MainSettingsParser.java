@@ -40,9 +40,12 @@ public class MainSettingsParser {
                 if(cur_line.charAt(0) != '.') {
                     //If the current line is a main heading, construct a new signalSetting object.
                     String[] signal_info = cur_line.split(", ");
+                    boolean isFloat = signal_info[5].equals("float");
+                    boolean isSigned = signal_info[5].equals("signed");
                     SignalSetting cur_setting = new SignalSetting(Byte.parseByte(signal_info[0]), signal_info[1],
                             Byte.parseByte(signal_info[2]), Integer.parseInt(signal_info[3]),
-                            Byte.parseByte(signal_info[4]), signal_info[5].equals("signed"));
+                            Byte.parseByte(signal_info[4]), isSigned);
+                    cur_setting.isFloat = isFloat;
                     signalSettings.put((int) cur_setting.index, cur_setting);
 
                 } else if (cur_line.charAt(0) == '.' && !cur_line.startsWith("..")) {

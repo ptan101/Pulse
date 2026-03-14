@@ -15,6 +15,7 @@ public class SignalSetting implements Serializable {
     public byte bitResolution;
     public boolean signed;
     public boolean littleEndian = true;
+    public boolean isFloat = false;
 
     //Optional settings
     //Graph settings

@@ -128,9 +128,12 @@ public class BLEPacketParser {
     public ArrayList<Float> filterSignals(ArrayList<Integer> raw_data, int index) {
         ArrayList<Float> filtered_data = new ArrayList<>(raw_data.size());
         float prescaler = (float) Math.pow(2, signalSettings.get(index).bitResolution);
+        boolean isFloat = signalSettings.get(index).isFloat;
 
         for(int i = 0; i < raw_data.size(); i ++) {
-            if(signalSettings.get(index).filter != null) {
+            if (isFloat) {
+                filtered_data.add(Float.intBitsToFloat(raw_data.get(i)));
+            } else if(signalSettings.get(index).filter != null) {
                 float filteredSample = signalSettings.get(index).filter.findNextY((raw_data.get(i)));
                 filteredSample /= prescaler;
                 filtered_data.add(filteredSample);

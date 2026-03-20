@@ -24,6 +24,7 @@ NICBPv2_ncs, nicbp.init
 NICBPv3, nicbp_v3.init
 NICBPv3.1, nicbp_v3.init
 Chest-DWN-rdet-v1, Chest-DWN-rdet-v1.init
+Chest-DWN-rdet-v1-debug, Chest-DWN-rdet-v1-debug.init
 quad_v1, quad_v1.init
 byteGuardPPG_v1.0, byteppg.init
 byteGuardPPG_v2.0, byteppg2.init

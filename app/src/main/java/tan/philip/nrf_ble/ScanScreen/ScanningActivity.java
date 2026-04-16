@@ -209,21 +209,21 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
-        switch(menuItem.getItemId()) {
-            case R.id.enterDebugMode:
-                startDebugMode();
-                return true;
-            case R.id.enterSickbayIP:
-                enterSickbayIP();
-                return true;
-            case R.id.enterSickbayBedID:
-                enterSickbayBedID();
-                return true;
-            case R.id.clearScan:
-                clearScan();
-                return true;
-            default:
-                return false;
+        int itemId = menuItem.getItemId();
+        if (itemId == R.id.enterDebugMode) {
+            startDebugMode();
+            return true;
+        } else if (itemId == R.id.enterSickbayIP) {
+            enterSickbayIP();
+            return true;
+        } else if (itemId == R.id.enterSickbayBedID) {
+            enterSickbayBedID();
+            return true;
+        } else if (itemId == R.id.clearScan) {
+            clearScan();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -491,20 +491,39 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
         int write_external_storage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int location_access = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        return (write_external_storage == PackageManager.PERMISSION_GRANTED) && (location_access == PackageManager.PERMISSION_GRANTED);
+        int bluetooth_connect = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? 
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) : PackageManager.PERMISSION_GRANTED;
+        int bluetooth_scan = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S ? 
+                ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) : PackageManager.PERMISSION_GRANTED;
+
+        return (write_external_storage == PackageManager.PERMISSION_GRANTED) && 
+               (location_access == PackageManager.PERMISSION_GRANTED) &&
+               (bluetooth_connect == PackageManager.PERMISSION_GRANTED) &&
+               (bluetooth_scan == PackageManager.PERMISSION_GRANTED);
     }
 
     private void requestBluetoothEnable() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S && 
+            ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            getPermissions();
+            return;
+        }
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         Log.d(TAG, "Requested user enabled Bluetooth. Try starting the scan again.");
     }
 
     private void getPermissions() {
-        ActivityCompat.requestPermissions(this, new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION
-        }, REQUEST_PERMISSION_CODE);
+        ArrayList<String> permissions = new ArrayList<>();
+        permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            permissions.add(Manifest.permission.BLUETOOTH_CONNECT);
+            permissions.add(Manifest.permission.BLUETOOTH_SCAN);
+        }
+        
+        ActivityCompat.requestPermissions(this, permissions.toArray(new String[0]), REQUEST_PERMISSION_CODE);
     }
 
     private void startBackgroundTransition() {

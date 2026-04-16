@@ -84,24 +84,24 @@ public class OptionsMenu implements PopupMenu.OnMenuItemClickListener{
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
-        switch(menuItem.getItemId()) {
-            case R.id.record:
-                toggleRecord();
-                return true;
-            case R.id.enable_all_autoscale:
-                EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(true));
-                return true;
-            case R.id.disable_all_autoscale:
-                EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(false));
-                return true;
-            case R.id.help:
-                showHelp();
-                return true;
-            case MENU_MARK_EVENT:
-                markEvent();
-                return true;
-            default:
-                return checkTXMessageClicked(menuItem.getItemId());
+        int itemId = menuItem.getItemId();
+        if (itemId == R.id.record) {
+            toggleRecord();
+            return true;
+        } else if (itemId == R.id.enable_all_autoscale) {
+            EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(true));
+            return true;
+        } else if (itemId == R.id.disable_all_autoscale) {
+            EventBus.getDefault().post(new RequestChangeAutoScaleAllEvent(false));
+            return true;
+        } else if (itemId == R.id.help) {
+            showHelp();
+            return true;
+        } else if (itemId == MENU_MARK_EVENT) {
+            markEvent();
+            return true;
+        } else {
+            return checkTXMessageClicked(menuItem.getItemId());
         }
     }
 

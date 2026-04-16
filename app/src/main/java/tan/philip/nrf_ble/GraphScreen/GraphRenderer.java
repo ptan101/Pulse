@@ -19,12 +19,9 @@ import tan.philip.nrf_ble.Algorithms.Biometric;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLEDevice;
 import tan.philip.nrf_ble.BLE.BLEDevices.BLETattooDevice;
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
-import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAll;
+import tan.philip.nrf_ble.Events.UIRequests.RequestChangeAutoScaleAllEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestChangeRecordEvent;
 import tan.philip.nrf_ble.GraphScreen.GraphSeries.GraphSeries;
-import tan.philip.nrf_ble.GraphScreen.GraphSeries.ImageSeries;
-import tan.philip.nrf_ble.GraphScreen.GraphSeries.NumericalSeries;
-import tan.philip.nrf_ble.GraphScreen.GraphSeries.WaveformSeries;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplay.DigitalDisplay;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.DigitalDisplayManager;
 import tan.philip.nrf_ble.GraphScreen.UIComponents.GraphContainer;
@@ -196,7 +193,7 @@ public class GraphRenderer {
     }
 
     @Subscribe(threadMode =  ThreadMode.MAIN)
-    public void toggleAllAutoscale(RequestChangeAutoScaleAll event) {
+    public void toggleAllAutoscale(RequestChangeAutoScaleAllEvent event) {
         for(String i: signals.keySet()) {
             for(Integer j : signals.get(i).keySet())
                 signals.get(i).get(j).setAutoscale(event.getAutoscale());

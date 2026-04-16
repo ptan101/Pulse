@@ -1,9 +1,9 @@
 package tan.philip.nrf_ble.Events.UIRequests;
 
-public class RequestChangeAutoScaleAll {
+public class RequestChangeAutoScaleAllEvent {
     private final boolean autoscale;
 
-    public RequestChangeAutoScaleAll(boolean autoscale) {
+    public RequestChangeAutoScaleAllEvent(boolean autoscale) {
         this.autoscale = autoscale;
     }
 

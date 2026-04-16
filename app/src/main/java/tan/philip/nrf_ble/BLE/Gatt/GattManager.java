@@ -180,6 +180,8 @@ public class GattManager {
                     super.onServicesDiscovered(gatt, status);
                     EventBus.getDefault().post(new GATTServicesDiscoveredEvent(new ArrayList<>(gatt.getServices()), device));
 
+                    gatt.requestMtu(247);
+
                     Log.d(TAG, "services discovered, status: " + status);
                     execute(gatt, operation);
                 }

@@ -1,3 +1,4 @@
+
 package tan.philip.nrf_ble.GraphScreen.GraphSeries;
 
 import android.graphics.Color;

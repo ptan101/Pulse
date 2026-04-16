@@ -2,6 +2,9 @@ package tan.philip.nrf_ble.BLE;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
@@ -18,14 +21,22 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ParcelUuid;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -40,6 +51,7 @@ import tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice;
 import tan.philip.nrf_ble.BLE.Gatt.GattManager;
 import tan.philip.nrf_ble.BLE.PacketParsing.BLEPacketParser;
 import tan.philip.nrf_ble.Events.ScanListUpdatedEvent;
+import tan.philip.nrf_ble.Events.Sickbay.SickbayReinitializeEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEDisconnectEvent;
@@ -55,9 +67,6 @@ import static tan.philip.nrf_ble.NotificationHandler.CHANNEL_ID;
 import static tan.philip.nrf_ble.NotificationHandler.FOREGROUND_SERVICE_NOTIFICATION_ID;
 import static tan.philip.nrf_ble.NotificationHandler.makeNotification;
 
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 //This service is a higher level package to handle scanning, connection events, receiving and sending data, etc
 public class BLEHandlerService extends Service {
@@ -90,7 +99,77 @@ public class BLEHandlerService extends Service {
     //Saving to file
     private final boolean mRecording = false;
 
+    // ADD fields
+    private static final String CH_ALERT = "ble_disconnect_alert";
+    private static final int    NOTIF_ID_ALERT = AlertStopReceiver.NOTIF_ID_ALERT;
+    private static final String ACTION_SILENCE = "tan.philip.nrf_ble.action.SILENCE_ALERT";
+
+    // If you want to suppress the alarm on *user*-requested disconnects:
+    private boolean mUserRequestedDisconnect = false;
+
     NotificationCompat.Builder notificationBuilder;
+
+    private void ensureAlertChannel() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel ch = new NotificationChannel(
+                    CH_ALERT, "BLE Disconnect Alert", NotificationManager.IMPORTANCE_HIGH);
+            ch.enableVibration(true);
+            ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) nm.createNotificationChannel(ch);
+        }
+    }
+
+    private PendingIntent makeStopPI() {
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT |
+                (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        return PendingIntent.getBroadcast(this, 0,
+                new Intent(this, AlertStopReceiver.class).setAction(ACTION_SILENCE), flags);
+    }
+
+    private void startDisconnectAlert() {
+        ensureAlertChannel();
+
+        // Tap body -> open your GraphActivity (optional)
+        int cFlags = PendingIntent.FLAG_UPDATE_CURRENT |
+                (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+        PendingIntent contentPI = PendingIntent.getActivity(
+                this, 0, new Intent(this, tan.philip.nrf_ble.GraphScreen.GraphActivity.class), cFlags);
+
+        PendingIntent stopPI = makeStopPI();
+
+        NotificationCompat.Builder nb = new NotificationCompat.Builder(this, CH_ALERT)
+                .setSmallIcon(R.drawable.heartrate)
+                .setContentTitle("Sensor disconnected")
+                .setContentText("Tap to open. Swipe away or press Silence to stop vibration.")
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setAutoCancel(true)
+                .setContentIntent(contentPI)
+                .addAction(0, "Silence", stopPI)
+                .setDeleteIntent(stopPI);
+
+        NotificationManagerCompat.from(this).notify(NOTIF_ID_ALERT, nb.build());
+
+        // Vibrate in a loop until user stops it
+        Vibrator vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        if (vib != null) {
+            long[] pattern = new long[]{0, 700, 500}; // start immediately, vibrate 700ms, pause 500ms
+            if (Build.VERSION.SDK_INT >= 26) {
+                vib.vibrate(VibrationEffect.createWaveform(pattern, 0)); // repeat from index 0
+            } else {
+                // Deprecated pre-26 but still works
+                vib.vibrate(pattern, 0);
+            }
+        }
+    }
+
+    private void stopDisconnectAlert() {
+        Vibrator vib = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        if (vib != null) vib.cancel();
+        NotificationManagerCompat.from(this).cancel(NOTIF_ID_ALERT);
+    }
+
 
 
     /////////////////////////Lifecycle Methods//////////////////////////////////////////////
@@ -211,11 +290,6 @@ public class BLEHandlerService extends Service {
     @SuppressLint("MissingPermission")
     @Subscribe(threadMode =  ThreadMode.MAIN)
     public void startScan(RequestBLEStartScanEvent event) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) ==
-                PackageManager.PERMISSION_DENIED) {
-            Log.e(TAG, "Permissions not enabled for BLE scan!");
-        }
-
         //BLE code
         //Return all broadcasting Bluetooth devices
         List<ScanFilter> filters = new ArrayList<>();
@@ -376,6 +450,7 @@ public class BLEHandlerService extends Service {
             //Start and bind to the SickbayPushService
             Intent intent = new Intent(this, SickbayPushService.class);
             bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
+            EventBus.getDefault().post(new SickbayReinitializeEvent());
         }
     }
 
@@ -397,6 +472,8 @@ public class BLEHandlerService extends Service {
 
         //deviceAddress = address;
         //deviceNameToConnect = getBluetoothIdentifier(deviceAddress);
+
+        stopDisconnectAlert(); // NEW---
 
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
@@ -435,14 +512,28 @@ public class BLEHandlerService extends Service {
      * callback.
      */
     public void disconnect(String address) {
+        Log.w(TAG, "disconnect() called for " + address +
+                "  userRequested=" + mUserRequestedDisconnect +
+                "  remaining=" + mConnectionManager.getBLEDevices().size());
+
         if (mBluetoothAdapter == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
 
         mConnectionManager.disconnectTattoo(address);
-        if(mConnectionManager.getBLEDevices().size() == 0)
+
+        if (mConnectionManager.getBLEDevices().size() == 0) {
             stopForeground(true);
+
+            // If user *explicitly* requested, don't alarm. Otherwise, alarm.
+            if (mUserRequestedDisconnect) {
+                mUserRequestedDisconnect = false; // consume the flag
+                stopDisconnectAlert();            // just in case
+            } else {
+                startDisconnectAlert();
+            }
+        }
     }
 
     public void closeAllConnections() {
@@ -452,6 +543,7 @@ public class BLEHandlerService extends Service {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void disconnect(RequestBLEDisconnectEvent event) {
+        mUserRequestedDisconnect = true;  // mark as intentional
         closeAllConnections();
     }
 
@@ -461,4 +553,3 @@ public class BLEHandlerService extends Service {
 
     /////////////////////Transcieving/////////////////////////////////////
 }
-

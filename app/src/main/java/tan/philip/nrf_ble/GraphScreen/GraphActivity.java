@@ -80,6 +80,7 @@ public class GraphActivity extends AppCompatActivity {
     public void onDestroy() {
         super.onDestroy();
 
+
         EventBus.getDefault().post(new RequestBLEDisconnectEvent());
 
         renderer.deregister();

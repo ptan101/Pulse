@@ -21,6 +21,15 @@ import tan.philip.nrf_ble.BLE.PacketParsing.TattooMessage;
 import tan.philip.nrf_ble.FileWriting.MarkerFile;
 import tan.philip.nrf_ble.FileWriting.TattooFile;
 
+import android.os.Build;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.util.Log;
+import android.content.Context;
+
+import org.greenrobot.eventbus.EventBus;
+import tan.philip.nrf_ble.Events.Device.DeviceConnectionChangedEvent;
+
 public class BLEDevice {
     protected Context mCtx;
 
@@ -177,16 +186,43 @@ public class BLEDevice {
     public boolean connected() { return mConnected;}
 
     public void setConnected(boolean connected) {
-        Long curTime = System.currentTimeMillis();
+        long curTime = System.currentTimeMillis();
+        boolean wasConnected = mConnected;   // <-- remember previous
         mConnected = connected;
 
-        //If recording, note the disconnect time
-        if(mRecording && mConnected && disconnectTime != 0) {
-            Long timeDisconnected = curTime - disconnectTime;
-            markerFile.queueWrite(new String[] {Float.toString(recordTime),
-                    "Device disconnected for " + timeDisconnected + " ms"});
-        } else if (mRecording && !mConnected){
+        // Existing logging of disconnect duration for recording
+        if (mRecording && mConnected && disconnectTime != 0) {
+            long timeDisconnected = curTime - disconnectTime;
+            markerFile.queueWrite(new String[] { Float.toString(recordTime),
+                    "Device disconnected for " + timeDisconnected + " ms" });
+        } else if (mRecording && !mConnected) {
             disconnectTime = curTime;
+        }
+
+        EventBus.getDefault().post(new DeviceConnectionChangedEvent(
+                getAddress(),
+                getDisplayName(),
+                connected
+        ));
+
+        // NEW: haptics
+        if (wasConnected && !connected) {
+            Log.w("BLEDevice", "Disconnected: " + getBluetoothIdentifier());
+            Vibrator vib = (Vibrator) mCtx.getSystemService(Context.VIBRATOR_SERVICE);
+            if (vib != null) {
+                // strong repeating pattern (until you stop it)
+                long[] timings = {0, 900, 400}; // start now, vibrate 900ms, pause 400ms
+                if (Build.VERSION.SDK_INT >= 26) {
+                    vib.vibrate(VibrationEffect.createWaveform(timings, 0)); // repeat
+                } else {
+                    vib.vibrate(timings, 0);
+                }
+            }
+        } else if (!wasConnected && connected) {
+            Log.i("BLEDevice", "Reconnected: " + getBluetoothIdentifier());
+            // stop any ongoing buzz
+            Vibrator vib = (Vibrator) mCtx.getSystemService(Context.VIBRATOR_SERVICE);
+            if (vib != null) vib.cancel();
         }
     }
 
@@ -228,4 +264,3 @@ public class BLEDevice {
 
     public BiometricsSet getBiometrics() { return mBLEParser.getBiometrics(); }
 }
-

@@ -18,9 +18,9 @@ NICBP, nicbp.init
 Simulated Ultrasound, simulated_ultrasound.init
 ADXL355, adxl355_125.init
 Dual_SCG, dualSCG.init
-NICBP, nicbp_v2.init
-NICBPv2, nicbp.init
-NICBPv2_ncs, nicbp.init
+NICBP, nicbp.init
+NICBPv2, nicbp_v2.init
+NICBPv2.1, nicbp_v2_currentdraw.init
 NICBPv3, nicbp_v3.init
 NICBPv3.1, nicbp_v3.init
 Chest-DWN-rdet-v1, Chest-DWN-rdet-v1.init

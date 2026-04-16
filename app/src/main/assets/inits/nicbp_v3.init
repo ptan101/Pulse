@@ -5,6 +5,7 @@ Signals Information
 0, SCG-Z, 3, 125, 20, signed
 .graphable
 ..color: 0 0 250 255
+..graphHeight: 110
 .filter
 ..b: 0.87685389, -3.50741556,  5.26112334, -3.50741556,  0.87685389
 ..a: 1.0, -3.73735339,  5.24600331, -3.27743279,  0.76887274
@@ -12,6 +13,7 @@ Signals Information
 1, ECG, 3, 125, 18, signed
 .graphable
 ..color: 250 0 0 255
+..graphHeight: 110
 .filter
 ..b: 1.0
 ..a: 1.0
@@ -19,6 +21,7 @@ Signals Information
 2, PPGG, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
+..graphHeight: 110
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
@@ -32,6 +35,7 @@ Signals Information
 5, PPGIR, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
+..graphHeight: 110
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254

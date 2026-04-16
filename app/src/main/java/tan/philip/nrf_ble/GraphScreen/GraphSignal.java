@@ -41,6 +41,7 @@ public class  GraphSignal {
         GraphContainer graphContainer = new GraphContainer(ctx, this, seriesToRender);
         graphContainer.setViewportMinX(0);
         graphContainer.setViewportMaxX(monitor_length);
+        graphContainers.add(graphContainer);
         return graphContainer;
     }
 
@@ -52,6 +53,7 @@ public class  GraphSignal {
         graphContainer.setViewportMinX(0);
         graphContainer.setViewportMaxX(nLines);
         graphContainer.setViewportMaxY(30);
+        graphContainers.add(graphContainer);
         return graphContainer;
     }
 

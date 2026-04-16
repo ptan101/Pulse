@@ -170,8 +170,10 @@ public class BLEDevice {
 
         TattooFile.createFolder(fileName);
         TattooFile.createFolder(fileName + File.separator + fileDisplayName);
+        
         mFile = new TattooFile(fileName, fileDisplayName, mBLEParser.getSignalSettings(), mBLEParser.getSignalOrder());
         markerFile = new MarkerFile(fileName, fileDisplayName);
+        
         mRecording = true;
     }
 

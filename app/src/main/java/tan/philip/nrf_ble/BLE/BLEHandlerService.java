@@ -217,8 +217,10 @@ public class BLEHandlerService extends Service {
         mConnectionManager.unregister();
 
         //Unbind from the SickbayPushService
-        unbindService(sickbayPushConnection);
-        mIsBound = false;
+        if (mIsBound) {
+            unbindService(sickbayPushConnection);
+            mIsBound = false;
+        }
 
         //Connecting
         closeAllConnections();

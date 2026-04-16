@@ -11,7 +11,7 @@ import java.io.File;
 
 public abstract class PulseFile {
     private static final String TAG = "PulseFile";
-    protected static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    protected static final String BASE_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath() + File.separator + "Pulse_Data";
     protected final String sessionDirPath;
     protected final String fileName;
     protected final String deviceName;

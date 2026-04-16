@@ -1,0 +1,50 @@
+Packet Information
+1, 54
+end
+Signals Information
+0, PPG, 2, 25, 16, signed
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, num, 2, 1, 16, unsigned
+.digdisplay
+2, HR, 2, 1, 16, unsigned
+.digdisplay
+..DecimalFormat: ###.##
+..conversion: x/256
+..suffix: bpm
+end
+Biometric Settings
+end
+Packet Structure
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+2
+end

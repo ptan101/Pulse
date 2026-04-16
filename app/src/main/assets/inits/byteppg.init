@@ -1,0 +1,41 @@
+Packet Information
+1, 90
+end
+Signals Information
+0, PPG, 4, 22, 24, unsigned
+.graphable
+..color: 250 0 0 255
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 1
+1, num, 2, 1, 16, unsigned
+.digdisplay
+end
+Biometric Settings
+end
+Packet Structure
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+end

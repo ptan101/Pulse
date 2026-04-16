@@ -1,0 +1,35 @@
+Packet Information
+0.52, 8
+end
+Signals Information
+0, SBP, 4, 1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: mmHg
+1, num, 2, 1, 16, unsigned
+2, DBP, 4, 1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: mmHg
+3, TEMP, 2, 1, 16, unsigned
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x/128
+..suffix: \u00B0C
+4, SV, 4, 1, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..conversion: x
+..suffix: ml
+end
+Biometric Settings
+end
+Packet Structure
+1
+4
+0
+2
+3
+end

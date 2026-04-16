@@ -1,15 +1,15 @@
 Packet Information
-6, 84
+6.25, 84
 end
 Signals Information
-0, PPG, 4, 30, 20, unsigned
+0, PPG, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
 .filter
-..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
-..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
+..b: 0.23300636, 0, -0.69901907, 0, 0.69901907, 0, -0.23300636
+..a: 1.0, -1.85904099, 0.88235731, -0.26722609, 0.49256264, -0.18847693, -0.04151043
 ..gain: 8
-1, ECG, 3, 120, 18, signed
+1, ECG, 3, 125, 18, signed
 .graphable
 ..color: 250 0 0 255
 .filter
@@ -17,11 +17,14 @@ Signals Information
 ..a: 1.0, -0.4121554390755492, -2.694838729987918, 0.7592290897292722, 2.9336465200712283, -0.508403607035584, -1.4785220120175717, 0.11865500458231906, 0.2879304294211396
 ..gain: 5
 2, num, 2, 6, 16, unsigned
-.digdisplay
 3, Ac-X, 2, 6, 14, signed
 4, Ac-Y, 2, 6, 14, signed
 5, Ac-Z, 2, 6, 14, signed
 6, TEMP, 2, 6, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x/128
+..suffix: \u00B0C
 end
 Biometric Settings
 pan-tompkins: 3

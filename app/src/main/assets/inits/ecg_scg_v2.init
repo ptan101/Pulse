@@ -15,10 +15,9 @@ Signals Information
 4, num, 2, 10, 16, unsigned
 5, HR, 2, 10, 16, signed
 .digdisplay
-..displayName: HR MAX
 ..DecimalFormat: ###.#
 ..conversion: 7500/x
-..suffix: _BPM
+..suffix: bpm
 end
 Biometric Settings
 pan-tompkins: 3

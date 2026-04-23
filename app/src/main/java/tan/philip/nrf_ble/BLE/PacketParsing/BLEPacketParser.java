@@ -181,8 +181,22 @@ public class BLEPacketParser {
         BufferedReader reader = null;
         ArrayList<String> lines = new ArrayList<String>();
         try {
-            reader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("inits/" + initFileName)));
+            java.io.File targetFile = null;
+            java.io.File docDir = new java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS), "Pulse_Data/inits");
+            java.io.File extFilesDir = new java.io.File(context.getExternalFilesDir(null), "inits");
+            
+            if (new java.io.File(docDir, initFileName).exists()) {
+                targetFile = new java.io.File(docDir, initFileName);
+            } else if (new java.io.File(extFilesDir, initFileName).exists()) {
+                targetFile = new java.io.File(extFilesDir, initFileName);
+            }
+            
+            if (targetFile != null) {
+                reader = new BufferedReader(new java.io.FileReader(targetFile));
+            } else {
+                reader = new BufferedReader(
+                        new InputStreamReader(context.getAssets().open("inits/" + initFileName)));
+            }
 
             String mLine;
 
@@ -249,10 +263,25 @@ public class BLEPacketParser {
     //////////////////Helper Method for loading in init file lookup table
     public static String lookupInitFile(String deviceName, Context context) {
         BufferedReader reader = null;
+        if (deviceName == null) return null;
 
         try {
-            reader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("inits/init_file_lookup.txt")));
+            java.io.File externalLookup = null;
+            java.io.File docDir = new java.io.File(android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOCUMENTS), "Pulse_Data/inits");
+            java.io.File extFilesDir = new java.io.File(context.getExternalFilesDir(null), "inits");
+            
+            if (new java.io.File(docDir, "init_file_lookup.txt").exists()) {
+                externalLookup = new java.io.File(docDir, "init_file_lookup.txt");
+            } else if (new java.io.File(extFilesDir, "init_file_lookup.txt").exists()) {
+                externalLookup = new java.io.File(extFilesDir, "init_file_lookup.txt");
+            }
+            
+            if (externalLookup != null) {
+                reader = new BufferedReader(new java.io.FileReader(externalLookup));
+            } else {
+                reader = new BufferedReader(
+                        new InputStreamReader(context.getAssets().open("inits/init_file_lookup.txt")));
+            }
 
             String mLine;
 

@@ -60,7 +60,7 @@ public class BLEDevice {
     protected boolean mConnected;
 
     @SuppressLint("MissingPermission")
-    public BLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
+    public BLEDevice(Context context, BluetoothDevice bluetoothDevice, String parsedName) throws FileNotFoundException {
         this.mCtx = context;
         this.mBluetoothDevice = bluetoothDevice;
 
@@ -68,10 +68,13 @@ public class BLEDevice {
         //Temporary solution. Use GattCallback to populate this. TO DO
         mServiceUUIDs.add(NUS_UUID);
 
-        if(bluetoothDevice != null)
+        displayName = parsedName;
+        if (displayName == null && bluetoothDevice != null) {
             displayName = bluetoothDevice.getName();
-        else
+        }
+        if (displayName == null) {
             displayName = DEBUG_MODE_BT_ID;
+        }
         if (displayName == null)
             displayName = "Unknown";
 

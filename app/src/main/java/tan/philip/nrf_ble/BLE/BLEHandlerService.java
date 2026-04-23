@@ -261,6 +261,14 @@ public class BLEHandlerService extends Service {
 
     //////////////////////////Scanning//////////////////////////////////////////////////
     public boolean hasBLEPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+            if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.BLUETOOTH_SCAN) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
         return (mBluetoothAdapter != null && mBluetoothAdapter.isEnabled());
     }
 
@@ -312,6 +320,10 @@ public class BLEHandlerService extends Service {
 
         //Now grab hold of the BluetoothLeScanner to start the scan, and set our scanning boolean to true.
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+        if (mBluetoothLeScanner == null) {
+            Log.e(TAG, "BluetoothLeScanner is null. Check if Bluetooth is enabled/supported.");
+            return;
+        }
         mBluetoothLeScanner.startScan(filters, settings, mScanCallback);
 
         mScanning = true;
@@ -469,7 +481,11 @@ public class BLEHandlerService extends Service {
     @SuppressLint("MissingPermission")
     private void connectDevice(final String address) {
         notificationBuilder.setContentTitle("Attempting BLE connection...");
-        startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+        if (Build.VERSION.SDK_INT >= 34) {
+            startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build(), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        } else {
+            startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
+        }
         makeNotification(FOREGROUND_SERVICE_NOTIFICATION_ID, notificationBuilder.build());
 
         //deviceAddress = address;
@@ -486,8 +502,13 @@ public class BLEHandlerService extends Service {
             BLETattooDevice newTattooDevice;
             if(!address.equals(DEBUG_MODE_ADDRESS)) {
                 final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                Log.w(TAG, device.getName());
-                newTattooDevice = new BLETattooDevice(this, device);
+                String deviceName = null;
+                if (mScanResults.containsKey(address)) {
+                    deviceName = mScanResults.get(address).getName();
+                }
+                if (deviceName == null) deviceName = device.getName();
+                Log.w(TAG, deviceName != null ? deviceName : "Unknown Device");
+                newTattooDevice = new BLETattooDevice(this, device, deviceName);
 
                 if (device == null) {
                     Log.w(TAG, "Device not found.  Unable to connect.");

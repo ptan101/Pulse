@@ -427,11 +427,11 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void startScan() {
         mBinding.layout1.getBackground().setAlpha(0);
 
-        EventBus.getDefault().post(new RequestBLEStartScanEvent());
-
         if (!hasPermissions() || mScanning) {
             return;
         }
+
+        EventBus.getDefault().post(new RequestBLEStartScanEvent());
 
         //mBinding.btnListDevices.setVisibility(View.GONE);
 
@@ -494,21 +494,31 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
             return false;
         }
 
-        int write_external_storage = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        boolean storageGranted = true;
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+            storageGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+        }
         int location_access = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        return (write_external_storage == PackageManager.PERMISSION_GRANTED) && (location_access == PackageManager.PERMISSION_GRANTED);
+        return storageGranted && (location_access == PackageManager.PERMISSION_GRANTED);
     }
 
     private void requestBluetoothEnable() {
         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
 
+            ArrayList<String> permissions = new ArrayList<>(Arrays.asList(
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_SCAN,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            ));
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION.SDK_INT) {
+                if(android.os.Build.VERSION.SDK_INT >= 33) {
+                    permissions.add(Manifest.permission.POST_NOTIFICATIONS);
+                }
+            }
+
             ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.BLUETOOTH_CONNECT,
-                            Manifest.permission.BLUETOOTH_SCAN,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                    },
+                    permissions.toArray(new String[0]),
                     REQUEST_BLUETOOTH_PERMISSIONS);
 
             return;
@@ -518,10 +528,16 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     private void getPermissions() {
-        ActivityCompat.requestPermissions(this, new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION
-        }, REQUEST_PERMISSION_CODE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            }, REQUEST_PERMISSION_CODE);
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+            }, REQUEST_PERMISSION_CODE);
+        }
     }
 
     private void startBackgroundTransition() {

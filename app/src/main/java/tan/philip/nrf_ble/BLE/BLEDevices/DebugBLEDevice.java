@@ -29,7 +29,7 @@ public class DebugBLEDevice extends BLETattooDevice {
 
 
     public DebugBLEDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
-        super(context, bluetoothDevice);
+        super(context, bluetoothDevice, DEBUG_MODE_BT_ID);
 
         debugNotificationHandler = new Handler();
         debugConnectionHandler = new Handler();

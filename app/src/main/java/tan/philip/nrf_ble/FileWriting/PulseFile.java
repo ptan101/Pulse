@@ -30,6 +30,9 @@ public abstract class PulseFile {
     //Wanted to make write and queue abstract methods but had issues with generic primitive parameters
 
     public static boolean isStoragePermissionGranted(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return true; // WRITE_EXTERNAL_STORAGE is deprecated and rarely granted
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (context.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {

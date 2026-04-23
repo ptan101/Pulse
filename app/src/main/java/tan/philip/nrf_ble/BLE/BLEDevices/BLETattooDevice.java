@@ -29,8 +29,8 @@ public class BLETattooDevice extends BLEDevice {
     private long timestamps[] = new long[1000];
     private int n = 0;
 
-    public BLETattooDevice(Context context, BluetoothDevice bluetoothDevice) throws FileNotFoundException {
-        super(context, bluetoothDevice);
+    public BLETattooDevice(Context context, BluetoothDevice bluetoothDevice, String parsedName) throws FileNotFoundException {
+        super(context, bluetoothDevice, parsedName);
 
         //Add graphable signals for all BLETattooDevices
         graphSignals = new ArrayList<>();

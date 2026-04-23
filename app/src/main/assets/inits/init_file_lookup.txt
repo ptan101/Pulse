@@ -22,6 +22,7 @@ NICBPv2, nicbp_v2.init
 NICBPv2.1, nicbp_v2_currentdraw.init
 NICBPv3, nicbp_v3.init
 NICBPv3.1, nicbp_v3.init
+NICBPv3.2, nicbp_v3.init
 Chest-DWN-rdet-v1, Chest-DWN-rdet-v1.init
 Chest-DWN-rdet-v1-debug, Chest-DWN-rdet-v1-debug.init
 quad_v1, quad_v1.init

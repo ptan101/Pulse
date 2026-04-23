@@ -158,9 +158,10 @@ public class GraphActivity extends AppCompatActivity {
 
         for (BLEDevice device : bleDevices) {
             TextView text = new TextView(this);
-            text.setText(device.getBluetoothIdentifier() + " connecting...");
-            text.setTextSize(TypedValue.COMPLEX_UNIT_SP,10);
             text.setId(View.generateViewId());
+            text.setText(device.getBluetoothIdentifier() + " connecting...");
+            text.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10);
+            text.setTextColor(Color.GRAY);
 
             deviceStates.put(device.getAddress(), text);
             layout.addView(text);
@@ -168,8 +169,10 @@ public class GraphActivity extends AppCompatActivity {
             ConstraintSet constraintSet = new ConstraintSet();
             constraintSet.clone(layout);
 
+            constraintSet.constrainWidth(text.getId(), ConstraintSet.WRAP_CONTENT);
+            constraintSet.constrainHeight(text.getId(), ConstraintSet.WRAP_CONTENT);
             constraintSet.connect(text.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, (int) convertDpToPixel(10, this));
-            constraintSet.centerHorizontally(text.getId(), layout.getId());
+            constraintSet.centerHorizontally(text.getId(), ConstraintSet.PARENT_ID);
             constraintSet.applyTo(layout);
 
             lastView = text;

@@ -37,7 +37,7 @@ public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
     private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
-    private static final String DEFAULT_IP_ADDRESS = "192.168.50.147";
+    private static final String DEFAULT_IP_ADDRESS = "10.145.69.74";
     private static final String DEFAULT_WEB_SOCKET_URL = "http://" + DEFAULT_IP_ADDRESS + ":3001";
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
 
@@ -89,6 +89,8 @@ public class SickbayPushService extends Service {
     }
 
     private void initializeSickbaySettings() {
+        if (mSocket != null) disconnectSocket();
+
         readSickbaySettings(); //TO DO: Check if the IP address and Bed names are valid
 
         Log.d(TAG, "Initializing Sockets.");
@@ -104,7 +106,7 @@ public class SickbayPushService extends Service {
     }
 
     //Reads the sickbay settings from local memory
-    private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private static final String BASE_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath() + File.separator + "Pulse_Data";
     private void readSickbaySettings() {
         //Read the sickbay IP first
         String filePath = BASE_DIR_PATH + File.separator + "sickbayIP.txt";
@@ -119,7 +121,7 @@ public class SickbayPushService extends Service {
             }
             Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
 
-            webSocketURL = "https://" + sickbayIP + ":3001";
+            webSocketURL = "http://" + sickbayIP + ":3001";
 
             fileReader.close();
         }
@@ -227,9 +229,11 @@ public class SickbayPushService extends Service {
     void initializeSocket() {
         try {
             IO.Options options = new IO.Options();
-            SocketSSL.set(options);
+            if (webSocketURL.startsWith("https://")) {
+                SocketSSL.set(options);
+            }
             mSocket = IO.socket(webSocketURL, options);
-            Log.d(TAG, "Socket object created.");
+            Log.d(TAG, "Socket object created. URL=" + webSocketURL);
         } catch (URISyntaxException e) {
             Log.e("Error URI", String.valueOf(e));
             throw new RuntimeException(e);
@@ -298,7 +302,12 @@ public class SickbayPushService extends Service {
         @Override
         public void call(Object... args) {
             mSocket.connect();
-            Log.e(TAG, "Socket connection had an error (" + args[0] +")");
+            String msg = String.valueOf(args[0]);
+            if (args[0] instanceof Throwable) {
+                Throwable cause = ((Throwable) args[0]).getCause();
+                if (cause != null) msg += " | cause: " + cause;
+            }
+            Log.e(TAG, "Socket connection had an error (" + msg + ")");
         }
     };
 

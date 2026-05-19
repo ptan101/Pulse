@@ -47,6 +47,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestBLEClearScanListEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEConnectEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStartScanEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStopScanEvent;
+import tan.philip.nrf_ble.Events.Sickbay.SickbayReinitializeEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
@@ -266,8 +267,9 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
 
                 Log.d(TAG, "Sickbay IP set to " + sickbayIP);
 
-                //Write to file
+                //Write to file, then signal the service to reconnect with the new IP
                 writeSickbaySettings("sickbayIP", sickbayIP);
+                EventBus.getDefault().post(new SickbayReinitializeEvent());
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -313,7 +315,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     }
 
     //Very bad, doesn't check if number or if folder exists
-    private static final String BASE_DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "Pulse_Data";
+    private static final String BASE_DIR_PATH = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS).getAbsolutePath() + File.separator + "Pulse_Data";
     private void writeSickbaySettings(String fileName, String data) {
         Log.d(TAG, "Writing Sickbay setting " + fileName + " " + data);
         String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";

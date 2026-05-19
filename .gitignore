@@ -37,3 +37,4 @@ obj/
 .externalNativeBuild
 
 liblsl-Java/
+sickbay-test-script/node_modules/

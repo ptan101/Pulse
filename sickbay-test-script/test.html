@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sickbay Test Client</title>
+    <style>
+        body { font-family: monospace; max-width: 700px; margin: 40px auto; padding: 0 20px; }
+        h2 { margin-bottom: 4px; }
+        label { font-weight: bold; }
+        input[type="text"] { width: 220px; padding: 4px 6px; margin: 4px 0; }
+        button { padding: 6px 16px; margin: 4px 4px 4px 0; cursor: pointer; }
+        #status { margin: 12px 0 4px; font-weight: bold; }
+        #log { background: #111; color: #0f0; padding: 12px; height: 320px; overflow-y: auto;
+               white-space: pre-wrap; font-size: 13px; border-radius: 4px; }
+        .ok   { color: #0f0; }
+        .warn { color: #ff0; }
+        .err  { color: #f44; }
+    </style>
+</head>
+<body>
+    <h2>Sickbay Socket.IO Test Client</h2>
+    <p>Simulates the Pulse Android app sending data to the local test server.</p>
+
+    <label>Server IP:</label>
+    <input type="text" id="ipInput" value="127.0.0.1" placeholder="e.g. 192.168.1.105">
+    <button id="btnConnect">Connect</button>
+    <button id="btnDisconnect" disabled>Disconnect</button>
+
+    <div id="status">Status: <span id="statusText">Disconnected</span></div>
+
+    <button id="btnSend" disabled>Send Test Data</button>
+    <button id="btnSendStream" disabled>Stream (10 packets)</button>
+
+    <h3>Log</h3>
+    <div id="log"></div>
+    <button onclick="document.getElementById('log').textContent=''">Clear log</button>
+
+    <!-- Socket.IO client is loaded dynamically from the server on connect,
+         guaranteeing the client and server are always the same version. -->
+    <script>
+        var socket = null;
+
+        var logEl  = document.getElementById('log');
+        var stEl   = document.getElementById('statusText');
+
+        function log(msg, cls) {
+            var line = document.createElement('span');
+            if (cls) line.className = cls;
+            line.textContent = '[' + new Date().toISOString() + '] ' + msg + '\n';
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function setStatus(text, cls) {
+            stEl.textContent = text;
+            stEl.className = cls || '';
+        }
+
+        function connectWithClient(url) {
+            if (socket) { socket.disconnect(); }
+            socket = io(url, { transports: ['websocket'], forceNew: true });
+
+            socket.on('connect', function() {
+                setStatus('Connected', 'ok');
+                log('Connected to server.', 'ok');
+                document.getElementById('btnSend').disabled      = false;
+                document.getElementById('btnSendStream').disabled = false;
+                document.getElementById('btnDisconnect').disabled = false;
+                document.getElementById('btnConnect').disabled    = true;
+            });
+
+            socket.on('disconnect', function() {
+                setStatus('Disconnected', 'err');
+                log('Disconnected from server.', 'warn');
+                document.getElementById('btnSend').disabled      = true;
+                document.getElementById('btnSendStream').disabled = true;
+                document.getElementById('btnDisconnect').disabled = true;
+                document.getElementById('btnConnect').disabled    = false;
+            });
+
+            socket.on('connect_error', function(err) {
+                setStatus('Connection error', 'err');
+                log('Connection error: ' + err, 'err');
+                document.getElementById('btnConnect').disabled = false;
+            });
+        }
+
+        document.getElementById('btnConnect').onclick = function() {
+            var ip  = document.getElementById('ipInput').value.trim() || '127.0.0.1';
+            var url = 'http://' + ip + ':3001';
+            log('Loading Socket.IO client from server...');
+
+            // Load the client from the server so the version always matches the server.
+            var existingScript = document.getElementById('sio-script');
+            if (existingScript) existingScript.parentNode.removeChild(existingScript);
+
+            var script = document.createElement('script');
+            script.id  = 'sio-script';
+            script.src = url + '/socket.io/socket.io.js';
+            script.onload = function() {
+                log('Client loaded. Connecting to ' + url + ' ...');
+                connectWithClient(url);
+            };
+            script.onerror = function() {
+                log('Could not load client from server — is node socketListen.js running?', 'err');
+            };
+            document.head.appendChild(script);
+        };
+
+        document.getElementById('btnDisconnect').onclick = function() {
+            if (socket) socket.disconnect();
+        };
+
+        // Build a mock payload that matches SickbayMessage.convertPacketToJSONString()
+        // Uses debug.init sickbayIDs (1000=Sine, 1001=Square, 1002=Sawtooth) and ns=TATTOOWAVE
+        function makeMockPayload(t0) {
+            var dt = 1000 / 5 / 1000;  // debug.init: notificationFreq=5 Hz → dt=0.2s
+            var signals = {};
+            // 4 samples per signal (matches debug.init packet structure)
+            var t = (t0 / 1000);
+            signals['1000'] = [Math.sin(2*Math.PI*t),   Math.sin(2*Math.PI*(t+dt)),
+                               Math.sin(2*Math.PI*(t+2*dt)), Math.sin(2*Math.PI*(t+3*dt))];
+            signals['1001'] = [t%2 < 1 ? 1.0 : -1.0,   (t+dt)%2 < 1 ? 1.0 : -1.0,
+                               (t+2*dt)%2 < 1 ? 1.0 : -1.0, (t+3*dt)%2 < 1 ? 1.0 : -1.0];
+            signals['1002'] = [t%1, (t+dt)%1, (t+2*dt)%1, (t+3*dt)%1];
+
+            return {
+                data: {
+                    channel:    'BED001',
+                    ns:         'TATTOOWAVE',
+                    t0:         t0,
+                    dt:         dt,
+                    VIZ:        0,
+                    Z:          0,
+                    InstanceID: 0,
+                    signals:    signals
+                }
+            };
+        }
+
+        document.getElementById('btnSend').onclick = function() {
+            if (!socket || !socket.connected) { log('Not connected.', 'warn'); return; }
+            var payload = makeMockPayload(Date.now());
+            socket.emit('NewWebsocketData_serverside_timestamp', payload);
+            log('Sent 1 packet → signals: ' + Object.keys(payload.data.signals).join(', '));
+        };
+
+        document.getElementById('btnSendStream').onclick = function() {
+            if (!socket || !socket.connected) { log('Not connected.', 'warn'); return; }
+            var count = 0;
+            log('Streaming 10 packets at 200ms intervals...');
+            var interval = setInterval(function() {
+                if (!socket.connected || count >= 10) { clearInterval(interval); return; }
+                var payload = makeMockPayload(Date.now());
+                socket.emit('NewWebsocketData_serverside_timestamp', payload);
+                count++;
+            }, 200);
+        };
+    </script>
+</body>
+</html>

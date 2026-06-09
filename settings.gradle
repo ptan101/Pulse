@@ -16,3 +16,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Pulse App"
 include ':app'
+include ':liblsl-Java'
+project(':liblsl-Java').projectDir = new File('C:/Users/Owner/Documents/GitHub/labstreaminglayer/LSL/liblsl-Java')

@@ -19,6 +19,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <!-- Prevents WiFi from turning off for Sickbay -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Allows LSL multicast discovery packets to reach the app -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -61,6 +63,11 @@
             </intent-filter>
         </activity>
         <service android:name=".BLE.BLEHandlerService" android:foregroundServiceType="connectedDevice" />
+        <service
+            android:name=".LSLStreaming.LSLStreamingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>

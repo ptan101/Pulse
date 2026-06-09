@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import tan.philip.nrf_ble.BLE.PacketParsing.SignalSetting;
+import tan.philip.nrf_ble.Events.LSLDataEvent;
 import tan.philip.nrf_ble.Events.PlotDataEvent;
 import tan.philip.nrf_ble.Events.Sickbay.SickbaySendFloatsEvent;
 import tan.philip.nrf_ble.Events.TMSMessageReceivedEvent;
@@ -71,6 +72,8 @@ public class BLETattooDevice extends BLEDevice {
 
             EventBus.getDefault().post(new SickbaySendFloatsEvent(sickbayPush, this));
         }
+
+        EventBus.getDefault().post(new LSLDataEvent(filtered_data, this));
 
         runBiometricAlgorithms(packaged_data);
 

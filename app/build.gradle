@@ -44,6 +44,8 @@ dependencies {
         exclude group: 'org.json', module: 'json'
     }
 
+    implementation project(':liblsl-Java')
+
     // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

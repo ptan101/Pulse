@@ -59,6 +59,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStartScanEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestBLEStopScanEvent;
 import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.R;
+import tan.philip.nrf_ble.LSLStreaming.LSLStreamingService;
 import tan.philip.nrf_ble.SickbayPush.SickbayPushService;
 
 import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
@@ -95,6 +96,9 @@ public class BLEHandlerService extends Service {
     SickbayPushService sickbayPushService;
     boolean mIsBound = false;
     boolean pushToSickbay = true;
+
+    //Communication to LSLStreaming
+    boolean mLSLStarted = false;
 
     //Saving to file
     private final boolean mRecording = false;
@@ -222,6 +226,12 @@ public class BLEHandlerService extends Service {
             mIsBound = false;
         }
 
+        //Stop the LSLStreamingService
+        if (mLSLStarted) {
+            stopService(new Intent(this, LSLStreamingService.class));
+            mLSLStarted = false;
+        }
+
         //Connecting
         closeAllConnections();
 
@@ -258,6 +268,7 @@ public class BLEHandlerService extends Service {
             mIsBound = false;
         }
     };
+
 
     //////////////////////////Scanning//////////////////////////////////////////////////
     public boolean hasBLEPermissions() {
@@ -465,6 +476,17 @@ public class BLEHandlerService extends Service {
             Intent intent = new Intent(this, SickbayPushService.class);
             bindService(intent, sickbayPushConnection, Context.BIND_AUTO_CREATE);
             EventBus.getDefault().post(new SickbayReinitializeEvent());
+        }
+
+        //Start the LSLStreamingService (always-on, independent of Sickbay)
+        if (!mLSLStarted) {
+            Intent lslIntent = new Intent(this, LSLStreamingService.class);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(lslIntent);
+            } else {
+                startService(lslIntent);
+            }
+            mLSLStarted = true;
         }
     }
 

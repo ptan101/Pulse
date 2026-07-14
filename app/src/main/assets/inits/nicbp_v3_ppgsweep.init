@@ -1,51 +1,60 @@
 Packet Information
-6.25, 224
+6.25, 170
 end
 Signals Information
 0, SCG-Z, 3, 125, 20, signed
 .graphable
 ..color: 0 0 250 255
-..graphHeight: 75
+..graphHeight: 110
 .filter
 ..b: 0.87685389, -3.50741556,  5.26112334, -3.50741556,  0.87685389
 ..a: 1.0, -3.73735339,  5.24600331, -3.27743279,  0.76887274
 ..gain: 5
+.sickbayID: 1000
 1, ECG, 3, 125, 18, signed
 .graphable
 ..color: 250 0 0 255
-..graphHeight: 75
+..graphHeight: 110
 .filter
 ..b: 1.0
 ..a: 1.0
 ..gain: 5
+.sickbayID: 1001
 2, PPGG, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
-..graphHeight: 75
+..graphHeight: 110
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 5
+.sickbayID: 1002
 3, num, 2, 6, 16, unsigned
 4, TEMP, 2, 6, 16, signed
 .digdisplay
 ..DecimalFormat: ##.##
 ..conversion: x/128
-..suffix: \u00B0C
+..suffix: °C
 5, PPGIR, 4, 31, 20, unsigned
 .graphable
 ..color: 0 250 0 255
-..graphHeight: 75
+..graphHeight: 110
 .filter
 ..b: 0.81587532, -4.0793766, 8.1587532, -8.1587532,  4.0793766, -0.81587532
 ..a: 1.0, -4.5934214, 8.45511522, -7.79491832, 3.59890277, -0.66565254
 ..gain: 5
-6, ICG, 3, 125, 24, signed
+.sickbayID: 1003
+6, Timestamp, 4, -1, 32, unsigned
+7, PPGSW, 2, 6, 16, unsigned
 .graphable
-..color: 125 125 125 255
-..graphHeight: 75
+..color: 220 200 0 255
+..graphHeight: 60
+.sickbayID: 1007
 end
 Biometric Settings
+end
+Sickbay Settings
+.sickbayNS: TATTOOWAVE
 end
 Packet Structure
 3
@@ -99,25 +108,7 @@ Packet Structure
 5
 5
 5
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
-6
+7
 4
+6
 end

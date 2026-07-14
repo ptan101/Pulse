@@ -1,0 +1,31 @@
+Packet Information
+6.25, 18
+end
+Signals Information
+0, num, 2, 6, 16, unsigned
+1, SV, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..suffix: ml
+2, SBP, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..suffix: mmHg
+3, DBP, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: ###.#
+..suffix: mmHg
+4, HR, 4, 6, 32, float
+.digdisplay
+..DecimalFormat: ##.##
+..suffix: bpm
+end
+Biometric Settings
+end
+Packet Structure
+0
+1
+2
+3
+4
+end

@@ -1,0 +1,120 @@
+Packet Information
+6.25, 244
+end
+Signals Information
+0, SCG-Z, 3, 125, 20, signed
+.graphable
+..color: 0 0 250 255
+..graphHeight: 75
+.filter
+..b: 0.87685389, -3.50741556,  5.26112334, -3.50741556,  0.87685389
+..a: 1.0, -3.73735339,  5.24600331, -3.27743279,  0.76887274
+..gain: 5
+1, ECG, 3, 125, 18, signed
+.graphable
+..color: 250 0 0 255
+..graphHeight: 75
+.filter
+..b: 1.0
+..a: 1.0
+..gain: 5
+2, num, 2, 6, 16, unsigned
+3, TEMP, 2, 6, 16, signed
+.digdisplay
+..DecimalFormat: ##.##
+..conversion: x/128
+..suffix: °C
+4, ICGI, 3, 125, 24, signed
+.big
+.graphable
+..color: 0 80 255 255
+..graphHeight: 75
+5, ICGQ, 3, 125, 24, signed
+.big
+end
+Biometric Settings
+end
+Packet Structure
+2
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+5
+3
+end

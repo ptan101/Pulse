@@ -23,9 +23,11 @@ NICBPv2.1, nicbp_v2_currentdraw.init
 NICBPv3, nicbp_v3.init
 NICBPv3.1, nicbp_v3.init
 NICBPv3.2, nicbp_v3.init
+NICBPv3sw, nicbp_v3_ppgsweep.init
 Chest-DWN-rdet-v1, Chest-DWN-rdet-v1.init
 Chest-DWN-rdet-v1-debug, Chest-DWN-rdet-v1-debug.init
 quad_v1, quad_v1.init
+quad_v1_iq, quad_v1_iq.init
 byteGuardPPG_v1.0, byteppg.init
 byteGuardPPG_v2.0, byteppg2.init
 byteGuardPPG_v3.0, byteppg2.init

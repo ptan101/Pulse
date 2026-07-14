@@ -32,6 +32,8 @@ public class GraphRenderer {
     private boolean firstData = true;
 
     private final HashMap<String, HashMap<Integer, GraphSignal>> signals;
+    //For the I/Q ICG experiment: maps device address -> {ICGI index, ICGQ index}.
+    private final HashMap<String, int[]> icgIQIndex = new HashMap<>();
 
     private final TextView recordTimer;
     private boolean recording = false;
@@ -60,6 +62,18 @@ public class GraphRenderer {
         HashMap<Integer, GraphSignal> signalsInDevice = signals.get(address);
         long curTime = System.currentTimeMillis();
 
+        //I/Q build: hand this packet's Q batch to the complex ICGI processor before dispatch,
+        //so it can demodulate I against the matching Q (both are in newDataPoints).
+        int[] iq = icgIQIndex.get(address);
+        if (iq != null) {
+            GraphSignal isig = signalsInDevice.get(iq[0]);
+            if (isig instanceof ICGComplexGraphSignal) {
+                ArrayList<Float> qData = newDataPoints.get(iq[1]);
+                if (qData != null)
+                    ((ICGComplexGraphSignal) isig).setPendingQ(qData);
+            }
+        }
+
         for(Integer i : signalsInDevice.keySet()) {
             //Skip null elements (negative indices). I am currently using them for Biometrics but they queue points
             //separately.
@@ -86,8 +100,14 @@ public class GraphRenderer {
             for(Integer i : signalsInDevice.keySet()) {
                 GraphSignal signal = signalsInDevice.get(i);
                 if (signal.isGraphable()) {
-                    GraphContainer newView = signal.setupWaveformGraph(ctx, 10);
-                    v.addView(newView);
+                    if (signal instanceof ICGGraphSignal) {
+                        //ICG: raw Z + derived cIPG-Z(t) + -dZ/dt, stacked top to bottom.
+                        for (GraphContainer c : ((ICGGraphSignal) signal).setupICGGraphs(ctx, 10))
+                            v.addView(c);
+                    } else {
+                        GraphContainer newView = signal.setupWaveformGraph(ctx, 10);
+                        v.addView(newView);
+                    }
                 }
 
                 if (signal.imageable()) {
@@ -134,7 +154,15 @@ public class GraphRenderer {
                 //Create  GraphSignals for all plottable signals
                 for (Integer i : bleDevice.getSignalSettings().keySet()) {
                     SignalSetting setting = bleDevice.getSignalSettings().get(i);
-                    GraphSignal newSignal = new GraphSignal(setting);
+                    //Special-case the ICG channels: derived cIPG-Z(t)/-dZ/dt graphs + mod%.
+                    //  "ICG"  = on-device magnitude; "ICGI" = host I/Q complex demod build.
+                    GraphSignal newSignal;
+                    if ("ICG".equalsIgnoreCase(setting.name))
+                        newSignal = new ICGGraphSignal(setting);
+                    else if ("ICGI".equalsIgnoreCase(setting.name))
+                        newSignal = new ICGComplexGraphSignal(setting);
+                    else
+                        newSignal = new GraphSignal(setting);
 
                     if (setting.graphable || setting.image || newSignal.useDigitalDisplay())
                         signalsInDevice.put((int) setting.index, newSignal);
@@ -152,6 +180,16 @@ public class GraphRenderer {
 
                 }
                 signals.put(bleDevice.getAddress(), signalsInDevice);
+
+                //Pair ICGI (complex demod) with ICGQ so we can hand Q in per packet.
+                int iIdx = -1, qIdx = -1;
+                for (Integer k : bleDevice.getSignalSettings().keySet()) {
+                    SignalSetting s = bleDevice.getSignalSettings().get(k);
+                    if ("ICGI".equalsIgnoreCase(s.name)) iIdx = s.index;
+                    else if ("ICGQ".equalsIgnoreCase(s.name)) qIdx = s.index;
+                }
+                if (iIdx >= 0 && qIdx >= 0)
+                    icgIQIndex.put(bleDevice.getAddress(), new int[]{iIdx, qIdx});
             }
         }
     }

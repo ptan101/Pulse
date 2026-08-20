@@ -1,5 +1,5 @@
 Packet Information
-6.25, 160
+6.25, 222
 end
 Signals Information
 0, SCG-Z, 3, 125, 20, signed
@@ -27,7 +27,6 @@ Signals Information
 4, TEMP, 2, 6, 16, signed
 .digdisplay
 ..DecimalFormat: ##.##
-..conversion: x/128
 ..suffix: \u00B0C
 5, SV, 4, 6, 32, signed
 .digdisplay
@@ -45,11 +44,25 @@ Signals Information
 .digdisplay
 ..DecimalFormat: ##.##
 ..suffix: bpm
+9, rdet_last_r_idx, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: #
+..suffix: smp
+10, rdet_raw_idx, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: #
+..suffix: smp
+11, rdet_status, 1, 6, 8, unsigned
+12, dbg_chunk_seq, 1, 6, 8, unsigned
+13, dbg_r_abs, 4, 6, 32, signed
+.digdisplay
+..DecimalFormat: #
+..suffix: smp
+14, dbg_ecg_sample, 4, 75, 32, signed
 end
 Biometric Settings
 end
 Packet Structure
-3
 0
 0
 0
@@ -100,4 +113,21 @@ Packet Structure
 6
 7
 8
+9
+10
+11
+12
+13
+14
+14
+14
+14
+14
+14
+14
+14
+14
+14
+14
+14
 end

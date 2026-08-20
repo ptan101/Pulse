@@ -26,7 +26,9 @@ NICBPv3.2, nicbp_v3.init
 NICBPv3sw, nicbp_v3_ppgsweep.init
 Chest-DWN-rdet-v1, Chest-DWN-rdet-v1.init
 Chest-DWN-rdet-v1-debug, Chest-DWN-rdet-v1-debug.init
+Chest-DWN-rdet-debug-v1, Chest-DWN-rdet-debug-v1.init
 quad_v1, quad_v1.init
+quad_v1sw, quad_v1_icgsweep.init
 quad_v1_iq, quad_v1_iq.init
 byteGuardPPG_v1.0, byteppg.init
 byteGuardPPG_v2.0, byteppg2.init
@@ -54,3 +56,4 @@ Chest_v3.2, ecg_scg_v1.init
 Max6 PPG v4, max6_ppg_v4.init
 Max6 PPG v4 36c, max6_ppg_v4_36chan.init
 Tri_WNN, Tri_WNN.init
+smolbrain-v1, smolbrain_eeg_imu.init

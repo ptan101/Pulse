@@ -11,7 +11,9 @@ import android.os.Binder;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -38,7 +40,8 @@ public class SickbayPushService extends Service {
     private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
     private static final String DEFAULT_IP_ADDRESS = "10.145.69.74";
-    private static final String DEFAULT_WEB_SOCKET_URL = "http://" + DEFAULT_IP_ADDRESS + ":3001";
+    private static final String DEFAULT_WEB_SOCKET_PORT = "3001";
+    private static final String DEFAULT_WEB_SOCKET_URL = "http://" + DEFAULT_IP_ADDRESS + ":" + DEFAULT_WEB_SOCKET_PORT;
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
 
     private final String DEFAULT_BED_NAME = "BED001";
@@ -119,15 +122,15 @@ public class SickbayPushService extends Service {
             while ((i = fileReader.read()) != -1) {
                 sickbayIP += (char)i;
             }
-            Log.d(TAG, "Sickbay IP set to:" + sickbayIP);
-
-            webSocketURL = "http://" + sickbayIP + ":3001";
+            webSocketURL = buildWebSocketURL(sickbayIP);
+            Log.d(TAG, "Sickbay IP set to:" + sickbayIP.trim() + " (URL " + webSocketURL + ")");
 
             fileReader.close();
         }
         catch (Exception e) {
             File file = new File(filePath);
             try {
+                ensureBaseDirExists();
                 file.createNewFile();
                 FileWriter fileWriter = new FileWriter(file);
                 fileWriter.write(DEFAULT_IP_ADDRESS);
@@ -151,6 +154,7 @@ public class SickbayPushService extends Service {
             while ((i = fileReader.read()) != -1) {
                 bedID += (char)i;
             }
+            bedID = bedID.trim();
             Log.d(TAG, "Sickbay Bed ID set to:" + bedID);
 
             bedName = bedID;
@@ -160,6 +164,7 @@ public class SickbayPushService extends Service {
         catch (Exception e) {
             File file = new File(filePath);
             try {
+                ensureBaseDirExists();
                 file.createNewFile();
                 FileWriter fileWriter = new FileWriter(file);
                 fileWriter.write(DEFAULT_BED_NAME);
@@ -170,6 +175,56 @@ public class SickbayPushService extends Service {
                 Log.e(TAG, "Could not make sickbay settings files.", e);
             }
         }
+    }
+
+    /**
+     * Builds the web socket URL from whatever the user typed into the Sickbay IP dialog.
+     * Accepts "host", "host:port", "http://host", "https://host:port". The scheme defaults
+     * to http (the local test bench); the port defaults to 3001.
+     */
+    private static String buildWebSocketURL(String rawIP) {
+        String scheme = "http://";
+        String hostAndPort = rawIP.trim();
+
+        if (hostAndPort.startsWith("http://") || hostAndPort.startsWith("https://")) {
+            int schemeEnd = hostAndPort.indexOf("://") + 3;
+            scheme = hostAndPort.substring(0, schemeEnd);
+            hostAndPort = hostAndPort.substring(schemeEnd);
+        }
+
+        //Drop any trailing path, e.g. "10.0.0.5:3001/socket.io"
+        int slash = hostAndPort.indexOf('/');
+        if (slash >= 0)
+            hostAndPort = hostAndPort.substring(0, slash);
+
+        //Only add the default port if the user did not type one
+        if (!hostAndPort.contains(":"))
+            hostAndPort = hostAndPort + ":" + DEFAULT_WEB_SOCKET_PORT;
+
+        return scheme + hostAndPort;
+    }
+
+    //The settings files live in a shared folder that may not exist yet on a fresh install.
+    private static void ensureBaseDirExists() {
+        File baseDir = new File(BASE_DIR_PATH);
+        if (!baseDir.exists())
+            baseDir.mkdirs();
+    }
+
+    private void toastToMain(String message) {
+        new Handler(Looper.getMainLooper()).post(() ->
+                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show());
+    }
+
+    //Connection errors retry immediately, so only surface one to the user every 10 seconds.
+    private static final long ERROR_TOAST_INTERVAL_MS = 10000;
+    private long lastErrorToastTime = 0;
+    private void toastConnectError(String message) {
+        long curTime = System.currentTimeMillis();
+        if (curTime - lastErrorToastTime < ERROR_TOAST_INTERVAL_MS)
+            return;
+        lastErrorToastTime = curTime;
+        toastToMain("Sickbay (" + webSocketURL + ") not connected: " + message);
     }
 
     // ////////////////////////////////Queue Functions////////////////////////////////////////////
@@ -308,6 +363,7 @@ public class SickbayPushService extends Service {
                 if (cause != null) msg += " | cause: " + cause;
             }
             Log.e(TAG, "Socket connection had an error (" + msg + ")");
+            toastConnectError(msg);
         }
     };
 
@@ -316,6 +372,8 @@ public class SickbayPushService extends Service {
         @Override
         public void call(Object... args) {
             Log.d(TAG, "Socket connected!");
+            lastErrorToastTime = 0;
+            toastToMain("Sickbay connected (" + webSocketURL + ")");
 
             acquireWifiLock();
         }

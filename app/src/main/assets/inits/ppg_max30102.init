@@ -11,8 +11,7 @@ Signals Information
 ..a: 1.0, -5.381191122920366, 12.756735008986512, -17.605766754829023, 15.62779824541153, -9.169030300274237, 3.4576491641358897, -0.762385439483564, 0.07619706461033243
 ..gain: -50
 .digdisplay
-.sickbayID 1000
-.sickbayNS TATTOOWAVE
+.sickbayID: 1000
 1, IR PPG, 3, 50, 18, unsigned
 .big
 .graphable
@@ -22,8 +21,7 @@ Signals Information
 ..a: 1.0, -5.381191122920366, 12.756735008986512, -17.605766754829023, 15.62779824541153, -9.169030300274237, 3.4576491641358897, -0.762385439483564, 0.07619706461033243
 ..gain: -150
 .digdisplay
-.sickbayID 1002
-.sickbayNS TATTOOWAVE
+.sickbayID: 1002
 2, FSR, 2, 3, 14, signed
 .big
 .graphable
@@ -40,6 +38,9 @@ Biometric Settings
 heartrate, 0
 spo2, 0, 0, 0, 0
 pwv, 0, 0
+end
+Sickbay Settings
+.sickbayNS: TATTOOWAVE
 end
 Packet Structure
 0

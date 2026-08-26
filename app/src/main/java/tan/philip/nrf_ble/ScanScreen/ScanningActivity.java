@@ -254,16 +254,17 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void enterSickbayIP() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(readSickbaySetting("sickbayIP"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(input);
 
         builder.setTitle("Set Sickbay IP");
-        builder.setMessage("Enter the IP address of the Sickbay server to connect to.");
+        builder.setMessage("Enter the address of the Sickbay server to connect to. A scheme and port may be included, e.g. https://10.0.0.5:3001 (defaults to http and port 3001).");
         builder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                sickbayIP = input.getText().toString();
+                sickbayIP = input.getText().toString().trim();
 
                 Log.d(TAG, "Sickbay IP set to " + sickbayIP);
 
@@ -287,6 +288,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void enterSickbayBedID() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(readSickbaySetting("sickbayBedID"));
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(input);
@@ -296,7 +298,7 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         builder.setPositiveButton("Set", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                sickbayBedID = input.getText().toString();
+                sickbayBedID = input.getText().toString().trim();
 
                 Log.d(TAG, "Sickbay Bed ID set to " + sickbayBedID);
 
@@ -323,14 +325,43 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
         java.io.FileWriter mFileWriter;
 
         try {
+            //The folder does not exist until the first recording, so make it here if needed.
+            File baseDir = new File(BASE_DIR_PATH);
+            if (!baseDir.exists() && !baseDir.mkdirs())
+                throw new IOException("Could not create " + BASE_DIR_PATH);
+
             mFileWriter = new java.io.FileWriter(filePath, false);
             mFileWriter.write(data);
             mFileWriter.close();
             Log.d(TAG, "SUCCESSFUL WRITE");
+            Toast.makeText(this, "Saved " + fileName + ": " + data, Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             Log.d(TAG, e.toString());
+            Toast.makeText(this, "Could not save " + fileName + " (" + e.getMessage() + ")",
+                    Toast.LENGTH_LONG).show();
         } finally {
 
+        }
+    }
+
+    //Returns the Sickbay setting currently stored on disk, or "" if it has never been set.
+    private String readSickbaySetting(String fileName) {
+        String filePath = BASE_DIR_PATH + File.separator + fileName + ".txt";
+
+        try {
+            java.io.FileReader fileReader = new java.io.FileReader(filePath);
+
+            StringBuilder setting = new StringBuilder();
+            int i;
+            while ((i = fileReader.read()) != -1) {
+                setting.append((char) i);
+            }
+            fileReader.close();
+
+            return setting.toString().trim();
+        } catch (IOException e) {
+            Log.d(TAG, "No stored Sickbay setting " + fileName + " (" + e + ")");
+            return "";
         }
     }
 

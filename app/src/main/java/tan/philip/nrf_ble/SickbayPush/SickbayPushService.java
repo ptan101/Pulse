@@ -39,9 +39,15 @@ public class SickbayPushService extends Service {
     private static final String TAG = "SickbayPushService";
     private static final String WIFI_TAG = "SICKBAY_WIFI_LOCK";
 
-    private static final String DEFAULT_IP_ADDRESS = "10.145.69.74";
+    //Address the Sickbay IP dialog starts from, and what gets written when no IP has been
+    //set yet. Includes the scheme: the clinical Sickbay servers terminate TLS, while the
+    //local test bench (sickbay-test-script) is plain http.
+    public static final String DEFAULT_SICKBAY_ADDRESS = "https://10.88.155.246";
+    //Addresses earlier versions stamped into sickbayIP.txt on their own. A phone still
+    //holding one of these was never configured by a user, so it follows the default above.
+    private static final String[] LEGACY_DEFAULT_ADDRESSES = {"10.145.69.74", "192.168.50.147"};
     private static final String DEFAULT_WEB_SOCKET_PORT = "3001";
-    private static final String DEFAULT_WEB_SOCKET_URL = "http://" + DEFAULT_IP_ADDRESS + ":" + DEFAULT_WEB_SOCKET_PORT;
+    private static final String DEFAULT_WEB_SOCKET_URL = buildWebSocketURL(DEFAULT_SICKBAY_ADDRESS);
     private String webSocketURL = DEFAULT_WEB_SOCKET_URL;
 
     private final String DEFAULT_BED_NAME = "BED001";
@@ -122,6 +128,9 @@ public class SickbayPushService extends Service {
             while ((i = fileReader.read()) != -1) {
                 sickbayIP += (char)i;
             }
+            if (isUnconfiguredAddress(sickbayIP))
+                sickbayIP = DEFAULT_SICKBAY_ADDRESS;
+
             webSocketURL = buildWebSocketURL(sickbayIP);
             Log.d(TAG, "Sickbay IP set to:" + sickbayIP.trim() + " (URL " + webSocketURL + ")");
 
@@ -133,7 +142,7 @@ public class SickbayPushService extends Service {
                 ensureBaseDirExists();
                 file.createNewFile();
                 FileWriter fileWriter = new FileWriter(file);
-                fileWriter.write(DEFAULT_IP_ADDRESS);
+                fileWriter.write(DEFAULT_SICKBAY_ADDRESS);
                 fileWriter.close();
 
                 Log.e(TAG, "Made sickbay settings file.", e);
@@ -175,6 +184,23 @@ public class SickbayPushService extends Service {
                 Log.e(TAG, "Could not make sickbay settings files.", e);
             }
         }
+    }
+
+    /**
+     * True if nothing has been set yet, or if the stored address is one this app wrote by
+     * itself as a default. Either way the current default should be used instead.
+     */
+    public static boolean isUnconfiguredAddress(String address) {
+        String trimmed = address.trim();
+
+        if (trimmed.isEmpty())
+            return true;
+
+        for (String legacy : LEGACY_DEFAULT_ADDRESSES)
+            if (trimmed.equals(legacy))
+                return true;
+
+        return false;
     }
 
     /**

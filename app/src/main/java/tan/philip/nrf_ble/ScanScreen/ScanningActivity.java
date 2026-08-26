@@ -52,6 +52,7 @@ import tan.philip.nrf_ble.Events.UIRequests.RequestEndBLEForegroundEvent;
 import tan.philip.nrf_ble.FileWriting.PulseFile;
 import tan.philip.nrf_ble.GraphScreen.GraphActivity;
 import tan.philip.nrf_ble.R;
+import tan.philip.nrf_ble.SickbayPush.SickbayPushService;
 import tan.philip.nrf_ble.databinding.ActivityScanningBinding;
 
 import static tan.philip.nrf_ble.BLE.BLEDevices.DebugBLEDevice.DEBUG_MODE_ADDRESS;
@@ -254,7 +255,9 @@ public class ScanningActivity extends AppCompatActivity implements PopupMenu.OnM
     private void enterSickbayIP() {
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
-        input.setText(readSickbaySetting("sickbayIP"));
+        String storedIP = readSickbaySetting("sickbayIP");
+        input.setText(SickbayPushService.isUnconfiguredAddress(storedIP)
+                ? SickbayPushService.DEFAULT_SICKBAY_ADDRESS : storedIP);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(input);
